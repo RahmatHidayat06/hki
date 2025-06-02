@@ -72,11 +72,18 @@
                 <a href="{{ route('admin.dashboard') }}" class="nav-link{{ request()->routeIs('admin.dashboard') ? ' active' : '' }} dashboard-link">
                     <i class="fas fa-th-large me-2"></i> Dashboard Admin
                 </a>
-                <a href="{{ route('admin.dashboard') }}" class="nav-link{{ request()->routeIs('admin.dashboard') ? ' active' : '' }}">
+                <a href="{{ route('admin.pengajuan') }}" class="nav-link{{ request()->routeIs('admin.pengajuan') ? ' active' : '' }}">
                     <i class="fas fa-list me-2"></i> Daftar Pengajuan
                 </a>
                 <a href="{{ route('admin.rekap') }}" class="nav-link{{ request()->routeIs('admin.rekap') ? ' active' : '' }}">
                     <i class="fas fa-file-excel me-2"></i> Rekap Data
+                </a>
+            @elseif(auth()->user()->role === 'direktur')
+                <a href="{{ route('direktur.ttd.form') }}" class="nav-link{{ request()->routeIs('direktur.ttd.form') ? ' active' : '' }}">
+                    <i class="fas fa-pen-nib me-2"></i> Upload Tanda Tangan
+                </a>
+                <a href="{{ route('persetujuan.index') }}" class="nav-link{{ request()->routeIs('persetujuan.index') ? ' active' : '' }}">
+                    <i class="fas fa-check-circle me-2"></i> Persetujuan
                 </a>
             @else
                 <a href="{{ route('dashboard') }}" class="nav-link{{ request()->routeIs('dashboard') ? ' active' : '' }} dashboard-link">

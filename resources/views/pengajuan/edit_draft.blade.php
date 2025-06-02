@@ -41,31 +41,35 @@
                             <label class="form-label">Anda mengajukan sebagai?</label>
                             <div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input role-radio" type="radio" name="role" id="role-dosen" value="dosen" {{ old('role', $pengajuan->role) == 'dosen' ? 'checked' : '' }} readonly tabindex="-1">
+                                    <input class="form-check-input role-radio" type="radio" name="role" id="role-dosen" value="dosen" {{ $pengajuan->role == 'dosen' ? 'checked' : '' }} disabled>
                                     <label class="form-check-label" for="role-dosen">Dosen</label>
                                 </div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input role-radio" type="radio" name="role" id="role-mahasiswa" value="mahasiswa" {{ old('role', $pengajuan->role) == 'mahasiswa' ? 'checked' : '' }} readonly tabindex="-1">
+                                    <input class="form-check-input role-radio" type="radio" name="role" id="role-mahasiswa" value="mahasiswa" {{ $pengajuan->role == 'mahasiswa' ? 'checked' : '' }} disabled>
                                     <label class="form-check-label" for="role-mahasiswa">Mahasiswa</label>
                                 </div>
-                                <input type="hidden" name="role" value="{{ old('role', $pengajuan->role) }}">
-                                <span class="badge bg-info text-dark mt-2">Pilihan tidak dapat diubah</span>
+                                <input type="hidden" name="role" value="{{ $pengajuan->role }}">
+                                @if($pengajuan->role)
+                                    <div class="mt-2">
+                                        <span class="text-success fw-bold">Sudah dipilih: {{ ucfirst($pengajuan->role) }}</span>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="nama_pengusul" class="form-label">Nama Lengkap</label>
-                                <input type="text" class="form-control" id="nama_pengusul" name="nama_pengusul" value="{{ old('nama_pengusul', $pengajuan->nama_pengusul) }}" required>
+                                <input type="text" class="form-control" id="nama_pengusul" name="nama_pengusul" value="{{ $pengajuan->nama_pengusul }}" required>
                             </div>
                             <div class="col-md-6 mb-3" id="nip-nidn-field">
                                 <label for="nip_nidn" class="form-label">NIP/NIDN</label>
-                                <input type="text" class="form-control" id="nip_nidn" name="nip_nidn" value="{{ old('nip_nidn', $pengajuan->nip_nidn) }}" required>
+                                <input type="text" class="form-control" id="nip_nidn" name="nip_nidn" value="{{ $pengajuan->nip_nidn }}" required>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="no_hp" class="form-label">Nomor HP</label>
-                                <input type="text" class="form-control" id="no_hp" name="no_hp" value="{{ old('no_hp', $pengajuan->no_hp) }}" required>
+                                <input type="text" class="form-control" id="no_hp" name="no_hp" value="{{ $pengajuan->no_hp }}" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="tahun_usulan" class="form-label">Tahun Usulan</label>
@@ -77,7 +81,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3" id="id-sinta-field">
                                 <label for="id_sinta" class="form-label">ID Sinta</label>
-                                <input type="text" class="form-control" id="id_sinta" name="id_sinta" value="{{ old('id_sinta', $pengajuan->id_sinta) }}" required>
+                                <input type="text" class="form-control" id="id_sinta" name="id_sinta" value="{{ $pengajuan->id_sinta }}" required>
                             </div>
                         </div>
                         <div class="d-flex justify-content-end mt-3">
@@ -99,19 +103,19 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <label for="judul" class="form-label">Judul Ciptaan</label>
-                            <input type="text" class="form-control" id="judul" name="judul" value="{{ old('judul', $pengajuan->judul_karya) }}" required>
+                            <input type="text" class="form-control" id="judul" name="judul" value="{{ $pengajuan->judul_karya }}" required>
                         </div>
                         <div class="mb-3">
                             <label for="kategori" class="form-label">Kategori</label>
-                            <input type="text" class="form-control" id="kategori" name="kategori" value="{{ old('kategori', $pengajuan->kategori) }}" required>
+                            <input type="text" class="form-control" id="kategori" name="kategori" value="{{ $pengajuan->kategori }}" required>
                         </div>
                         <div class="mb-3">
                             <label for="identitas_ciptaan" class="form-label">Jenis Ciptaan</label>
                             <select class="form-select" id="identitas_ciptaan" name="identitas_ciptaan" required>
                                 <option value="">Pilih Jenis Ciptaan</option>
-                                <option value="karya tulis" {{ old('identitas_ciptaan', $pengajuan->identitas_ciptaan) == 'karya tulis' ? 'selected' : '' }}>Karya Tulis</option>
-                                <option value="karya audio visual" {{ old('identitas_ciptaan', $pengajuan->identitas_ciptaan) == 'karya audio visual' ? 'selected' : '' }}>Karya Audio Visual</option>
-                                <option value="karya lainnya" {{ old('identitas_ciptaan', $pengajuan->identitas_ciptaan) == 'karya lainnya' ? 'selected' : '' }}>Karya Lainnya</option>
+                                <option value="karya tulis" {{ $pengajuan->identitas_ciptaan == 'karya tulis' ? 'selected' : '' }}>Karya Tulis</option>
+                                <option value="karya audio visual" {{ $pengajuan->identitas_ciptaan == 'karya audio visual' ? 'selected' : '' }}>Karya Audio Visual</option>
+                                <option value="karya lainnya" {{ $pengajuan->identitas_ciptaan == 'karya lainnya' ? 'selected' : '' }}>Karya Lainnya</option>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -122,11 +126,11 @@
                         </div>
                         <div class="mb-3">
                             <label for="deskripsi" class="form-label">Deskripsi Ciptaan</label>
-                            <textarea class="form-control" id="deskripsi" name="deskripsi" rows="4" required>{{ old('deskripsi', $pengajuan->deskripsi) }}</textarea>
+                            <textarea class="form-control" id="deskripsi" name="deskripsi" rows="4" required>{{ $pengajuan->deskripsi }}</textarea>
                         </div>
                         <div class="mb-3">
                             <label for="tanggal_pertama_kali_diumumkan" class="form-label">Tanggal Pertama Kali Diumumkan</label>
-                            <input type="date" class="form-control" id="tanggal_pertama_kali_diumumkan" name="tanggal_pertama_kali_diumumkan" value="{{ old('tanggal_pertama_kali_diumumkan', $pengajuan->tanggal_pertama_kali_diumumkan) }}" required>
+                            <input type="date" class="form-control" id="tanggal_pertama_kali_diumumkan" name="tanggal_pertama_kali_diumumkan" value="{{ $pengajuan->tanggal_pertama_kali_diumumkan }}" required>
                         </div>
                         <div class="d-flex justify-content-between mt-3">
                             <button type="button" class="btn btn-secondary prev-section" data-prev="data-pengusul">
@@ -865,6 +869,15 @@ input[readonly].role-radio:checked {
 }
 input[readonly].role-radio {
     pointer-events: none;
+}
+input[type="radio"].role-radio:checked:disabled {
+    accent-color: #198754; /* hijau bootstrap */
+    border-color: #198754;
+    background-color: #198754;
+}
+input[type="radio"].role-radio:disabled {
+    border-color: #ccc;
+    background-color: #f8f9fa;
 }
 </style>
 @endpush

@@ -18,14 +18,24 @@ class DokumenController extends Controller
         $file = $request->file('file');
         $path = $file->store('dokumen-hki', 'public');
 
-        DokumenHki::create([
+        // Update document status to indicate it needs a signature or stamp
+        $dokumen = DokumenHki::create([
             'pengajuan_hki_id' => $pengajuanId,
             'jenis_dokumen' => $request->jenis_dokumen,
             'nama_file' => $file->getClientOriginalName(),
             'path_file' => $path,
             'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize()
+            'size' => $file->getSize(),
+            'status' => 'menunggu_ttd_materai' // New status indicating it needs signature and stamp
         ]);
+
+        // Check if the document type requires a signature or stamp
+        if ($request->jenis_dokumen === 'surat_pernyataan') {
+            // Logic to ensure the document has a stamp and signature
+            // This could involve checking the file content or metadata
+        } else if ($request->jenis_dokumen === 'surat_pengalihan') {
+            // Logic to ensure the document has a signature
+        }
 
         return back()->with('success', 'Dokumen berhasil diupload');
     }

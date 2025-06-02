@@ -41,4 +41,25 @@ class AdminController extends Controller
         }
         return Excel::download(new PengajuanHkiExport, 'rekap_pengajuan_hki.xlsx');
     }
+
+    // Daftar Pengajuan untuk admin
+    public function pengajuan()
+    {
+        $pengajuan = PengajuanHki::orderBy('created_at', 'desc')->paginate(15);
+        $total = PengajuanHki::count();
+        $totalLengkap = PengajuanHki::whereNotNull('judul_karya')
+            ->whereNotNull('kategori')
+            ->whereNotNull('deskripsi')
+            ->whereNotNull('file_karya')
+            ->whereNotNull('file_dokumen_pendukung')
+            ->count();
+        return view('admin.pengajuan', compact('pengajuan', 'total', 'totalLengkap'));
+    }
+
+    // Detail pengajuan untuk admin
+    public function show($id)
+    {
+        $pengajuan = \App\Models\PengajuanHki::findOrFail($id);
+        return view('admin.show', compact('pengajuan'));
+    }
 } 

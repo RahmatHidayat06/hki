@@ -62,6 +62,16 @@ Route::middleware('auth')->group(function () {
     // Route untuk admin
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\AdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/pengajuan', [\App\Http\Controllers\AdminController::class, 'pengajuan'])->name('pengajuan');
+        Route::get('/pengajuan/{pengajuan}', [\App\Http\Controllers\AdminController::class, 'show'])->name('pengajuan.show');
         Route::get('/rekap', [\App\Http\Controllers\AdminController::class, 'rekap'])->name('rekap');
+        Route::get('/surat-pengalihan/{pengajuan}', [\App\Http\Controllers\SuratController::class, 'pengalihan'])->name('surat.pengalihan');
+        Route::get('/surat-pernyataan/{pengajuan}', [\App\Http\Controllers\SuratController::class, 'pernyataan'])->name('surat.pernyataan');
+    });
+
+    // Route untuk upload tanda tangan direktur
+    Route::middleware('role:direktur')->prefix('direktur')->name('direktur.')->group(function () {
+        Route::get('/ttd', [\App\Http\Controllers\DirekturController::class, 'formTtd'])->name('ttd.form');
+        Route::post('/ttd', [\App\Http\Controllers\DirekturController::class, 'uploadTtd'])->name('ttd.upload');
     });
 });
