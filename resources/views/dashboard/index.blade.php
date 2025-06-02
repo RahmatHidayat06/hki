@@ -1,77 +1,72 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">Dashboard</h4>
-                </div>
-
-                <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-md-12">
-                            <a href="{{ route('pengajuan.create') }}" class="btn btn-primary">
-                                Buat Pengajuan Baru
-                            </a>
-                        </div>
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow rounded-lg border-0" style="background: linear-gradient(90deg, #002366 0%, #0a2a6c 100%);">
+                <div class="card-body d-flex align-items-center justify-content-between py-4">
+                    <div>
+                        <h5 class="card-title mb-1 text-white" style="font-weight: 600;">Hak Cipta Terdaftar</h5>
+                        <h1 class="display-4 mb-0" style="color: #FFD600; font-size: 3rem; font-weight: bold;">{{ $totalPengajuan ?? 0 }}</h1>
                     </div>
-
+                </div>
+            </div>
+        </div>
+        <div class="col-12 mb-4">
+            <div class="card shadow rounded-lg border-0">
+                <div class="card-body py-4">
+                    <h5 class="card-title mb-3" style="font-weight: 600; color: #002366;">Hak Cipta Yang Tidak Lengkap</h5>
                     <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>No</th>
+                        <table class="table table-borderless mb-0 align-middle">
+                            <thead class="bg-light">
+                                <tr style="font-weight: 600; color: #002366;">
+                                    <th>Pengguna</th>
                                     <th>Judul</th>
-                                    <th>Jenis HKI</th>
-                                    <th>Status</th>
-                                    <th>Tanggal Pengajuan</th>
-                                    <th>Aksi</th>
+                                    <th>Tanggal</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($pengajuan as $key => $item)
-                                <tr>
-                                    <td>{{ $key + 1 }}</td>
-                                    <td>{{ $item->judul_karya }}</td>
-                                    <td>{{ $item->kategori }}</td>
-                                    <td>
-                                        <span class="badge bg-{{ $item->status === 'menunggu_validasi' ? 'warning' : 
-                                            ($item->status === 'divalidasi' ? 'info' : 
-                                            ($item->status === 'disetujui' ? 'success' : 'danger')) }}">
-                                            {{ ucfirst(str_replace('_', ' ', $item->status)) }}
-                                        </span>
-                                    </td>
-                                    <td>{{ $item->created_at->format('d/m/Y H:i') }}</td>
-                                    <td>
-                                        <a href="{{ route('pengajuan.show', $item->id) }}" class="btn btn-info btn-sm">
-                                            Detail
-                                        </a>
-                                        @if($item->status === 'menunggu_validasi')
-                                        <a href="{{ route('pengajuan.edit', $item->id) }}" class="btn btn-warning btn-sm">
-                                            Edit
-                                        </a>
-                                        <form action="{{ route('pengajuan.destroy', $item->id) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus pengajuan ini?')">
-                                                Hapus
-                                            </button>
-                                        </form>
-                                        @endif
-                                    </td>
-                                </tr>
+                                @forelse($tidakLengkap as $item)
+                                    <tr>
+                                        <td>{{ $item->user->name ?? '-' }}</td>
+                                        <td>{{ $item->judul_karya }}</td>
+                                        <td>{{ $item->created_at->format('d/m/Y') }}</td>
+                                    </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="6" class="text-center">Belum ada pengajuan</td>
-                                </tr>
+                                    <tr><td colspan="3" class="text-center text-muted">Tidak ada data</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
-                    <div class="mt-4">
-                        {{ $pengajuan->links() }}
+                </div>
+            </div>
+        </div>
+        <div class="col-12 mb-4">
+            <div class="card shadow rounded-lg border-0">
+                <div class="card-body py-4">
+                    <h5 class="card-title mb-3" style="font-weight: 600; color: #002366;">Hak Cipta Yang Belum Disetujui</h5>
+                    <div class="table-responsive">
+                        <table class="table table-borderless mb-0 align-middle">
+                            <thead class="bg-light">
+                                <tr style="font-weight: 600; color: #002366;">
+                                    <th>Pengguna</th>
+                                    <th>Judul</th>
+                                    <th>Tanggal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($belumDisetujui as $item)
+                                    <tr>
+                                        <td>{{ $item->user->name ?? '-' }}</td>
+                                        <td>{{ $item->judul_karya }}</td>
+                                        <td>{{ $item->created_at->format('d/m/Y') }}</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="3" class="text-center text-muted">Tidak ada data</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

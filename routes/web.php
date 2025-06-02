@@ -26,6 +26,15 @@ Route::middleware('auth')->group(function () {
     // Route untuk pengajuan
     Route::resource('pengajuan', PengajuanHkiController::class);
     
+    // Route untuk draft ciptaan
+    Route::get('/draft', [PengajuanHkiController::class, 'draftIndex'])->name('draft.index');
+    Route::post('/draft/store', [PengajuanHkiController::class, 'storeDraft'])->name('draft.store');
+    Route::get('/draft/{pengajuan}/edit', [PengajuanHkiController::class, 'editDraft'])->name('draft.edit');
+    Route::delete('/draft/{pengajuan}', [PengajuanHkiController::class, 'destroyDraft'])->name('draft.destroy');
+    Route::post('/draft/{pengajuan}/submit', [PengajuanHkiController::class, 'submitDraft'])->name('draft.submit');
+    Route::patch('/draft/{pengajuan}/update', [PengajuanHkiController::class, 'updateDraft'])->name('draft.update');
+    Route::delete('/draft/{pengajuan}/delete-file', [PengajuanHkiController::class, 'deleteDraftFile'])->name('draft.delete_file');
+    
     // Route untuk validasi (admin P3M)
     Route::middleware('role:admin_p3m')->group(function () {
         Route::get('validasi', [ValidasiController::class, 'index'])->name('validasi.index');
@@ -49,4 +58,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifikasi/{id}/mark-as-read', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.markAsRead');
     Route::post('/notifikasi/mark-all-as-read', [NotifikasiController::class, 'markAllAsRead'])->name('notifikasi.markAllAsRead');
     Route::delete('/notifikasi/{id}', [NotifikasiController::class, 'destroy'])->name('notifikasi.destroy');
+
+    // Route untuk admin
+    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\AdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/rekap', [\App\Http\Controllers\AdminController::class, 'rekap'])->name('rekap');
+    });
 });

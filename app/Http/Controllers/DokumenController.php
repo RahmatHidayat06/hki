@@ -16,7 +16,7 @@ class DokumenController extends Controller
         ]);
 
         $file = $request->file('file');
-        $path = $file->store('dokumen-hki');
+        $path = $file->store('dokumen-hki', 'public');
 
         DokumenHki::create([
             'pengajuan_hki_id' => $pengajuanId,

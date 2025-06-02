@@ -30,11 +30,12 @@ class PengajuanHki extends Model
         'jumlah_pencipta',
         'identitas_ciptaan',
         'sub_jenis_ciptaan',
-        'tanggal_pertama_kali_diumumkan'
+        'tanggal_pertama_kali_diumumkan',
+        'tahun_usulan',
     ];
 
     protected $casts = [
-        'tanggal_pengajuan' => 'date',
+        'tanggal_pengajuan' => 'datetime',
         'tanggal_selesai' => 'date',
     ];
 

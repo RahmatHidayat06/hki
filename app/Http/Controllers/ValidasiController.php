@@ -25,13 +25,16 @@ class ValidasiController extends Controller
     public function validasi(Request $request, PengajuanHki $pengajuan): RedirectResponse
     {
         $request->validate([
-            'status' => 'required|in:divalidasi,ditolak,menunggu_persetujuan_direktur,menunggu_pembayaran',
-            'catatan_validasi' => 'required|string'
+            'status_validasi' => 'required|in:disetujui,ditolak',
+            'catatan_validasi' => 'required_if:status_validasi,ditolak|nullable|string'
         ]);
 
+        $status = $request->status_validasi === 'disetujui' ? 'divalidasi' : 'ditolak';
+        $catatan = $request->catatan_validasi;
+
         $pengajuan->update([
-            'status' => $request->status,
-            'catatan_validasi' => $request->catatan_validasi
+            'status' => $status,
+            'catatan_validasi' => $catatan
         ]);
 
         // Buat notifikasi untuk pengaju
@@ -39,9 +42,9 @@ class ValidasiController extends Controller
             'user_id' => $pengajuan->user_id,
             'pengajuan_hki_id' => $pengajuan->id,
             'judul' => 'Update Status Validasi HKI',
-            'pesan' => 'Pengajuan HKI Anda dengan judul "' . $pengajuan->judul . '" telah ' . 
-                      ($request->status === 'divalidasi' ? 'divalidasi' : 'ditolak') . '. ' .
-                      'Catatan: ' . $request->catatan_validasi,
+            'pesan' => 'Pengajuan HKI Anda dengan judul "' . ($pengajuan->judul_karya ?? $pengajuan->judul) . '" telah ' .
+                      ($status === 'divalidasi' ? 'divalidasi' : 'ditolak') . '. ' .
+                      'Catatan: ' . $catatan,
             'status' => 'unread',
             'dibaca' => false
         ]);

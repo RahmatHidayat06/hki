@@ -26,8 +26,15 @@ class DashboardController extends Controller
         } elseif ($user->role === 'direktur') {
             return Redirect::to(route('persetujuan.index'));
         } else {
-            $pengajuan = PengajuanHki::where('user_id', $user->id)->paginate(10);
-            return view('dashboard.index', compact('pengajuan'));
+            $all = PengajuanHki::where('user_id', $user->id)->get();
+            $totalPengajuan = $all->count();
+            $tidakLengkap = $all->filter(function($item) {
+                return $item->status !== 'disetujui' && (empty($item->judul_karya) || empty($item->kategori) || empty($item->created_at));
+            });
+            $belumDisetujui = $all->filter(function($item) {
+                return $item->status !== 'disetujui';
+            });
+            return view('dashboard.index', compact('totalPengajuan', 'tidakLengkap', 'belumDisetujui'));
         }
     }
 }

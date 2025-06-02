@@ -28,7 +28,7 @@
                         </div>
                     </div>
 
-                    <form method="POST" action="{{ route('pengajuan.store') }}" enctype="multipart/form-data">
+                    <form id="form-pengajuan" method="POST" action="{{ route('pengajuan.store') }}" enctype="multipart/form-data">
                         @csrf
                         
                         <div class="tab-content" id="form-tabs-content">
@@ -56,7 +56,7 @@
 
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
-                                                <label for="nama_pengusul" class="form-label">{{ __('Nama Lengkap') }}</label>
+                                                <label for="nama_pengusul" class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
                                                 <input type="text" class="form-control @error('nama_pengusul') is-invalid @enderror" 
                                                        id="nama_pengusul" name="nama_pengusul" value="{{ old('nama_pengusul') }}" required>
                                                 @error('nama_pengusul')
@@ -64,7 +64,7 @@
                                                 @enderror
                                             </div>
                                             <div class="col-md-6 mb-3" id="nip-nidn-field">
-                                                <label for="nip_nidn" class="form-label">{{ __('NIP/NIDN') }}</label>
+                                                <label for="nip_nidn" class="form-label">NIP/NIDN <span class="text-danger">*</span></label>
                                                 <input type="text" class="form-control @error('nip_nidn') is-invalid @enderror" 
                                                        id="nip_nidn" name="nip_nidn" value="{{ old('nip_nidn') }}" required>
                                                 @error('nip_nidn')
@@ -74,7 +74,7 @@
                                         </div>
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
-                                                <label for="no_hp" class="form-label">{{ __('Nomor HP') }}</label>
+                                                <label for="no_hp" class="form-label">Nomor HP <span class="text-danger">*</span></label>
                                                 <input type="text" class="form-control @error('no_hp') is-invalid @enderror" 
                                                        id="no_hp" name="no_hp" value="{{ old('no_hp') }}" required>
                                                 @error('no_hp')
@@ -106,6 +106,7 @@
                                              <button type="button" class="btn btn-primary next-section" data-next="data-ciptaan">
                                                  Selanjutnya <i class="fas fa-arrow-right ms-2"></i>
                                              </button>
+                                             <button type="submit" name="save_as_draft" value="1" class="btn btn-secondary ms-2" formnovalidate>Simpan sebagai Draft</button>
                                          </div>
                                     </div>
                                 </div>
@@ -119,7 +120,7 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="mb-3">
-                                            <label for="judul" class="form-label">{{ __('Judul Ciptaan') }}</label>
+                                            <label for="judul" class="form-label">Judul Ciptaan <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control @error('judul') is-invalid @enderror" 
                                                    id="judul" name="judul" value="{{ old('judul') }}" required>
                                             @error('judul')
@@ -128,7 +129,7 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="kategori" class="form-label">{{ __('Kategori') }}</label>
+                                            <label for="kategori" class="form-label">Kategori <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control @error('kategori') is-invalid @enderror" 
                                                    id="kategori" name="kategori" value="{{ old('kategori') }}" required>
                                             @error('kategori')
@@ -137,7 +138,7 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="identitas_ciptaan" class="form-label">{{ __('Jenis Ciptaan') }}</label>
+                                            <label for="identitas_ciptaan" class="form-label">Jenis Ciptaan <span class="text-danger">*</span></label>
                                             <select class="form-select @error('identitas_ciptaan') is-invalid @enderror" 
                                                     id="identitas_ciptaan" name="identitas_ciptaan" required>
                                                 <option value="">Pilih Jenis Ciptaan</option>
@@ -151,7 +152,7 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="sub_jenis_ciptaan" class="form-label">{{ __('Sub Jenis Ciptaan') }}</label>
+                                            <label for="sub_jenis_ciptaan" class="form-label">Sub Jenis Ciptaan <span class="text-danger">*</span></label>
                                             <select class="form-select @error('sub_jenis_ciptaan') is-invalid @enderror" 
                                                     id="sub_jenis_ciptaan" name="sub_jenis_ciptaan" required>
                                                 <option value="">Pilih Sub Jenis Ciptaan</option>
@@ -163,7 +164,7 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="deskripsi" class="form-label">{{ __('Deskripsi Ciptaan') }}</label>
+                                            <label for="deskripsi" class="form-label">Deskripsi Ciptaan <span class="text-danger">*</span></label>
                                             <textarea class="form-control @error('deskripsi') is-invalid @enderror" 
                                                       id="deskripsi" name="deskripsi" rows="4" required>{{ old('deskripsi') }}</textarea>
                                             @error('deskripsi')
@@ -172,7 +173,7 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="tanggal_pertama_kali_diumumkan" class="form-label">{{ __('Tanggal Pertama Kali Diumumkan') }}</label>
+                                            <label for="tanggal_pertama_kali_diumumkan" class="form-label">Tanggal Pertama Kali Diumumkan <span class="text-danger">*</span></label>
                                             <input type="date" class="form-control @error('tanggal_pertama_kali_diumumkan') is-invalid @enderror" 
                                                    id="tanggal_pertama_kali_diumumkan" name="tanggal_pertama_kali_diumumkan" 
                                                    value="{{ old('tanggal_pertama_kali_diumumkan') }}" required>
@@ -188,6 +189,7 @@
                                             <button type="button" class="btn btn-primary next-section" data-next="data-pencipta">
                                                 Selanjutnya <i class="fas fa-arrow-right ms-2"></i>
                                             </button>
+                                            <button type="submit" name="save_as_draft" value="1" class="btn btn-secondary ms-2" formnovalidate>Simpan sebagai Draft</button>
                                         </div>
                                     </div>
                                 </div>
@@ -201,7 +203,7 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="mb-3">
-                                            <label for="jumlah_pencipta" class="form-label">{{ __('Jumlah Pencipta') }}</label>
+                                            <label for="jumlah_pencipta" class="form-label">Jumlah Pencipta <span class="text-danger">*</span></label>
                                             <select class="form-select @error('jumlah_pencipta') is-invalid @enderror" 
                                                     id="jumlah_pencipta" name="jumlah_pencipta" required>
                                                 <option value="">Pilih Jumlah Pencipta</option>
@@ -227,6 +229,7 @@
                                             <button type="button" class="btn btn-primary next-section" data-next="dokumen">
                                                 Selanjutnya <i class="fas fa-arrow-right ms-2"></i>
                                             </button>
+                                            <button type="submit" name="save_as_draft" value="1" class="btn btn-secondary ms-2" formnovalidate>Simpan sebagai Draft</button>
                                         </div>
                                     </div>
                                 </div>
@@ -240,17 +243,34 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="mb-3">
-                                            <label for="contoh_ciptaan" class="form-label">{{ __('CONTOH CIPTAAN *') }}</label>
-                                            <input type="file" class="form-control @error('contoh_ciptaan') is-invalid @enderror" 
-                                                   id="contoh_ciptaan" name="contoh_ciptaan" required>
-                                            <div class="form-text">Upload 1 supported file: PDF, audio, drawing, image, or video. Max 10 MB.</div>
-                                            @error('contoh_ciptaan')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
+                                            <label class="form-label">CONTOH CIPTAAN <span class="text-danger">*</span></label>
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="form-check me-3">
+                                                    <input class="form-check-input" type="radio" name="contoh_ciptaan_type" id="contoh_ciptaan_upload" value="upload" checked>
+                                                    <label class="form-check-label" for="contoh_ciptaan_upload">Upload</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="contoh_ciptaan_type" id="contoh_ciptaan_link" value="link">
+                                                    <label class="form-check-label" for="contoh_ciptaan_link">Link</label>
+                                                </div>
+                                            </div>
+                                            <div id="contoh-ciptaan-upload-field">
+                                                <input type="file" class="form-control @error('contoh_ciptaan') is-invalid @enderror" id="contoh_ciptaan" name="contoh_ciptaan" required>
+                                                <div class="form-text">Upload 1 supported file: PDF, audio, drawing, image, or video. Max 10 MB.</div>
+                                                @error('contoh_ciptaan')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                            <div id="contoh-ciptaan-link-field" style="display:none;">
+                                                <input type="url" class="form-control @error('contoh_ciptaan_link') is-invalid @enderror" name="contoh_ciptaan_link" placeholder="https://">
+                                                @error('contoh_ciptaan_link')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="surat_pengalihan_hak_cipta" class="form-label">{{ __('Surat Pengalihan Hak Cipta (Format Pdf) *') }}</label>
+                                            <label for="surat_pengalihan_hak_cipta" class="form-label">Surat Pengalihan Hak Cipta (Format Pdf) <span class="text-danger">*</span></label>
                                             <p class="form-text"><a href="https://bit.ly/TemplatePengalihanHakCipta" target="_blank" class="btn btn-sm btn-secondary"><i class="fas fa-download me-2"></i> Download Template</a></p>
                                             <input type="file" class="form-control @error('surat_pengalihan_hak_cipta') is-invalid @enderror" 
                                                    id="surat_pengalihan_hak_cipta" name="surat_pengalihan_hak_cipta" required>
@@ -261,7 +281,7 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="surat_pernyataan_hak_cipta" class="form-label">{{ __('Surat Pernyataan Hak Cipta (Format Pdf) *') }}</label>
+                                            <label for="surat_pernyataan_hak_cipta" class="form-label">Surat Pernyataan Hak Cipta (Format Pdf) <span class="text-danger">*</span></label>
                                              <p class="form-text"><a href="https://bit.ly/TemplatePernyataanHakCipta" target="_blank" class="btn btn-sm btn-secondary"><i class="fas fa-download me-2"></i> Download Template</a></p>
                                             <input type="file" class="form-control @error('surat_pernyataan_hak_cipta') is-invalid @enderror" 
                                                    id="surat_pernyataan_hak_cipta" name="surat_pernyataan_hak_cipta" required>
@@ -272,7 +292,7 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="ktp_seluruh_pencipta" class="form-label">{{ __('KTP (SELURUH PENCIPTA) *') }}</label>
+                                            <label for="ktp_seluruh_pencipta" class="form-label">KTP (SELURUH PENCIPTA) <span class="text-danger">*</span></label>
                                              <p class="form-text"><a href="https://bit.ly/TemplateKTP_HakCipta" target="_blank" class="btn btn-sm btn-secondary"><i class="fas fa-download me-2"></i> Download Template KTP</a> (Lampirkan KTP seluruh pencipta format Pdf)</p>
                                             <input type="file" class="form-control @error('ktp_seluruh_pencipta') is-invalid @enderror" 
                                                    id="ktp_seluruh_pencipta" name="ktp_seluruh_pencipta" required>
@@ -286,9 +306,8 @@
                                             <button type="button" class="btn btn-secondary prev-section" data-prev="data-pencipta">
                                                 <i class="fas fa-arrow-left me-2"></i> Sebelumnya
                                             </button>
-                                            <button type="submit" class="btn btn-success">
-                                                <i class="fas fa-save me-2"></i> Simpan Pengajuan
-                                            </button>
+                                            <button type="submit" class="btn btn-primary">Kirim</button>
+                                            <button type="submit" name="save_as_draft" value="1" class="btn btn-secondary ms-2" formnovalidate>Simpan sebagai Draft</button>
                                         </div>
                                     </div>
                                 </div>
@@ -364,32 +383,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Nama Lengkap</label>
+                                <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="pencipta[${i}][nama]" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Email</label>
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
                                 <input type="email" class="form-control" name="pencipta[${i}][email]" required>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">No. HP</label>
-                                <input type="text" class="form-control" name="pencipta[${i}][no_hp]">
+                                <label class="form-label">No. HP <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="pencipta[${i}][no_hp]" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Alamat</label>
-                                <textarea class="form-control" name="pencipta[${i}][alamat]" rows="2"></textarea>
+                                <label class="form-label">Alamat <span class="text-danger">*</span></label>
+                                <textarea class="form-control" name="pencipta[${i}][alamat]" rows="2" required></textarea>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Kecamatan</label>
-                                <input type="text" class="form-control" name="pencipta[${i}][kecamatan]">
+                                <label class="form-label">Kecamatan <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="pencipta[${i}][kecamatan]" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Kode Pos</label>
-                                <input type="text" class="form-control" name="pencipta[${i}][kodepos]">
+                                <label class="form-label">Kode Pos <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="pencipta[${i}][kodepos]" required>
                             </div>
                         </div>
                     </div>
@@ -499,9 +518,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Validasi seluruh field required sebelum submit form
-    const form = document.querySelector('form[action="{{ route('pengajuan.store') }}"]');
+    // --- TOMBOL SIMPAN SEBAGAI DRAFT ---
+    let lastClickedButton = null;
+    const form = document.getElementById('form-pengajuan');
+    form.querySelectorAll('button[type="submit"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            lastClickedButton = this;
+        });
+    });
+
     form.addEventListener('submit', function(event) {
+        // Jika tombol draft yang diklik, hilangkan semua required sebelum submit
+        if (lastClickedButton && lastClickedButton.name === 'save_as_draft') {
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(field => field.removeAttribute('required'));
+            return; // biarkan submit tanpa validasi
+        }
+        // Validasi seluruh field required sebelum submit form (default Ajukan)
         const allRequiredFields = form.querySelectorAll('input[required], select[required], textarea[required]');
         let isFormValid = true;
         let firstInvalidField = null;
@@ -526,6 +559,27 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             firstInvalidField.focus();
             firstInvalidField.reportValidity();
+        }
+    });
+
+    // Enable/disable tombol draft jika ada field terisi di section
+    function checkDraftButton(sectionId) {
+        const section = document.getElementById(sectionId);
+        const draftBtn = section.querySelector('button[name="save_as_draft"]');
+        if (!draftBtn) return;
+        const inputs = section.querySelectorAll('input, select, textarea');
+        let filled = false;
+        inputs.forEach(input => {
+            if (input.value && input.value.trim() !== '') filled = true;
+        });
+        draftBtn.disabled = !filled;
+    }
+    ['data-pengusul', 'data-ciptaan', 'data-pencipta', 'dokumen'].forEach(sectionId => {
+        const section = document.getElementById(sectionId);
+        if (section) {
+            section.addEventListener('input', () => checkDraftButton(sectionId));
+            // Inisialisasi saat load
+            checkDraftButton(sectionId);
         }
     });
 
@@ -579,6 +633,28 @@ document.addEventListener('DOMContentLoaded', function() {
     updateSubJenisCiptaan();
     // Update saat jenis ciptaan berubah
     identitasCiptaanSelect.addEventListener('change', updateSubJenisCiptaan);
+
+    // Toggle upload/link contoh ciptaan
+    const radioUpload = document.getElementById('contoh_ciptaan_upload');
+    const radioLink = document.getElementById('contoh_ciptaan_link');
+    const uploadField = document.getElementById('contoh-ciptaan-upload-field');
+    const linkField = document.getElementById('contoh-ciptaan-link-field');
+    radioUpload.addEventListener('change', function() {
+        if (this.checked) {
+            uploadField.style.display = '';
+            linkField.style.display = 'none';
+            uploadField.querySelector('input').setAttribute('required', true);
+            linkField.querySelector('input').removeAttribute('required');
+        }
+    });
+    radioLink.addEventListener('change', function() {
+        if (this.checked) {
+            uploadField.style.display = 'none';
+            linkField.style.display = '';
+            linkField.querySelector('input').setAttribute('required', true);
+            uploadField.querySelector('input').removeAttribute('required');
+        }
+    });
 });
 </script>
 @endpush

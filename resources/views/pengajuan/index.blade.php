@@ -10,6 +10,12 @@
                 </div>
 
                 <div class="card-body">
+                    @if(session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
                     <div class="row mb-4">
                         <div class="col-md-12">
                             <a href="{{ route('pengajuan.create') }}" class="btn btn-primary">
@@ -51,28 +57,37 @@
                                             {{ ucfirst(str_replace('_', ' ', $item->status)) }}
                                         </span>
                                     </td>
-                                    <td>{{ $item->tanggal_pengajuan }}</td>
+                                    <td>{{ $item->tanggal_pengajuan ? $item->tanggal_pengajuan->format('d/m/Y H:i') : '-' }}</td>
                                     <td>
-                                        <a href="{{ route('pengajuan.show', $item->id) }}" class="btn btn-info btn-sm">
+                                        <a href="{{ route('pengajuan.show', $item->id) }}" class="btn btn-info btn-sm" title="Lihat Detail">
                                             Detail
                                         </a>
-                                        @if($item->status === 'menunggu_validasi')
-                                        <a href="{{ route('pengajuan.edit', $item->id) }}" class="btn btn-warning btn-sm">
-                                            Edit
-                                        </a>
-                                        <form action="{{ route('pengajuan.destroy', $item->id) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus pengajuan ini?')">
-                                                Hapus
-                                            </button>
-                                        </form>
-                                        @endif
-                                        @if($item->status === 'menunggu_pembayaran')
-                                            {{-- TODO: Ganti dengan route dan logic pembayaran yang sebenarnya --}}
-                                            <a href="#" class="btn btn-success btn-sm ms-2">
-                                                <i class="fas fa-dollar-sign me-1"></i> Bayar Sekarang
-                                            </a>
+                                        @if(auth()->user()->role === 'admin')
+                                            <div class="d-flex flex-row gap-1 align-items-center mt-1">
+                                                @if($item->status === 'menunggu_validasi')
+                                                    <a href="{{ route('pengajuan.edit', $item->id) }}" class="btn btn-warning btn-sm" title="Edit Pengajuan">
+                                                        Edit
+                                                    </a>
+                                                    <form action="{{ route('pengajuan.destroy', $item->id) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-danger btn-sm" title="Hapus Pengajuan" onclick="return confirm('Apakah Anda yakin ingin menghapus pengajuan ini?')">
+                                                            Hapus
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                        @else
+                                            @if($item->status === 'menunggu_pembayaran')
+                                                <a href="#" class="btn btn-success btn-sm ms-2" title="Bayar Sekarang">
+                                                    Bayar Sekarang
+                                                </a>
+                                            @endif
+                                            @if($item->status === 'disetujui' || $item->status === 'selesai')
+                                                <a href="#" class="btn btn-primary btn-sm ms-2" title="Unduh Sertifikat">
+                                                    Unduh Sertifikat
+                                                </a>
+                                            @endif
                                         @endif
                                     </td>
                                 </tr>
