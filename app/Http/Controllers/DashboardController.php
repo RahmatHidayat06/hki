@@ -24,7 +24,7 @@ class DashboardController extends Controller
         if ($user->role === 'admin_p3m') {
             return Redirect::to(route('validasi.index'));
         } elseif ($user->role === 'direktur') {
-            return Redirect::to(route('persetujuan.index'));
+            return Redirect::to(route('pengajuan.index'));
         } else {
             $all = PengajuanHki::where('user_id', $user->id)->get();
             $totalPengajuan = $all->count();
