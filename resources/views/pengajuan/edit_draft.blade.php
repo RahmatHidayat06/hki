@@ -721,18 +721,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Buat radio role readonly (tidak bisa diubah)
-    document.querySelectorAll('input[name="role"]').forEach(function(radio) {
-        radio.addEventListener('click', function(e) {
-            e.preventDefault();
-            return false;
-        });
-        radio.addEventListener('keydown', function(e) {
-            e.preventDefault();
-            return false;
-        });
-    });
-
     // Navigasi otomatis ke tab error, tampilkan daftar link ke tab error
     form.addEventListener('submit', function(e) {
         let firstInvalid = null;
