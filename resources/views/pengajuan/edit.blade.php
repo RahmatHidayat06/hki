@@ -9,20 +9,19 @@
                     <h4 class="mb-0">Edit Pengajuan HKI</h4>
                 </div>
                 <div class="card-body">
+                    <div id="global-error-alert" class="alert alert-danger d-none"></div>
                     <form method="POST" action="{{ route('pengajuan.update', $pengajuan->id) }}">
                         @csrf
                         @method('PUT')
                         <div class="mb-3">
                             <label for="judul_karya" class="form-label">Judul Karya</label>
                             <input type="text" class="form-control" id="judul_karya" name="judul" value="{{ old('judul', $pengajuan->judul_karya) }}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="kategori" class="form-label">Kategori</label>
-                            <input type="text" class="form-control" id="kategori" name="kategori" value="{{ old('kategori', $pengajuan->kategori) }}" required>
+                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                         </div>
                         <div class="mb-3">
                             <label for="deskripsi" class="form-label">Deskripsi</label>
                             <textarea class="form-control" id="deskripsi" name="deskripsi" rows="3" required>{{ old('deskripsi', $pengajuan->deskripsi) }}</textarea>
+                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                         </div>
                         <div class="mb-3">
                             <label for="identitas_ciptaan" class="form-label">Jenis Ciptaan</label>
@@ -32,6 +31,7 @@
                                 <option value="karya audio visual" {{ old('identitas_ciptaan', $pengajuan->identitas_ciptaan) == 'karya audio visual' ? 'selected' : '' }}>Karya Audio Visual</option>
                                 <option value="karya lainnya" {{ old('identitas_ciptaan', $pengajuan->identitas_ciptaan) == 'karya lainnya' ? 'selected' : '' }}>Karya Lainnya</option>
                             </select>
+                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                         </div>
                         <div class="mb-3">
                             <label for="sub_jenis_ciptaan" class="form-label">Sub Jenis Ciptaan</label>
@@ -39,6 +39,7 @@
                                 <option value="">Pilih Sub Jenis Ciptaan</option>
                                 <!-- Opsi akan diisi oleh JavaScript -->
                             </select>
+                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                         </div>
                         <div class="mb-3">
                             <label for="tahun_usulan" class="form-label">Tahun Usulan</label>
@@ -46,6 +47,7 @@
                                 <option value="">Pilih</option>
                                 <!-- Opsi tahun akan diisi oleh JavaScript -->
                             </select>
+                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                         </div>
                         <div class="mb-3">
                             <label for="jumlah_pencipta" class="form-label">Jumlah Pencipta</label>
@@ -57,6 +59,7 @@
                                 <option value="4 orang" {{ old('jumlah_pencipta', $pengajuan->jumlah_pencipta) == '4 orang' ? 'selected' : '' }}>4 orang</option>
                                 <option value="5 orang" {{ old('jumlah_pencipta', $pengajuan->jumlah_pencipta) == '5 orang' ? 'selected' : '' }}>5 orang</option>
                             </select>
+                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                         </div>
                         <hr>
                         <h5>Data Pencipta</h5>
@@ -65,26 +68,32 @@
                             <div class="mb-2">
                                 <label class="form-label">Nama</label>
                                 <input type="text" class="form-control" name="pencipta[{{ $i }}][nama]" value="{{ old('pencipta.'.$i.'.nama', $pencipta->nama) }}" required>
+                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                             </div>
                             <div class="mb-2">
                                 <label class="form-label">Email</label>
                                 <input type="email" class="form-control" name="pencipta[{{ $i }}][email]" value="{{ old('pencipta.'.$i.'.email', $pencipta->email) }}" required>
+                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                             </div>
                             <div class="mb-2">
                                 <label class="form-label">No HP</label>
-                                <input type="text" class="form-control" name="pencipta[{{ $i }}][no_hp]" value="{{ old('pencipta.'.$i.'.no_hp', $pencipta->no_hp) }}">
+                                <input type="tel" class="form-control" name="pencipta[{{ $i }}][no_hp]" value="{{ old('pencipta.'.$i.'.no_hp', $pencipta->no_hp) }}" pattern="^08[0-9]{8,11}$" maxlength="15" required>
+                                <div class="invalid-feedback">Nomor HP wajib diisi dan harus dimulai 08, 10-13 digit angka.</div>
                             </div>
                             <div class="mb-2">
                                 <label class="form-label">Alamat</label>
                                 <textarea class="form-control" name="pencipta[{{ $i }}][alamat]" rows="2">{{ old('pencipta.'.$i.'.alamat', $pencipta->alamat) }}</textarea>
+                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                             </div>
                             <div class="mb-2">
                                 <label class="form-label">Kecamatan</label>
                                 <input type="text" class="form-control" name="pencipta[{{ $i }}][kecamatan]" value="{{ old('pencipta.'.$i.'.kecamatan', $pencipta->kecamatan) }}">
+                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                             </div>
                             <div class="mb-2">
                                 <label class="form-label">Kode Pos</label>
-                                <input type="text" class="form-control" name="pencipta[{{ $i }}][kodepos]" value="{{ old('pencipta.'.$i.'.kodepos', $pencipta->kodepos) }}">
+                                <input type="text" class="form-control" name="pencipta[{{ $i }}][kodepos]" value="{{ old('pencipta.'.$i.'.kodepos', $pencipta->kodepos) }}" pattern="^[0-9]{5}$" maxlength="5" required>
+                                <div class="invalid-feedback">Kode Pos harus 5 digit angka.</div>
                             </div>
                         </div>
                         @endforeach
@@ -148,6 +157,39 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     updateSubJenisCiptaan();
     identitasCiptaanSelect.addEventListener('change', updateSubJenisCiptaan);
+    const form = document.querySelector('form');
+    const alertBox = document.getElementById('global-error-alert');
+    form.addEventListener('submit', function(event) {
+        let isFormValid = true;
+        let firstInvalidField = null;
+        let missingFields = [];
+        form.querySelectorAll('input[required], select[required], textarea[required]').forEach(field => {
+            const feedback = field.parentElement.querySelector('.invalid-feedback');
+            if (!field.checkValidity()) {
+                isFormValid = false;
+                if (!firstInvalidField) firstInvalidField = field;
+                field.classList.add('is-invalid');
+                if (feedback) feedback.style.display = 'block';
+                let label = field.closest('.mb-3,.mb-2,.col-md-6,.col-md-12')?.querySelector('label')?.textContent || field.name || 'Field';
+                if (label && !missingFields.includes(label)) missingFields.push(label.trim());
+            } else {
+                field.classList.remove('is-invalid');
+                if (feedback) feedback.style.display = 'none';
+            }
+        });
+        if (!isFormValid) {
+            event.preventDefault();
+            if (alertBox) {
+                alertBox.textContent = 'Lengkapi data berikut sebelum lanjut atau kirim: ' + missingFields.join(', ');
+                alertBox.classList.remove('d-none');
+                alertBox.scrollIntoView({behavior:'smooth', block:'center'});
+            }
+            alert('Lengkapi data berikut sebelum lanjut atau kirim:\n- ' + missingFields.join('\n- '));
+            setTimeout(()=>{firstInvalidField.focus();}, 300);
+        } else {
+            if (alertBox) alertBox.classList.add('d-none');
+        }
+    });
 });
 </script>
 @endpush 

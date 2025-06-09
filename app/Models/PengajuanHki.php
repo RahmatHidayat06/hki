@@ -14,7 +14,6 @@ class PengajuanHki extends Model
     protected $fillable = [
         'user_id',
         'judul_karya',
-        'kategori',
         'deskripsi',
         'file_karya',
         'file_dokumen_pendukung',

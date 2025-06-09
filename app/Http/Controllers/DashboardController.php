@@ -23,18 +23,16 @@ class DashboardController extends Controller
         // Redirect berdasarkan role
         if ($user->role === 'admin_p3m') {
             return Redirect::to(route('validasi.index'));
-        } elseif ($user->role === 'direktur') {
-            return Redirect::to(route('persetujuan.index'));
-        } else {
+        }
+        // Direktur dan role lain langsung ke dashboard.index
             $all = PengajuanHki::where('user_id', $user->id)->get();
             $totalPengajuan = $all->count();
             $tidakLengkap = $all->filter(function($item) {
-                return $item->status !== 'disetujui' && (empty($item->judul_karya) || empty($item->kategori) || empty($item->created_at));
+            return $item->status !== 'disetujui' && (empty($item->judul_karya) || empty($item->created_at));
             });
             $belumDisetujui = $all->filter(function($item) {
                 return $item->status !== 'disetujui';
             });
             return view('dashboard.index', compact('totalPengajuan', 'tidakLengkap', 'belumDisetujui'));
-        }
     }
 }

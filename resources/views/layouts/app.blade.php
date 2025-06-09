@@ -79,6 +79,9 @@
                     <i class="fas fa-file-excel me-2"></i> Rekap Data
                 </a>
             @elseif(auth()->user()->role === 'direktur')
+                <a href="{{ route('dashboard') }}" class="nav-link{{ request()->routeIs('dashboard') ? ' active' : '' }} dashboard-link">
+                    <i class="fas fa-th-large me-2"></i> Dashboard Direktur
+                </a>
                 <a href="{{ route('direktur.ttd.form') }}" class="nav-link{{ request()->routeIs('direktur.ttd.form') ? ' active' : '' }}">
                     <i class="fas fa-pen-nib me-2"></i> Upload Tanda Tangan
                 </a>

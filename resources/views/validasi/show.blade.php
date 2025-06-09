@@ -15,8 +15,6 @@
                         <dd class="col-sm-8">{{ $pengajuan->nomor_pengajuan ?? '-' }}</dd>
                         <dt class="col-sm-4">Judul Karya</dt>
                         <dd class="col-sm-8">{{ $pengajuan->judul_karya ?? '-' }}</dd>
-                        <dt class="col-sm-4">Kategori</dt>
-                        <dd class="col-sm-8">{{ $pengajuan->kategori ?? '-' }}</dd>
                         <dt class="col-sm-4">Deskripsi</dt>
                         <dd class="col-sm-8">{{ $pengajuan->deskripsi ?? '-' }}</dd>
                         <dt class="col-sm-4">Jenis Ciptaan</dt>

@@ -17,7 +17,6 @@
         <tr><td width="150">Nama Pengusul</td><td>: {{ $pengajuan->nama_pengusul }}</td></tr>
         <tr><td>NIP/NIDN</td><td>: {{ $pengajuan->nip_nidn }}</td></tr>
         <tr><td>Judul Karya</td><td>: {{ $pengajuan->judul_karya }}</td></tr>
-        <tr><td>Kategori</td><td>: {{ $pengajuan->kategori }}</td></tr>
     </table>
     <p>Dengan ini mengalihkan hak cipta atas karya tersebut kepada institusi.</p>
     <div class="ttd-area">

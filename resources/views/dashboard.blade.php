@@ -26,11 +26,51 @@
                             </div>
                         </div>
                     @elseif(auth()->user()->role === 'direktur')
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                             <div class="bg-purple-100 p-6 rounded-lg">
-                                <h3 class="text-lg font-semibold text-purple-800 mb-2">Persetujuan HKI</h3>
-                                <p class="text-purple-600">Berikan persetujuan untuk pengajuan HKI yang telah divalidasi.</p>
-                                <a href="{{ route('persetujuan.index') }}" class="mt-4 inline-block bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">Lihat Pengajuan</a>
+                                <h3 class="text-lg font-semibold text-purple-800 mb-2">Menunggu Persetujuan</h3>
+                                <div class="text-3xl font-bold text-purple-700">{{ $menunggu }}</div>
+                            </div>
+                            <div class="bg-green-100 p-6 rounded-lg">
+                                <h3 class="text-lg font-semibold text-green-800 mb-2">Disetujui</h3>
+                                <div class="text-3xl font-bold text-green-700">{{ $disetujui }}</div>
+                            </div>
+                            <div class="bg-red-100 p-6 rounded-lg">
+                                <h3 class="text-lg font-semibold text-red-800 mb-2">Ditolak</h3>
+                                <div class="text-3xl font-bold text-red-700">{{ $ditolak }}</div>
+                            </div>
+                        </div>
+                        <div class="mb-4 flex flex-wrap gap-2">
+                            <a href="{{ route('persetujuan.index') }}" class="btn btn-primary">Lihat Daftar Persetujuan</a>
+                            <a href="{{ route('direktur.ttd.form') }}" class="btn btn-secondary">Upload Tanda Tangan</a>
+                        </div>
+                        <div class="card mb-4">
+                            <div class="card-header bg-light"><b>5 Pengajuan Menunggu Persetujuan Terbaru</b></div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Judul</th>
+                                                <th>Pengusul</th>
+                                                <th>Tanggal Pengajuan</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @forelse($pengajuanBaru as $item)
+                                            <tr>
+                                                <td>{{ $item->judul_karya }}</td>
+                                                <td>{{ $item->nama_pengusul }}</td>
+                                                <td>{{ $item->tanggal_pengajuan ? $item->tanggal_pengajuan->format('d/m/Y H:i') : '-' }}</td>
+                                                <td><a href="{{ route('persetujuan.show', $item->id) }}" class="btn btn-sm btn-info">Detail</a></td>
+                                            </tr>
+                                            @empty
+                                            <tr><td colspan="4" class="text-center">Tidak ada pengajuan menunggu persetujuan.</td></tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     @endif

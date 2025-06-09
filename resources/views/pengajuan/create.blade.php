@@ -16,17 +16,26 @@
                             <button class="nav-link active" id="data-pengusul-tab" data-bs-toggle="pill" data-bs-target="#data-pengusul" type="button" role="tab">
                                 <i class="fas fa-user me-2"></i>Data Pengusul
                             </button>
-                            <button class="nav-link" id="data-ciptaan-tab" data-bs-toggle="pill" data-bs-target="#data-ciptaan" type="button" disabled>
+                            <button class="nav-link" id="data-ciptaan-tab" data-bs-toggle="pill" data-bs-target="#data-ciptaan" type="button" role="tab">
                                 <i class="fas fa-book me-2"></i>Data Ciptaan
                             </button>
-                            <button class="nav-link" id="data-pencipta-tab" data-bs-toggle="pill" data-bs-target="#data-pencipta" type="button" disabled>
+                            <button class="nav-link" id="data-pencipta-tab" data-bs-toggle="pill" data-bs-target="#data-pencipta" type="button" role="tab">
                                 <i class="fas fa-users me-2"></i>Data Pencipta
                             </button>
-                            <button class="nav-link" id="dokumen-tab" data-bs-toggle="pill" data-bs-target="#dokumen" type="button" role="tab" disabled>
+                            <button class="nav-link" id="dokumen-tab" data-bs-toggle="pill" data-bs-target="#dokumen" type="button" role="tab">
                                 <i class="fas fa-file me-2"></i>Dokumen
                             </button>
                         </div>
                     </div>
+
+                    <div id="global-error-alert" class="alert alert-danger d-none"></div>
+
+                    @if(session('success'))
+                        <div class="alert alert-success">{{ session('success') }}</div>
+                    @endif
+                    @if(session('error'))
+                        <div class="alert alert-danger">{{ session('error') }}</div>
+                    @endif
 
                     <form id="form-pengajuan" method="POST" action="{{ route('pengajuan.store') }}" enctype="multipart/form-data">
                         @csrf
@@ -44,11 +53,11 @@
                                             <label class="form-label">{{ __('Anda mengajukan sebagai?') }}</label>
                                             <div>
                                                 <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="radio" name="role" id="role-dosen" value="dosen" checked>
+                                                    <input class="form-check-input" type="radio" name="role" id="role-dosen" value="dosen" {{ (old('role') ?? ($draft->role ?? '')) == 'dosen' ? 'checked' : '' }}>
                                                     <label class="form-check-label" for="role-dosen">{{ __('Dosen') }}</label>
                                                 </div>
                                                 <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="radio" name="role" id="role-mahasiswa" value="mahasiswa">
+                                                    <input class="form-check-input" type="radio" name="role" id="role-mahasiswa" value="mahasiswa" {{ (old('role') ?? ($draft->role ?? '')) == 'mahasiswa' ? 'checked' : '' }}>
                                                     <label class="form-check-label" for="role-mahasiswa">{{ __('Mahasiswa') }}</label>
                                                 </div>
                                             </div>
@@ -59,6 +68,7 @@
                                                 <label for="nama_pengusul" class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
                                                 <input type="text" class="form-control @error('nama_pengusul') is-invalid @enderror" 
                                                        id="nama_pengusul" name="nama_pengusul" value="{{ old('nama_pengusul') }}" required>
+                                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                                                 @error('nama_pengusul')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -66,7 +76,8 @@
                                             <div class="col-md-6 mb-3" id="nip-nidn-field">
                                                 <label for="nip_nidn" class="form-label">NIP/NIDN <span class="text-danger">*</span></label>
                                                 <input type="text" class="form-control @error('nip_nidn') is-invalid @enderror" 
-                                                       id="nip_nidn" name="nip_nidn" value="{{ old('nip_nidn') }}" required>
+                                                       id="nip_nidn" name="nip_nidn" value="{{ old('nip_nidn') }}" required pattern="^[0-9]{8,20}$" maxlength="20">
+                                                <div class="invalid-feedback">NIP/NIDN wajib diisi, hanya angka 8-20 digit.</div>
                                                 @error('nip_nidn')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -75,8 +86,8 @@
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
                                                 <label for="no_hp" class="form-label">Nomor HP <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control @error('no_hp') is-invalid @enderror" 
-                                                       id="no_hp" name="no_hp" value="{{ old('no_hp') }}" required>
+                                                <input type="tel" class="form-control @error('no_hp') is-invalid @enderror" id="no_hp" name="no_hp" value="{{ old('no_hp') }}" required pattern="^08[0-9]{8,11}$" maxlength="15">
+                                                <div class="invalid-feedback">Nomor HP wajib diisi dan harus dimulai 08, 10-13 digit angka.</div>
                                                 @error('no_hp')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -87,6 +98,7 @@
                                                     <option value="">Pilih</option>
                                                     <!-- Opsi tahun akan diisi oleh JavaScript -->
                                                 </select>
+                                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                                                 @error('tahun_usulan')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -97,6 +109,7 @@
                                                 <label for="id_sinta" class="form-label">{{ __('ID Sinta') }}</label>
                                                 <input type="text" class="form-control @error('id_sinta') is-invalid @enderror" 
                                                        id="id_sinta" name="id_sinta" value="{{ old('id_sinta') }}">
+                                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                                                 @error('id_sinta')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -123,16 +136,8 @@
                                             <label for="judul" class="form-label">Judul Ciptaan <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control @error('judul') is-invalid @enderror" 
                                                    id="judul" name="judul" value="{{ old('judul') }}" required>
+                                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                                             @error('judul')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="kategori" class="form-label">Kategori <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control @error('kategori') is-invalid @enderror" 
-                                                   id="kategori" name="kategori" value="{{ old('kategori') }}" required>
-                                            @error('kategori')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
@@ -146,6 +151,7 @@
                                                 <option value="karya audio visual" {{ old('identitas_ciptaan') == 'karya audio visual' ? 'selected' : '' }}>Karya Audio Visual</option>
                                                 <option value="karya lainnya" {{ old('identitas_ciptaan') == 'karya lainnya' ? 'selected' : '' }}>Karya Lainnya</option>
                                             </select>
+                                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                                             @error('identitas_ciptaan')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -158,6 +164,7 @@
                                                 <option value="">Pilih Sub Jenis Ciptaan</option>
                                                 <!-- Opsi akan diisi oleh JavaScript -->
                                             </select>
+                                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                                             @error('sub_jenis_ciptaan')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -167,6 +174,7 @@
                                             <label for="deskripsi" class="form-label">Deskripsi Ciptaan <span class="text-danger">*</span></label>
                                             <textarea class="form-control @error('deskripsi') is-invalid @enderror" 
                                                       id="deskripsi" name="deskripsi" rows="4" required>{{ old('deskripsi') }}</textarea>
+                                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                                             @error('deskripsi')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -177,6 +185,7 @@
                                             <input type="date" class="form-control @error('tanggal_pertama_kali_diumumkan') is-invalid @enderror" 
                                                    id="tanggal_pertama_kali_diumumkan" name="tanggal_pertama_kali_diumumkan" 
                                                    value="{{ old('tanggal_pertama_kali_diumumkan') }}" required>
+                                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                                             @error('tanggal_pertama_kali_diumumkan')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -204,24 +213,16 @@
                                     <div class="card-body">
                                         <div class="mb-3">
                                             <label for="jumlah_pencipta" class="form-label">Jumlah Pencipta <span class="text-danger">*</span></label>
-                                            <select class="form-select @error('jumlah_pencipta') is-invalid @enderror" 
-                                                    id="jumlah_pencipta" name="jumlah_pencipta" required>
+                                            <select class="form-select" id="jumlah_pencipta" name="jumlah_pencipta" required>
                                                 <option value="">Pilih Jumlah Pencipta</option>
-                                                <option value="1 orang" {{ old('jumlah_pencipta') == '1 orang' ? 'selected' : '' }}>1 orang</option>
-                                                <option value="2 orang" {{ old('jumlah_pencipta') == '2 orang' ? 'selected' : '' }}>2 orang</option>
-                                                <option value="3 orang" {{ old('jumlah_pencipta') == '3 orang' ? 'selected' : '' }}>3 orang</option>
-                                                <option value="4 orang" {{ old('jumlah_pencipta') == '4 orang' ? 'selected' : '' }}>4 orang</option>
-                                                <option value="5 orang" {{ old('jumlah_pencipta') == '5 orang' ? 'selected' : '' }}>5 orang</option>
+                                                <option value="1">1 Pencipta</option>
+                                                <option value="2">2 Pencipta</option>
+                                                <option value="3">3 Pencipta</option>
+                                                <option value="4">4 Pencipta</option>
+                                                <option value="5">5 Pencipta</option>
                                             </select>
-                                            @error('jumlah_pencipta')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
                                         </div>
-
-                                        <div id="pencipta-container">
-                                            <!-- Container untuk form pencipta akan diisi secara dinamis -->
-                                        </div>
-
+                                        <div id="pencipta-container"></div>
                                         <div class="d-flex justify-content-between mt-3">
                                             <button type="button" class="btn btn-secondary prev-section" data-prev="data-ciptaan">
                                                 <i class="fas fa-arrow-left me-2"></i> Sebelumnya
@@ -257,12 +258,14 @@
                                             <div id="contoh-ciptaan-upload-field">
                                                 <input type="file" class="form-control @error('contoh_ciptaan') is-invalid @enderror" id="contoh_ciptaan" name="contoh_ciptaan" required>
                                                 <div class="form-text">Upload 1 supported file: PDF, audio, drawing, image, or video. Max 10 MB.</div>
+                                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                                                 @error('contoh_ciptaan')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                             </div>
                                             <div id="contoh-ciptaan-link-field" style="display:none;">
                                                 <input type="url" class="form-control @error('contoh_ciptaan_link') is-invalid @enderror" name="contoh_ciptaan_link" placeholder="https://">
+                                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                                                 @error('contoh_ciptaan_link')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -270,11 +273,26 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="surat_pengalihan_hak_cipta" class="form-label">Surat Pengalihan Hak Cipta (Format Pdf) <span class="text-danger">*</span></label>
-                                            <p class="form-text"><a href="https://bit.ly/TemplatePengalihanHakCipta" target="_blank" class="btn btn-sm btn-secondary"><i class="fas fa-download me-2"></i> Download Template</a></p>
-                                            <input type="file" class="form-control @error('surat_pengalihan_hak_cipta') is-invalid @enderror" 
-                                                   id="surat_pengalihan_hak_cipta" name="surat_pengalihan_hak_cipta" required>
+                                            <label class="form-label">Surat Pengalihan Hak Cipta (Format Pdf) <span class="text-danger">*</span></label>
+                                            <label for="jumlah_pencipta_template" class="form-label">Pilih Jumlah Pemegang Hak Cipta (Pencipta)</label>
+                                            <select id="jumlah_pencipta_template" class="form-select mb-2">
+                                                <option value="">Pilih Jumlah Pencipta</option>
+                                                <option value="1">1 Pencipta</option>
+                                                <option value="2">2 Pencipta</option>
+                                                <option value="3">3 Pencipta</option>
+                                                <option value="4">4 Pencipta</option>
+                                                <option value="5">5 Pencipta</option>
+                                            </select>
+                                            <div id="template-download-buttons">
+                                                <a href="https://docs.google.com/document/d/1JHJuY8oK3UOMQQ3Q5Ib6lP2y4cb_6TYPzZxbYhXAWyk/edit?tab=t.0" target="_blank" class="btn btn-sm btn-secondary d-none" id="template-link-1"><i class="fas fa-download me-2"></i> Download Template (1 Pencipta)</a>
+                                                <a href="https://docs.google.com/document/d/1G9cnmujI2JVc9h6Dirt0JPIWjxmmksF-Dt4-OJtOi64/edit?pli=1&tab=t.0" target="_blank" class="btn btn-sm btn-secondary d-none" id="template-link-2"><i class="fas fa-download me-2"></i> Download Template (2 Pencipta)</a>
+                                                <a href="https://docs.google.com/document/d/1uXTmaxGsJJ1Aj23eFVysJM9-EwwH-U7hQDmTq49YU34/edit?tab=t.0" target="_blank" class="btn btn-sm btn-secondary d-none" id="template-link-3"><i class="fas fa-download me-2"></i> Download Template (3 Pencipta)</a>
+                                                <a href="https://docs.google.com/document/d/1XPza3uNeThyAovGovW0PfO9acg_Or_FMHOGwFAvTotk/edit?tab=t.0" target="_blank" class="btn btn-sm btn-secondary d-none" id="template-link-4"><i class="fas fa-download me-2"></i> Download Template (4 Pencipta)</a>
+                                                <a href="https://docs.google.com/document/d/1kTomZpze6Oz4nxeyZ3wmp0hxfIRj4451wVRI5OSCqcM/edit?tab=t.0" target="_blank" class="btn btn-sm btn-secondary d-none" id="template-link-5"><i class="fas fa-download me-2"></i> Download Template (5 Pencipta)</a>
+                                            </div>
+                                            <input type="file" class="form-control mt-2 @error('surat_pengalihan_hak_cipta') is-invalid @enderror" id="surat_pengalihan_hak_cipta" name="surat_pengalihan_hak_cipta" accept="application/pdf" required>
                                             <div class="form-text">Upload 1 supported file: PDF. Max 10 MB.</div>
+                                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                                             @error('surat_pengalihan_hak_cipta')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -297,6 +315,7 @@
                                             <input type="file" class="form-control @error('ktp_seluruh_pencipta') is-invalid @enderror" 
                                                    id="ktp_seluruh_pencipta" name="ktp_seluruh_pencipta" required>
                                             <div class="form-text">Upload 1 supported file: PDF. Max 10 MB.</div>
+                                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                                             @error('ktp_seluruh_pencipta')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -306,8 +325,16 @@
                                             <button type="button" class="btn btn-secondary prev-section" data-prev="data-pencipta">
                                                 <i class="fas fa-arrow-left me-2"></i> Sebelumnya
                                             </button>
-                                            <button type="submit" class="btn btn-primary">Kirim</button>
-                                            <button type="submit" name="save_as_draft" value="1" class="btn btn-secondary ms-2" formnovalidate>Simpan sebagai Draft</button>
+                                            <div>
+                                                <button type="submit" name="save_as_draft" value="1" class="btn btn-secondary" id="btn-save-draft" formnovalidate>
+                                                    <span class="spinner-border spinner-border-sm d-none" id="spinner-draft" role="status" aria-hidden="true"></span>
+                                                    Simpan sebagai Draft
+                                                </button>
+                                                <button type="submit" class="btn btn-primary ms-2" id="btn-submit">
+                                                    <span class="spinner-border spinner-border-sm d-none" id="spinner-submit" role="status" aria-hidden="true"></span>
+                                                    Kirim
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -323,45 +350,63 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Fungsi untuk navigasi antar section
+    // Navigasi antar section/tab
     const nextButtons = document.querySelectorAll('.next-section');
     const prevButtons = document.querySelectorAll('.prev-section');
-    
-    // Handle next button click
+    const tabButtons = document.querySelectorAll('#form-tabs button[data-bs-toggle="pill"]');
+    // Disable semua tab navigasi kecuali section pertama
+    tabButtons.forEach((btn, idx) => {
+        if (idx !== 0) btn.setAttribute('disabled', 'disabled');
+    });
+    // Tombol Selanjutnya: validasi section aktif sebelum lanjut
     nextButtons.forEach(button => {
         button.addEventListener('click', function(event) {
             const currentTabPane = this.closest('.tab-pane');
-            // Validasi semua input/select/textarea required di dalam tab-pane
             const requiredFields = currentTabPane.querySelectorAll('input[required], select[required], textarea[required]');
             let isSectionValid = true;
+            let missingFields = [];
             requiredFields.forEach(field => {
                 if (!field.checkValidity()) {
                     isSectionValid = false;
-                    field.reportValidity();
+                    field.classList.add('is-invalid');
+                    let label = field.closest('.mb-3,.col-md-6,.col-md-12')?.querySelector('label')?.textContent || field.name || 'Field';
+                    if (label && !missingFields.includes(label)) missingFields.push(label.trim());
+                } else {
+                    field.classList.remove('is-invalid');
                 }
             });
-
-            if (isSectionValid) {
-                // Jika section valid, langsung picu klik pada tombol tab berikutnya di bagian atas
-                const nextSectionId = this.dataset.next;
-                const nextTabButton = document.querySelector(`#${nextSectionId}-tab`);
-                if (nextTabButton) {
-                    // Hapus atribut disabled agar tab bisa diakses
-                    nextTabButton.removeAttribute('disabled');
-                    nextTabButton.click(); // Panggil event klik pada tombol tab
-                }
+            if (!isSectionValid) {
+                event.preventDefault();
+                alert('Lengkapi data berikut sebelum melanjutkan:\n- ' + missingFields.join('\n- '));
+                const firstInvalid = currentTabPane.querySelector('.is-invalid');
+                if (firstInvalid) setTimeout(()=>{firstInvalid.focus();}, 300);
+                return false;
             }
-            // Browser akan menampilkan pesan validasi jika isSectionValid false
+            // Jika valid, enable tab berikutnya dan pindah
+            const nextSectionId = this.dataset.next;
+            const nextTabButton = document.querySelector(`#${nextSectionId}-tab`);
+            if (nextTabButton) {
+                nextTabButton.removeAttribute('disabled');
+                nextTabButton.click();
+            }
         });
     });
-    
-    // Handle previous button click
+    // Tombol Sebelumnya
     prevButtons.forEach(button => {
         button.addEventListener('click', function() {
             const prevSection = this.dataset.prev;
             const prevTabButton = document.querySelector(`#${prevSection}-tab`);
             if (prevTabButton) {
                 prevTabButton.click();
+            }
+        });
+    });
+    // Prevent klik tab navigasi manual jika belum valid
+    tabButtons.forEach((btn, idx) => {
+        btn.addEventListener('click', function(e) {
+            if (btn.hasAttribute('disabled')) {
+                e.preventDefault();
+                return false;
             }
         });
     });
@@ -373,42 +418,43 @@ document.addEventListener('DOMContentLoaded', function() {
     jumlahPenciptaSelect.addEventListener('change', function() {
         const jumlah = parseInt(this.value);
         penciptaContainer.innerHTML = '';
-
+        if (!jumlah || jumlah < 1) return;
         for (let i = 0; i < jumlah; i++) {
             const penciptaForm = `
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h6 class="mb-0">Data Pencipta ${i+1}</h6>
+                <div class=\"card mb-3\">
+                    <div class=\"card-header\">
+                        <h6 class=\"mb-0\">Data Pencipta ${i+1}</h6>
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="pencipta[${i}][nama]" required>
+                    <div class=\"card-body\">
+                        <div class=\"row\">
+                            <div class=\"col-md-6 mb-3\">
+                                <label class=\"form-label\">Nama Lengkap <span class=\"text-danger\">*</span></label>
+                                <input type=\"text\" class=\"form-control\" name=\"pencipta[${i}][nama]\" required>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" name="pencipta[${i}][email]" required>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">No. HP <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="pencipta[${i}][no_hp]" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Alamat <span class="text-danger">*</span></label>
-                                <textarea class="form-control" name="pencipta[${i}][alamat]" rows="2" required></textarea>
+                            <div class=\"col-md-6 mb-3\">
+                                <label class=\"form-label\">Email <span class=\"text-danger\">*</span></label>
+                                <input type=\"email\" class=\"form-control\" name=\"pencipta[${i}][email]\" required>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Kecamatan <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="pencipta[${i}][kecamatan]" required>
+                        <div class=\"row\">
+                            <div class=\"col-md-6 mb-3\">
+                                <label class=\"form-label\">No. HP <span class=\"text-danger\">*</span></label>
+                                <input type=\"tel\" class=\"form-control\" name=\"pencipta[${i}][no_hp]\" required pattern=\"^08[0-9]{8,11}$\" maxlength=\"15\">
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Kode Pos <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="pencipta[${i}][kodepos]" required>
+                            <div class=\"col-md-6 mb-3\">
+                                <label class=\"form-label\">Alamat <span class=\"text-danger\">*</span></label>
+                                <textarea class=\"form-control\" name=\"pencipta[${i}][alamat]\" rows=\"2\" required></textarea>
+                            </div>
+                        </div>
+                        <div class=\"row\">
+                            <div class=\"col-md-6 mb-3\">
+                                <label class=\"form-label\">Kecamatan <span class=\"text-danger\">*</span></label>
+                                <input type=\"text\" class=\"form-control\" name=\"pencipta[${i}][kecamatan]\" required>
+                            </div>
+                            <div class=\"col-md-6 mb-3\">
+                                <label class=\"form-label\">Kode Pos <span class=\"text-danger\">*</span></label>
+                                <input type=\"text\" class=\"form-control\" name=\"pencipta[${i}][kodepos]\" required pattern=\"^[0-9]{5}$\" maxlength=\"5\">
+                                <div class=\"invalid-feedback\">Kode Pos harus 5 digit angka.</div>
                             </div>
                         </div>
                     </div>
@@ -422,21 +468,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const roleRadios = document.querySelectorAll('input[name="role"]');
     const nipNidnField = document.getElementById('nip-nidn-field');
     const idSintaField = document.getElementById('id-sinta-field');
-
     function toggleRoleSpecificFields() {
-        const selectedRole = document.querySelector('input[name="role"]:checked').value;
+        const selectedRoleRadio = document.querySelector('input[name="role"]:checked');
+        const selectedRole = selectedRoleRadio ? selectedRoleRadio.value : '';
         if (selectedRole === 'mahasiswa') {
             // Sembunyikan field NIP/NIDN dan ID Sinta
             nipNidnField.style.display = 'none';
             idSintaField.style.display = 'none';
-            // Hapus atribut required dan kosongkan value
+            // Hapus atribut required, JANGAN kosongkan value (agar tetap tersimpan di draft)
             if (nipNidnField.querySelector('input')) {
                 nipNidnField.querySelector('input').removeAttribute('required');
-                nipNidnField.querySelector('input').value = '';
             }
             if (idSintaField.querySelector('input')) {
                 idSintaField.querySelector('input').removeAttribute('required');
-                idSintaField.querySelector('input').value = '';
             }
         } else {
             // Tampilkan kembali field NIP/NIDN dan ID Sinta
@@ -447,156 +491,33 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-
     // Panggil fungsi toggle saat pertama kali dimuat untuk mengatur tampilan awal
     toggleRoleSpecificFields();
-
     // Tambahkan event listener pada perubahan pilihan role
     roleRadios.forEach(radio => {
         radio.addEventListener('change', toggleRoleSpecificFields);
-    });
-
-    // Menambahkan validasi pada klik tombol tab navigasi di atas
-    const tabButtons = document.querySelectorAll('#form-tabs button[data-bs-toggle="pill"]');
-
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function(event) {
-            const targetTabId = this.getAttribute('data-bs-target').substring(1);
-            const currentActiveTabPane = document.querySelector('.tab-pane.show.active');
-            if (!currentActiveTabPane) return; // Cegah error jika tidak ada tab-pane aktif
-
-            // Dapatkan semua tab pane untuk menentukan urutan
-            const allPanes = document.querySelectorAll('.tab-pane');
-            let currentPaneIndex = -1;
-            let targetPaneIndex = -1;
-            allPanes.forEach((pane, index) => {
-                if (pane.id === currentActiveTabPane.id) currentPaneIndex = index;
-                if (pane.id === targetTabId) targetPaneIndex = index;
-            });
-
-            // Hanya lakukan validasi jika mencoba pindah ke tab berikutnya
-            if (targetPaneIndex > currentPaneIndex) {
-                let isPathValid = true;
-                const sectionIds = ['data-pengusul', 'data-ciptaan', 'data-pencipta', 'dokumen'];
-                for (let i = 0; i < targetPaneIndex; i++) {
-                     const paneIdToCheck = sectionIds[i];
-                     let isCurrentSectionValid = true;
-                     const paneElem = document.getElementById(paneIdToCheck);
-                     if (paneElem) {
-                         const requiredFields = paneElem.querySelectorAll('input[required], select[required], textarea[required]');
-                         requiredFields.forEach(field => {
-                             if (!field.checkValidity()) {
-                                 isCurrentSectionValid = false;
-                                 field.reportValidity();
-                             }
-                         });
-                     }
-                     if (!isCurrentSectionValid) {
-                         isPathValid = false;
-                         event.preventDefault();
-                         event.stopPropagation();
-                         const invalidSectionId = sectionIds[i];
-                         const invalidTabButton = document.querySelector(`#${invalidSectionId}-tab`);
-                          if (invalidTabButton && !invalidTabButton.classList.contains('active')) {
-                              setTimeout(() => {
-                                 const invalidTab = new bootstrap.Tab(invalidTabButton);
-                                 invalidTab.show();
-                                  setTimeout(() => {
-                                      const invalidPane = document.getElementById(invalidSectionId);
-                                       const firstInvalidField = invalidPane.querySelector('[required]:invalid');
-                                       if(firstInvalidField) {
-                                           firstInvalidField.focus();
-                                           firstInvalidField.reportValidity();
-                                       }
-                                  }, 150);
-                             }, 50);
-                         }
-                         break;
-                     }
-                }
-            }
-        });
-    });
-
-    // --- TOMBOL SIMPAN SEBAGAI DRAFT ---
-    let lastClickedButton = null;
-    const form = document.getElementById('form-pengajuan');
-    form.querySelectorAll('button[type="submit"]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            lastClickedButton = this;
-        });
-    });
-
-    form.addEventListener('submit', function(event) {
-        // Jika tombol draft yang diklik, hilangkan semua required sebelum submit
-        if (lastClickedButton && lastClickedButton.name === 'save_as_draft') {
-            const requiredFields = form.querySelectorAll('[required]');
-            requiredFields.forEach(field => field.removeAttribute('required'));
-            return; // biarkan submit tanpa validasi
-        }
-        // Validasi seluruh field required sebelum submit form (default Ajukan)
-        const allRequiredFields = form.querySelectorAll('input[required], select[required], textarea[required]');
-        let isFormValid = true;
-        let firstInvalidField = null;
-        allRequiredFields.forEach(field => {
-            if (!field.checkValidity()) {
-                isFormValid = false;
-                if (!firstInvalidField) firstInvalidField = field;
-            }
-        });
-        if (!isFormValid) {
-            event.preventDefault();
-            event.stopPropagation();
-            // Cari tab-pane dari field yang error
-            const invalidPane = firstInvalidField.closest('.tab-pane');
-            if (invalidPane && !invalidPane.classList.contains('show')) {
-                // Aktifkan tab yang error
-                const invalidTabButton = document.querySelector(`#${invalidPane.id}-tab`);
-                if (invalidTabButton) {
-                    invalidTabButton.removeAttribute('disabled');
-                    invalidTabButton.click();
-                }
-            }
-            firstInvalidField.focus();
-            firstInvalidField.reportValidity();
-        }
-    });
-
-    // Enable/disable tombol draft jika ada field terisi di section
-    function checkDraftButton(sectionId) {
-        const section = document.getElementById(sectionId);
-        const draftBtn = section.querySelector('button[name="save_as_draft"]');
-        if (!draftBtn) return;
-        const inputs = section.querySelectorAll('input, select, textarea');
-        let filled = false;
-        inputs.forEach(input => {
-            if (input.value && input.value.trim() !== '') filled = true;
-        });
-        draftBtn.disabled = !filled;
-    }
-    ['data-pengusul', 'data-ciptaan', 'data-pencipta', 'dokumen'].forEach(sectionId => {
-        const section = document.getElementById(sectionId);
-        if (section) {
-            section.addEventListener('input', () => checkDraftButton(sectionId));
-            // Inisialisasi saat load
-            checkDraftButton(sectionId);
-        }
     });
 
     // Field Tahun Usulan otomatis 4 tahun terakhir
     const tahunUsulanSelect = document.getElementById('tahun_usulan');
     if (tahunUsulanSelect) {
         const tahunSekarang = new Date().getFullYear();
+        const tahunLama = "{{ old('tahun_usulan') }}";
+        let tahunList = [];
         for (let i = 0; i < 4; i++) {
-            const tahun = tahunSekarang - i;
+            tahunList.push((tahunSekarang - i).toString());
+        }
+        if (tahunLama && !tahunList.includes(tahunLama)) {
+            tahunList.push(tahunLama);
+        }
+        tahunList = [...new Set(tahunList)].sort((a,b)=>b-a); // urut desc, unik
+        tahunList.forEach(function(tahun) {
             const option = document.createElement('option');
             option.value = tahun;
             option.textContent = tahun;
-            if (tahun == "{{ old('tahun_usulan') }}") {
-                option.selected = true;
-            }
+            if (tahun == tahunLama) option.selected = true;
             tahunUsulanSelect.appendChild(option);
-        }
+        });
     }
 
     // Sub Jenis Ciptaan dinamis sesuai Jenis Ciptaan
@@ -654,6 +575,32 @@ document.addEventListener('DOMContentLoaded', function() {
             linkField.querySelector('input').setAttribute('required', true);
             uploadField.querySelector('input').removeAttribute('required');
         }
+    });
+
+    const jumlahPenciptaTemplate = document.getElementById('jumlah_pencipta_template');
+    const templateLinks = [
+        null,
+        document.getElementById('template-link-1'),
+        document.getElementById('template-link-2'),
+        document.getElementById('template-link-3'),
+        document.getElementById('template-link-4'),
+        document.getElementById('template-link-5')
+    ];
+    jumlahPenciptaTemplate.addEventListener('change', function() {
+        templateLinks.forEach((btn, idx) => { if (btn) btn.classList.add('d-none'); });
+        const val = parseInt(this.value);
+        if (val && templateLinks[val]) templateLinks[val].classList.remove('d-none');
+    });
+
+    document.getElementById('btn-save-draft')?.addEventListener('click', function() {
+        this.disabled = true;
+        document.getElementById('spinner-draft').classList.remove('d-none');
+        document.getElementById('form-pengajuan').submit();
+    });
+    document.getElementById('btn-submit')?.addEventListener('click', function() {
+        this.disabled = true;
+        document.getElementById('spinner-submit').classList.remove('d-none');
+        document.getElementById('form-pengajuan').submit();
     });
 });
 </script>

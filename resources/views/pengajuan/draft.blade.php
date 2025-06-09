@@ -14,7 +14,6 @@
             <tr>
                 <th>No</th>
                 <th>Judul Karya</th>
-                <th>Kategori</th>
                 <th>Jenis Ciptaan</th>
                 <th>Sub Jenis Ciptaan</th>
                 <th>Tahun Usulan</th>
@@ -29,7 +28,6 @@
             <tr>
                 <td>{{ $loop->iteration }}</td>
                 <td>{{ $draft->judul_karya }}</td>
-                <td>{{ $draft->kategori }}</td>
                 <td>{{ $draft->identitas_ciptaan }}</td>
                 <td>{{ $draft->sub_jenis_ciptaan }}</td>
                 <td>{{ $draft->tahun_usulan ?? '-' }}</td>

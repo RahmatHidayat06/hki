@@ -41,14 +41,13 @@
                             <label class="form-label">Anda mengajukan sebagai?</label>
                             <div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input role-radio" type="radio" name="role" id="role-dosen" value="dosen" {{ $pengajuan->role == 'dosen' ? 'checked' : '' }} disabled>
+                                    <input class="form-check-input role-radio" type="radio" name="role" id="role-dosen" value="dosen" {{ old('role', $pengajuan->role) == 'dosen' || old('role', $pengajuan->role) == null ? 'checked' : '' }} required>
                                     <label class="form-check-label" for="role-dosen">Dosen</label>
                                 </div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input role-radio" type="radio" name="role" id="role-mahasiswa" value="mahasiswa" {{ $pengajuan->role == 'mahasiswa' ? 'checked' : '' }} disabled>
+                                    <input class="form-check-input role-radio" type="radio" name="role" id="role-mahasiswa" value="mahasiswa" {{ old('role', $pengajuan->role) == 'mahasiswa' ? 'checked' : '' }} required>
                                     <label class="form-check-label" for="role-mahasiswa">Mahasiswa</label>
                                 </div>
-                                <input type="hidden" name="role" value="{{ $pengajuan->role }}">
                                 @if($pengajuan->role)
                                     <div class="mt-2">
                                         <span class="text-success fw-bold">Sudah dipilih: {{ ucfirst($pengajuan->role) }}</span>
@@ -60,28 +59,33 @@
                             <div class="col-md-6 mb-3">
                                 <label for="nama_pengusul" class="form-label">Nama Lengkap</label>
                                 <input type="text" class="form-control" id="nama_pengusul" name="nama_pengusul" value="{{ $pengajuan->nama_pengusul }}" required>
+                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                             </div>
                             <div class="col-md-6 mb-3" id="nip-nidn-field">
                                 <label for="nip_nidn" class="form-label">NIP/NIDN</label>
-                                <input type="text" class="form-control" id="nip_nidn" name="nip_nidn" value="{{ $pengajuan->nip_nidn }}" required>
+                                <input type="text" class="form-control" id="nip_nidn" name="nip_nidn" value="{{ $pengajuan->nip_nidn }}" required pattern="^[0-9]{8,20}$" maxlength="20">
+                                <div class="invalid-feedback">NIP/NIDN wajib diisi, hanya angka 8-20 digit.</div>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="no_hp" class="form-label">Nomor HP</label>
-                                <input type="text" class="form-control" id="no_hp" name="no_hp" value="{{ $pengajuan->no_hp }}" required>
+                                <input type="tel" class="form-control" id="no_hp" name="no_hp" value="{{ $pengajuan->no_hp }}" required pattern="^08[0-9]{8,11}$" maxlength="15">
+                                <div class="invalid-feedback">Nomor HP wajib diisi dan harus dimulai 08, 10-13 digit angka.</div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="tahun_usulan" class="form-label">Tahun Usulan</label>
                                 <select class="form-select" id="tahun_usulan" name="tahun_usulan" required>
                                     <option value="">Pilih</option>
                                 </select>
+                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3" id="id-sinta-field">
                                 <label for="id_sinta" class="form-label">ID Sinta</label>
                                 <input type="text" class="form-control" id="id_sinta" name="id_sinta" value="{{ $pengajuan->id_sinta }}" required>
+                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                             </div>
                         </div>
                         <div class="d-flex justify-content-end mt-3">
@@ -104,10 +108,7 @@
                         <div class="mb-3">
                             <label for="judul" class="form-label">Judul Ciptaan</label>
                             <input type="text" class="form-control" id="judul" name="judul" value="{{ $pengajuan->judul_karya }}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="kategori" class="form-label">Kategori</label>
-                            <input type="text" class="form-control" id="kategori" name="kategori" value="{{ $pengajuan->kategori }}" required>
+                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                         </div>
                         <div class="mb-3">
                             <label for="identitas_ciptaan" class="form-label">Jenis Ciptaan</label>
@@ -117,20 +118,24 @@
                                 <option value="karya audio visual" {{ $pengajuan->identitas_ciptaan == 'karya audio visual' ? 'selected' : '' }}>Karya Audio Visual</option>
                                 <option value="karya lainnya" {{ $pengajuan->identitas_ciptaan == 'karya lainnya' ? 'selected' : '' }}>Karya Lainnya</option>
                             </select>
+                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                         </div>
                         <div class="mb-3">
                             <label for="sub_jenis_ciptaan" class="form-label">Sub Jenis Ciptaan</label>
                             <select class="form-select" id="sub_jenis_ciptaan" name="sub_jenis_ciptaan" required>
                                 <option value="">Pilih Sub Jenis Ciptaan</option>
                             </select>
+                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                         </div>
                         <div class="mb-3">
                             <label for="deskripsi" class="form-label">Deskripsi Ciptaan</label>
                             <textarea class="form-control" id="deskripsi" name="deskripsi" rows="4" required>{{ $pengajuan->deskripsi }}</textarea>
+                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                         </div>
                         <div class="mb-3">
                             <label for="tanggal_pertama_kali_diumumkan" class="form-label">Tanggal Pertama Kali Diumumkan</label>
                             <input type="date" class="form-control" id="tanggal_pertama_kali_diumumkan" name="tanggal_pertama_kali_diumumkan" value="{{ $pengajuan->tanggal_pertama_kali_diumumkan }}" required>
+                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                         </div>
                         <div class="d-flex justify-content-between mt-3">
                             <button type="button" class="btn btn-secondary prev-section" data-prev="data-pengusul">
@@ -180,6 +185,7 @@
                                     >{{ $j }} orang</option>
                                 @endfor
                             </select>
+                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                         </div>
                         <div id="pencipta-container">
                             @for($i = 0; $i < $jumlahPencipta; $i++)
@@ -204,7 +210,7 @@
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">No. HP <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" name="pencipta[{{ $i }}][no_hp]" value="{{ old('pencipta.'.$i.'.no_hp', $p->no_hp ?? '') }}" required>
+                                                <input type="tel" class="form-control" name="pencipta[{{ $i }}][no_hp]" value="{{ old('pencipta.'.$i.'.no_hp', $p->no_hp ?? '') }}" required pattern="^08[0-9]{8,11}$" maxlength="15">
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Alamat <span class="text-danger">*</span></label>
@@ -218,7 +224,8 @@
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Kode Pos <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" name="pencipta[{{ $i }}][kodepos]" value="{{ old('pencipta.'.$i.'.kodepos', $p->kodepos ?? '') }}" required>
+                                                <input type="text" class="form-control" name="pencipta[{{ $i }}][kodepos]" value="{{ old('pencipta.'.$i.'.kodepos', $p->kodepos ?? '') }}" required pattern="^[0-9]{5}$" maxlength="5">
+                                                <div class="invalid-feedback">Kode Pos harus 5 digit angka.</div>
                                             </div>
                                         </div>
                                     </div>
@@ -313,59 +320,6 @@
             </div>
         </div>
     </form>
-
-    <!-- Tombol hapus file dokumen, diletakkan di luar form utama agar tidak nested dan tidak trigger validasi form utama -->
-    <div class="mt-3">
-        @if($pengajuan->file_karya)
-            <div class="mb-2 file-lama-exists d-flex align-items-center gap-2">
-                <span class="fw-bold">CONTOH CIPTAAN:</span>
-                <a href="{{ asset('storage/'.$pengajuan->file_karya) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
-                <form method="POST" action="{{ route('draft.delete_file', $pengajuan->id) }}" style="display:inline;">
-                    @csrf
-                    @method('DELETE')
-                    <input type="hidden" name="tipe" value="contoh_ciptaan">
-                    <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> Hapus</button>
-                </form>
-            </div>
-        @endif
-        @php $dokumen = $pengajuan->file_dokumen_pendukung; if (is_string($dokumen)) $dokumen = json_decode($dokumen, true); @endphp
-        @if(isset($dokumen['surat_pengalihan']) && $dokumen['surat_pengalihan'])
-            <div class="mb-2 file-lama-exists d-flex align-items-center gap-2">
-                <span class="fw-bold">Surat Pengalihan Hak Cipta:</span>
-                <a href="{{ asset('storage/'.$dokumen['surat_pengalihan']) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
-                <form method="POST" action="{{ route('draft.delete_file', $pengajuan->id) }}" style="display:inline;">
-                    @csrf
-                    @method('DELETE')
-                    <input type="hidden" name="tipe" value="surat_pengalihan">
-                    <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> Hapus</button>
-                </form>
-            </div>
-        @endif
-        @if(isset($dokumen['surat_pernyataan']) && $dokumen['surat_pernyataan'])
-            <div class="mb-2 file-lama-exists d-flex align-items-center gap-2">
-                <span class="fw-bold">Surat Pernyataan Hak Cipta:</span>
-                <a href="{{ asset('storage/'.$dokumen['surat_pernyataan']) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
-                <form method="POST" action="{{ route('draft.delete_file', $pengajuan->id) }}" style="display:inline;">
-                    @csrf
-                    @method('DELETE')
-                    <input type="hidden" name="tipe" value="surat_pernyataan">
-                    <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> Hapus</button>
-                </form>
-            </div>
-        @endif
-        @if(isset($dokumen['ktp']) && $dokumen['ktp'])
-            <div class="mb-2 file-lama-exists d-flex align-items-center gap-2">
-                <span class="fw-bold">KTP (Seluruh Pencipta):</span>
-                <a href="{{ asset('storage/'.$dokumen['ktp']) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
-                <form method="POST" action="{{ route('draft.delete_file', $pengajuan->id) }}" style="display:inline;">
-                    @csrf
-                    @method('DELETE')
-                    <input type="hidden" name="tipe" value="ktp">
-                    <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> Hapus</button>
-                </form>
-            </div>
-        @endif
-    </div>
 </div>
 @push('scripts')
 <script>
@@ -417,76 +371,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     updateSubJenisCiptaan();
     identitasCiptaanSelect.addEventListener('change', updateSubJenisCiptaan);
-
-    // Enable tab berikutnya saat klik Selanjutnya
-    document.querySelectorAll('.next-section').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            const nextSectionId = btn.dataset.next;
-            const activeTab = document.querySelector('.tab-pane.active');
-            let valid = true;
-            let missingFields = [];
-            // Validasi hanya field required di section aktif
-            activeTab.querySelectorAll('input[required], select[required], textarea[required]').forEach(function(el) {
-                if (el.offsetParent !== null && !el.value) {
-                    el.classList.add('is-invalid');
-                    valid = false;
-                    // Cari label
-                    let label = el.closest('.mb-3,.col-md-6,.col-md-12')?.querySelector('label')?.textContent || el.name || 'Field';
-                    if (label && !missingFields.includes(label)) missingFields.push(label.trim());
-                } else {
-                    el.classList.remove('is-invalid');
-                }
-            });
-            // Cek radio group (role) jika ada di section aktif
-            const roleRadios = activeTab.querySelectorAll('input[name="role"]');
-            if (roleRadios.length && !Array.from(roleRadios).some(r=>r.checked && r.offsetParent!==null)) {
-                roleRadios.forEach(r=>r.classList.add('is-invalid'));
-                valid = false;
-                missingFields.push('Peran Pengusul');
-            } else {
-                roleRadios.forEach(r=>r.classList.remove('is-invalid'));
-            }
-            if (!valid) {
-                e.preventDefault();
-                // Tampilkan pesan popup
-                alert('Lengkapi data berikut sebelum melanjutkan:\n- ' + missingFields.join('\n- '));
-                // Tampilkan pesan error global juga
-                const alertBox = document.getElementById('global-error-alert');
-                if (alertBox) {
-                    alertBox.textContent = 'Lengkapi semua field wajib sebelum melanjutkan ke section berikutnya!';
-                    alertBox.classList.remove('d-none');
-                    alertBox.scrollIntoView({behavior:'smooth', block:'center'});
-                }
-                return false;
-            } else {
-                const alertBox = document.getElementById('global-error-alert');
-                if (alertBox) alertBox.classList.add('d-none');
-            }
-            // Jika valid, enable tab berikutnya dan pindah
-            const nextTabButton = document.querySelector(`#${nextSectionId}-tab`);
-            if (nextTabButton) {
-                nextTabButton.removeAttribute('disabled');
-                nextTabButton.click();
-            }
-        });
-    });
-
-    // Enable tab yang sudah ada datanya saat halaman dimuat
-    function enableTabIfSectionFilled(sectionId) {
-        const section = document.getElementById(sectionId);
-        if (!section) return;
-        let filled = false;
-        section.querySelectorAll('input,select,textarea').forEach(function(el) {
-            if (el.value && el.value.trim() !== '') filled = true;
-        });
-        // Tambahan: cek jika ada file lama
-        if (section.querySelector('.file-lama-exists')) filled = true;
-        const tabBtn = document.querySelector(`#${sectionId}-tab`);
-        if (tabBtn && filled) {
-            tabBtn.removeAttribute('disabled');
-        }
-    }
-    ['data-ciptaan', 'data-pencipta', 'dokumen'].forEach(enableTabIfSectionFilled);
 
     // Toggle field NIP/NIDN dan ID Sinta sesuai role (dosen/mahasiswa)
     const roleRadios = document.querySelectorAll('input[name="role"]');
@@ -553,6 +437,39 @@ document.addEventListener('DOMContentLoaded', function() {
     // Tambahkan arahan jika user klik tombol Kirim saat data belum lengkap
     if (btnAjukan) {
         btnAjukan.addEventListener('click', function(e) {
+            // Validasi dokumen wajib (frontend)
+            let dokumenError = '';
+            // Cek file lama sudah ada atau belum
+            function dokumenLamaAda(tipe) {
+                // Cek apakah ada tombol "Lihat File" untuk tipe dokumen tsb
+                // tipe: 'surat_pengalihan', 'surat_pernyataan', 'ktp'
+                const dokumen = document.querySelectorAll('.file-lama-exists a');
+                for (let i = 0; i < dokumen.length; i++) {
+                    // Cek href mengandung nama file lama dari value dokumen di backend
+                    if (dokumen[i].href && dokumen[i].href !== '#' && dokumen[i].href !== '') return true;
+                }
+                return false;
+            }
+            // Cek dokumen wajib
+            if (
+                (!document.getElementById('surat_pengalihan_hak_cipta').files.length && !dokumenLamaAda('surat_pengalihan'))
+            ) {
+                dokumenError = 'Surat pengalihan hak cipta wajib diupload.';
+            } else if (
+                (!document.getElementById('surat_pernyataan_hak_cipta').files.length && !dokumenLamaAda('surat_pernyataan'))
+            ) {
+                dokumenError = 'Surat pernyataan hak cipta wajib diupload.';
+            } else if (
+                (!document.getElementById('ktp_seluruh_pencipta').files.length && !dokumenLamaAda('ktp'))
+            ) {
+                dokumenError = 'KTP seluruh pencipta wajib diupload.';
+            }
+            if (dokumenError) {
+                e.preventDefault();
+                alert(dokumenError);
+                return false;
+            }
+            // Validasi field lain (seperti sebelumnya)
             if (btnAjukan.disabled) {
                 e.preventDefault();
                 alert('Lengkapi semua field wajib sebelum mengirim pengajuan!');
@@ -628,7 +545,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">No. HP <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="pencipta[${i}][no_hp]" value="${p.no_hp || ''}" required>
+                                <input type="tel" class="form-control" name="pencipta[${i}][no_hp]" value="${p.no_hp || ''}" required pattern="^08[0-9]{8,11}$" maxlength="15">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Alamat <span class="text-danger">*</span></label>
@@ -642,7 +559,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Kode Pos <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="pencipta[${i}][kodepos]" value="${p.kodepos || ''}" required>
+                                <input type="text" class="form-control" name="pencipta[${i}][kodepos]" value="${p.kodepos || ''}" required pattern="^[0-9]{5}$" maxlength="5">
+                                <div class="invalid-feedback">Kode Pos harus 5 digit angka.</div>
                             </div>
                         </div>
                     </div>
@@ -720,18 +638,6 @@ document.addEventListener('DOMContentLoaded', function() {
             new bootstrap.Tab(tabBtn).show();
         }
     }
-
-    // Buat radio role readonly (tidak bisa diubah)
-    document.querySelectorAll('input[name="role"]').forEach(function(radio) {
-        radio.addEventListener('click', function(e) {
-            e.preventDefault();
-            return false;
-        });
-        radio.addEventListener('keydown', function(e) {
-            e.preventDefault();
-            return false;
-        });
-    });
 
     // Navigasi otomatis ke tab error, tampilkan daftar link ke tab error
     form.addEventListener('submit', function(e) {
@@ -848,6 +754,60 @@ document.addEventListener('DOMContentLoaded', function() {
             tabBtn.click();
         }
     }
+
+    // --- LOGIKA TAB HANYA BISA DIKLIK JIKA SUDAH PERNAH DIISI/DIBUKA ---
+    // Key untuk localStorage
+    const visitedKey = 'draftTabVisited';
+    // Ambil status visited dari localStorage
+    let visitedTabs = JSON.parse(localStorage.getItem(visitedKey) || '{}');
+    // Section urut
+    const sectionIds = ['data-pengusul', 'data-ciptaan', 'data-pencipta', 'dokumen'];
+
+    // Enable tab yang sudah pernah diisi/dibuka (visited)
+    sectionIds.forEach((sectionId, idx) => {
+        const tabBtn = document.querySelector(`#${sectionId}-tab`);
+        if (tabBtn) {
+            if (idx === 0 || visitedTabs[sectionId]) {
+                tabBtn.removeAttribute('disabled');
+            } else {
+                tabBtn.setAttribute('disabled', 'disabled');
+            }
+        }
+    });
+
+    // Saat klik Selanjutnya, enable tab berikutnya dan tandai visited
+    document.querySelectorAll('.next-section').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            const nextSectionId = btn.dataset.next;
+            const nextTabButton = document.querySelector(`#${nextSectionId}-tab`);
+            if (nextTabButton) {
+                nextTabButton.removeAttribute('disabled');
+                // Tandai visited
+                visitedTabs[nextSectionId] = true;
+                localStorage.setItem(visitedKey, JSON.stringify(visitedTabs));
+                // Aktifkan tab berikutnya
+                new bootstrap.Tab(nextTabButton).show();
+            }
+        });
+    });
+
+    // Saat klik tab, hanya izinkan jika sudah enable
+    document.querySelectorAll('#form-tabs .nav-link').forEach(function(tabBtn) {
+        tabBtn.addEventListener('click', function(e) {
+            if (tabBtn.hasAttribute('disabled')) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            // Tandai tab ini sebagai visited
+            const sectionId = tabBtn.getAttribute('data-bs-target').replace('#','');
+            visitedTabs[sectionId] = true;
+            localStorage.setItem(visitedKey, JSON.stringify(visitedTabs));
+        });
+    });
+
+    // Reset visited jika user reload dan data draft baru (opsional, bisa disesuaikan)
+    // ... existing code ...
 });
 
 function toggleFileInput(id) {

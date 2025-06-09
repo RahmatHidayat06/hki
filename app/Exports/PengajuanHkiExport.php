@@ -13,7 +13,6 @@ class PengajuanHkiExport implements FromCollection, WithHeadings
         return PengajuanHki::select(
             'nomor_pengajuan',
             'judul_karya',
-            'kategori',
             'deskripsi',
             'nama_pengusul',
             'nip_nidn',
@@ -35,7 +34,6 @@ class PengajuanHkiExport implements FromCollection, WithHeadings
         return [
             'Nomor Pengajuan',
             'Judul Karya',
-            'Kategori',
             'Deskripsi',
             'Nama Pengusul',
             'NIP/NIDN',

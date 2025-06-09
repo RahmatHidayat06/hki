@@ -30,7 +30,6 @@
                                 <tr>
                                     <th>No</th>
                                     <th>Judul Karya</th>
-                                    <th>Kategori</th>
                                     <th>Jenis Ciptaan</th>
                                     <th>Sub Jenis Ciptaan</th>
                                     <th>Tahun Usulan</th>
@@ -45,7 +44,6 @@
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $item->judul_karya }}</td>
-                                    <td>{{ $item->kategori }}</td>
                                     <td>{{ $item->identitas_ciptaan }}</td>
                                     <td>{{ $item->sub_jenis_ciptaan }}</td>
                                     <td>{{ $item->tahun_usulan ?? '-' }}</td>
@@ -101,6 +99,10 @@
                     </div>
                     <div class="mt-4">
                         {{ $pengajuan->links() }}
+                    </div>
+                    <div class="alert alert-info">
+                        <strong>User ID yang login:</strong> {{ auth()->id() }}<br>
+                        <strong>Jumlah data pengajuan:</strong> {{ $pengajuan->total() }}
                     </div>
                 </div>
             </div>

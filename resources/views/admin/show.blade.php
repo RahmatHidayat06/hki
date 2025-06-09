@@ -8,8 +8,6 @@
             <dl class="row">
                 <dt class="col-md-3">Judul Karya</dt>
                 <dd class="col-md-9">{{ $pengajuan->judul_karya }}</dd>
-                <dt class="col-md-3">Kategori</dt>
-                <dd class="col-md-9">{{ $pengajuan->kategori }}</dd>
                 <dt class="col-md-3">Deskripsi</dt>
                 <dd class="col-md-9">{{ $pengajuan->deskripsi }}</dd>
                 <dt class="col-md-3">Nama Pengusul</dt>

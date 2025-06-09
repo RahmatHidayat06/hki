@@ -23,7 +23,12 @@ class AdminController extends Controller
             ->whereNotNull('file_dokumen_pendukung')
             ->count();
         $total = PengajuanHki::count();
-        return view('admin.dashboard', compact('pengajuan', 'total', 'totalLengkap'));
+        $totalDraft = PengajuanHki::where('status', 'draft')->count();
+        $totalMenunggu = PengajuanHki::where('status', 'menunggu_validasi')->count();
+        $totalDivalidasi = PengajuanHki::where('status', 'divalidasi')->count();
+        $totalDisetujui = PengajuanHki::where('status', 'disetujui')->count();
+        $totalDitolak = PengajuanHki::where('status', 'ditolak')->count();
+        return view('admin.dashboard', compact('pengajuan', 'total', 'totalLengkap', 'totalDraft', 'totalMenunggu', 'totalDivalidasi', 'totalDisetujui', 'totalDitolak'));
     }
 
     // Rekap data: export ke Excel jika semua data lengkap
