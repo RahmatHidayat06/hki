@@ -11,11 +11,12 @@
                     <div class="ml-10 flex items-baseline space-x-4">
                         <a href="{{ route('dashboard') }}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
                         
-                        @if(Auth::user()->role === 'dosen')
+                        @if(in_array(Auth::user()->role, ['dosen','mahasiswa']))
                             <a href="{{ route('pengajuan.index') }}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Pengajuan</a>
+                            <a href="{{ route('pembayaran.index') }}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Pembayaran & Sertifikat</a>
                         @endif
 
-                        @if(Auth::user()->role === 'admin_p3m')
+                        @if(Auth::user()->role === 'admin')
                             <a href="{{ route('validasi.index') }}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Validasi</a>
                         @endif
 

@@ -22,6 +22,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Muat polyfill fungsi lama PHP (magic_quotes) bila belum ada agar FPDF tidak error.
+        if (!function_exists('get_magic_quotes_runtime')) {
+            require_once base_path('bootstrap/polyfills.php');
+        }
+
         View::composer('layouts.navigation', function ($view) {
             if (Auth::check()) {
                 $unreadNotifications = Notifikasi::where('user_id', Auth::id())

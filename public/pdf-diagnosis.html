@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Loading Diagnosis</title>
+    <meta charset='utf-8'>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; }
+        .error { background-color: #f8d7da; }
+        .warning { background-color: #fff3cd; }
+        .btn { padding: 10px 15px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        #results { margin-top: 20px; }
+        .result-item { margin: 10px 0; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 PDF Loading Diagnosis</h1>
+    
+    <div class='test-section'>
+        <h3>📄 File Information</h3>
+        <p><strong>PDF Path:</strong> dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf</p>
+        <p><strong>File Size:</strong> 1,233.12 KB</p>
+        <p><strong>Storage URL:</strong> <a href='/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf' target='_blank'>/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf</a></p>
+        <p><strong>Full URL:</strong> <a href='http://localhost/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf' target='_blank'>http://localhost/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf</a></p>
+    </div>
+    
+    <div class='test-section'>
+        <h3>🧪 Diagnostic Tests</h3>
+        <button class='btn btn-primary' onclick='testDirectAccess()'>Test Direct PDF Access</button>
+        <button class='btn btn-primary' onclick='testPDFJS()'>Test PDF.js Loading</button>
+        <button class='btn btn-primary' onclick='testBrowserSupport()'>Test Browser Support</button>
+        <button class='btn btn-success' onclick='runAllTests()'>Run All Tests</button>
+    </div>
+    
+    <div id='results'></div>
+    
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        const pdfUrl = '/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf';
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(title, status, message, details = '') {
+            const className = status === 'success' ? 'success' : status === 'error' ? 'error' : 'warning';
+            const icon = status === 'success' ? '✅' : status === 'error' ? '❌' : '⚠️';
+            
+            const resultHtml = `
+                <div class='result-item ${className}'>
+                    <h4>${icon} ${title}</h4>
+                    <p>${message}</p>
+                    ${details ? '<details><summary>Details</summary><pre>' + details + '</pre></details>' : ''}
+                </div>
+            `;
+            resultsDiv.innerHTML += resultHtml;
+        }
+        
+        function testDirectAccess() {
+            addResult('Direct Access Test', 'warning', 'Testing direct PDF access...');
+            
+            fetch(pdfUrl, { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        const details = `Status: ${response.status}
+Content-Type: ${response.headers.get('content-type')}
+Content-Length: ${response.headers.get('content-length')}
+Cache-Control: ${response.headers.get('cache-control')}`;
+                        addResult('Direct Access Test', 'success', 'PDF is accessible via HTTP', details);
+                    } else {
+                        addResult('Direct Access Test', 'error', `HTTP Error: ${response.status} ${response.statusText}`);
+                    }
+                })
+                .catch(error => {
+                    addResult('Direct Access Test', 'error', 'Failed to access PDF', error.toString());
+                });
+        }
+        
+        function testPDFJS() {
+            addResult('PDF.js Test', 'warning', 'Testing PDF.js loading...');
+            
+            const loadingTask = pdfjsLib.getDocument({
+                url: pdfUrl,
+                disableFontFace: true,
+                disableAutoFetch: true,
+                disableStream: true,
+                verbosity: 0
+            });
+            
+            loadingTask.promise.then(pdf => {
+                addResult('PDF.js Test', 'success', `PDF loaded successfully with ${pdf.numPages} pages`);
+                
+                // Test rendering first page
+                pdf.getPage(1).then(page => {
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    const viewport = page.getViewport({ scale: 0.5 });
+                    
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    
+                    page.render(renderContext).promise.then(() => {
+                        addResult('PDF Rendering Test', 'success', 'PDF page rendered successfully');
+                        
+                        // Add rendered canvas to results
+                        const canvasContainer = document.createElement('div');
+                        canvasContainer.innerHTML = '<h4>📄 Rendered PDF Preview:</h4>';
+                        canvasContainer.appendChild(canvas);
+                        canvas.style.border = '1px solid #ccc';
+                        canvas.style.maxWidth = '100%';
+                        resultsDiv.appendChild(canvasContainer);
+                        
+                    }).catch(error => {
+                        addResult('PDF Rendering Test', 'error', 'Failed to render PDF page', error.toString());
+                    });
+                }).catch(error => {
+                    addResult('PDF Page Test', 'error', 'Failed to get PDF page', error.toString());
+                });
+                
+            }).catch(error => {
+                addResult('PDF.js Test', 'error', 'Failed to load PDF with PDF.js', error.toString());
+            });
+        }
+        
+        function testBrowserSupport() {
+            const features = {
+                'Canvas Support': !!document.createElement('canvas').getContext,
+                'Fetch API': typeof fetch !== 'undefined',
+                'Promise Support': typeof Promise !== 'undefined',
+                'Worker Support': typeof Worker !== 'undefined',
+                'ArrayBuffer Support': typeof ArrayBuffer !== 'undefined',
+                'Uint8Array Support': typeof Uint8Array !== 'undefined'
+            };
+            
+            let allSupported = true;
+            let details = '';
+            
+            for (const [feature, supported] of Object.entries(features)) {
+                details += `${feature}: ${supported ? '✅' : '❌'}\n`;
+                if (!supported) allSupported = false;
+            }
+            
+            const status = allSupported ? 'success' : 'error';
+            const message = allSupported ? 'All required features are supported' : 'Some features are missing';
+            
+            addResult('Browser Support Test', status, message, details);
+        }
+        
+        function runAllTests() {
+            resultsDiv.innerHTML = '<h3>🔄 Running all diagnostic tests...</h3>';
+            
+            setTimeout(() => testDirectAccess(), 100);
+            setTimeout(() => testBrowserSupport(), 500);
+            setTimeout(() => testPDFJS(), 1000);
+        }
+        
+        // Auto-run tests on page load
+        setTimeout(runAllTests, 1000);
+    </script>
+</body>
+</html>

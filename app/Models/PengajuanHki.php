@@ -31,16 +31,31 @@ class PengajuanHki extends Model
         'sub_jenis_ciptaan',
         'tanggal_pertama_kali_diumumkan',
         'tahun_usulan',
+        'billing_code',
+        'bukti_pembayaran',
+        'sertifikat',
+        'role',
+        'catatan_admin',
+        'tanggal_validasi',
     ];
 
     protected $casts = [
         'tanggal_pengajuan' => 'datetime',
         'tanggal_selesai' => 'date',
+        'tanggal_validasi' => 'datetime',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the applicant (user) for the HKI submission.
+     */
+    public function pemohon()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function pengaju()

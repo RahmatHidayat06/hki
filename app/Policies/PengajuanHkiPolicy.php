@@ -15,7 +15,7 @@ class PengajuanHkiPolicy
      */
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, ['dosen', 'admin_p3m', 'direktur']);
+        return in_array($user->role, ['dosen', 'admin', 'direktur']);
     }
 
     /**
@@ -24,7 +24,7 @@ class PengajuanHkiPolicy
     public function view(User $user, PengajuanHki $pengajuanHki): bool
     {
         return $user->id === $pengajuanHki->user_id || 
-               in_array($user->role, ['admin_p3m', 'direktur']);
+               in_array($user->role, ['admin', 'direktur']);
     }
 
     /**

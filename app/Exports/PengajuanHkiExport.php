@@ -10,7 +10,9 @@ class PengajuanHkiExport implements FromCollection, WithHeadings
 {
     public function collection()
     {
-        return PengajuanHki::select(
+        // Exclude draft from export
+        return PengajuanHki::where('status', '!=', 'draft')
+            ->select(
             'nomor_pengajuan',
             'judul_karya',
             'deskripsi',

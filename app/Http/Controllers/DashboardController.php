@@ -21,11 +21,29 @@ class DashboardController extends Controller
         $user = Auth::user();
         
         // Redirect berdasarkan role
-        if ($user->role === 'admin_p3m') {
-            return Redirect::to(route('validasi.index'));
+        if ($user->role === 'admin') {
+            return Redirect::to(route('admin.dashboard'));
         }
-        // Direktur dan role lain langsung ke dashboard.index
-            $all = PengajuanHki::where('user_id', $user->id)->get();
+
+        if ($user->role === 'direktur') {
+            // Dashboard untuk direktur - exclude draft from all statistics and data
+            $menunggu = PengajuanHki::where('status', 'menunggu_validasi')->count();
+            $disetujui = PengajuanHki::where('status', 'divalidasi')->count();
+            $ditolak = PengajuanHki::where('status', 'ditolak')->count();
+            
+            // Pengajuan baru menunggu persetujuan (exclude draft)
+            $pengajuanBaru = PengajuanHki::where('status', 'menunggu_validasi')
+                ->latest()
+                ->take(5)
+                ->get();
+            
+            return view('dashboard', compact('menunggu', 'disetujui', 'ditolak', 'pengajuanBaru'));
+        }
+        
+        // Untuk dosen dan mahasiswa - exclude draft from own statistics
+        $all = PengajuanHki::where('user_id', $user->id)
+            ->where('status', '!=', 'draft')
+            ->get();
             $totalPengajuan = $all->count();
             $tidakLengkap = $all->filter(function($item) {
             return $item->status !== 'disetujui' && (empty($item->judul_karya) || empty($item->created_at));

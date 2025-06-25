@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Access Test - Fixed</title>
+    <meta charset='utf-8'>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        .btn { padding: 10px 15px; margin: 5px; text-decoration: none; border-radius: 4px; display: inline-block; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        iframe { width: 100%; height: 600px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>🔧 PDF Access Test - After Fixes</h1>
+    
+    <div class='status success'>
+        <h3>✅ SUCCESS</h3>
+        <p><strong>HTTP Status:</strong> 200</p>
+        <p><strong>PDF URL:</strong> <a href='http://127.0.0.1:8000/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf' target='_blank'>http://127.0.0.1:8000/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf</a></p>
+    </div>
+    
+    <div style='margin: 20px 0;'>
+        <a href='http://127.0.0.1:8000/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf' class='btn btn-primary' target='_blank'>📄 Open PDF Directly</a>
+        <a href='http://127.0.0.1:8000/persetujuan/91/signature/surat_pengalihan' class='btn btn-success' target='_blank'>🖊️ Test Signature Editor</a>
+        <button class='btn btn-primary' onclick='testPDFInIframe()'>📺 Load PDF in Iframe</button>
+    </div>
+    
+    <div id='iframe-container' style='display: none;'>
+        <h3>📺 PDF Preview:</h3>
+        <iframe id='pdf-iframe' src=''></iframe>
+    </div>
+    
+    <div id='test-results'></div>
+    
+    <script>
+        function testPDFInIframe() {
+            const container = document.getElementById('iframe-container');
+            const iframe = document.getElementById('pdf-iframe');
+            const results = document.getElementById('test-results');
+            
+            container.style.display = 'block';
+            iframe.src = 'http://127.0.0.1:8000/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf';
+            
+            results.innerHTML = '<div class="status success"><h4>🔄 Loading PDF in iframe...</h4><p>If PDF loads below, the signature editor should work now!</p></div>';
+            
+            iframe.onload = function() {
+                results.innerHTML = '<div class="status success"><h4>✅ PDF Loaded Successfully!</h4><p>The signature editor should now work properly.</p></div>';
+            };
+            
+            iframe.onerror = function() {
+                results.innerHTML = '<div class="status error"><h4>❌ PDF Failed to Load</h4><p>There may still be issues with the PDF access.</p></div>';
+            };
+        }
+        
+        // Auto-test on page load
+        setTimeout(() => {
+            if (200 === 200) {
+                testPDFInIframe();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

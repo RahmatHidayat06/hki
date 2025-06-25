@@ -6,17 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void
+    public function up()
     {
         Schema::table('pengajuan_hkis', function (Blueprint $table) {
-            $table->string('tahun_usulan')->nullable()->after('tanggal_pertama_kali_diumumkan');
+            $table->string('tahun_usulan')->nullable()->after('tanggal_pengajuan');
         });
     }
 
-    public function down(): void
+    public function down()
     {
         Schema::table('pengajuan_hkis', function (Blueprint $table) {
             $table->dropColumn('tahun_usulan');
         });
     }
-}; 
+};

@@ -1,12 +1,24 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<x-page-header 
+    title="Form Usulan Hak Cipta" 
+    description="Lengkapi data berikut untuk mengajukan permohonan HKI"
+    icon="fas fa-file-alt"
+    :breadcrumbs="[
+        ['title' => 'Hak Cipta', 'url' => '#'],
+        ['title' => 'Permohonan Baru']
+    ]"
+/>
+
+<div class="container-fluid px-4">
     <div class="row justify-content-center">
         <div class="col-md-10">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">Form Usulan Hak Cipta</h4>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pt-4 pb-0">
+                    <h5 class="mb-0 fw-semibold text-dark">
+                        <i class="fas fa-edit me-2 text-primary"></i>Form Usulan Hak Cipta
+                    </h5>
                 </div>
 
                 <div class="card-body">
@@ -106,7 +118,7 @@
                                         </div>
                                         <div class="row">
                                             <div class="col-md-6 mb-3" id="id-sinta-field">
-                                                <label for="id_sinta" class="form-label">{{ __('ID Sinta') }}</label>
+                                                <label for="id_sinta" class="form-label">{{ __('ID Sinta') }} <span class="text-danger">*</span></label>
                                                 <input type="text" class="form-control @error('id_sinta') is-invalid @enderror" 
                                                        id="id_sinta" name="id_sinta" value="{{ old('id_sinta') }}">
                                                 <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
@@ -330,7 +342,7 @@
                                                     <span class="spinner-border spinner-border-sm d-none" id="spinner-draft" role="status" aria-hidden="true"></span>
                                                     Simpan sebagai Draft
                                                 </button>
-                                                <button type="submit" class="btn btn-primary ms-2" id="btn-submit">
+                                                <button type="submit" name="submit_final" value="1" class="btn btn-primary ms-2" id="btn-submit">
                                                     <span class="spinner-border spinner-border-sm d-none" id="spinner-submit" role="status" aria-hidden="true"></span>
                                                     Kirim
                                                 </button>
@@ -347,7 +359,12 @@
     </div>
 </div>
 
+<style>
+.card{transition:all .3s ease}.card:hover{transform:translateY(-2px)}.table-responsive{border-radius:.5rem}.table th{font-weight:600;text-transform:uppercase;font-size:.75rem;letter-spacing:.5px}.table td{vertical-align:middle}.badge{font-weight:500;letter-spacing:.25px}.btn{font-weight:500;border-radius:.375rem;transition:all .2s ease}.btn:hover{transform:translateY(-1px)}.form-control:focus{border-color:#0d6efd;box-shadow:0 0 0 .2rem rgba(13,110,253,.25)}.input-group-text{background-color:#f8f9fa;border-color:#dee2e6}
+</style>
+
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Navigasi antar section/tab
@@ -358,6 +375,75 @@ document.addEventListener('DOMContentLoaded', function() {
     tabButtons.forEach((btn, idx) => {
         if (idx !== 0) btn.setAttribute('disabled', 'disabled');
     });
+
+    // Function to check if a section is completed
+    function isSectionCompleted(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (!section) return false;
+        
+        const requiredFields = section.querySelectorAll('input[required], select[required], textarea[required]');
+        let isCompleted = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value || !field.value.trim()) {
+                isCompleted = false;
+            }
+        });
+        
+        // Special check for radio buttons
+        const radioGroups = section.querySelectorAll('input[type="radio"][required]');
+        const checkedGroups = new Set();
+        radioGroups.forEach(radio => {
+            if (radio.checked) {
+                checkedGroups.add(radio.name);
+            }
+        });
+        
+        // Get unique radio group names
+        const allGroups = new Set();
+        radioGroups.forEach(radio => allGroups.add(radio.name));
+        
+        if (allGroups.size !== checkedGroups.size) {
+            isCompleted = false;
+        }
+        
+        return isCompleted;
+    }
+
+    // Function to unlock completed sections
+    function unlockCompletedSections() {
+        const sections = ['data-pengusul', 'data-ciptaan', 'data-pencipta', 'dokumen'];
+        
+        sections.forEach((sectionId, index) => {
+            if (index === 0) return; // First section always unlocked
+            
+            // Check if all previous sections are completed
+            let allPreviousCompleted = true;
+            for (let i = 0; i < index; i++) {
+                if (!isSectionCompleted(sections[i])) {
+                    allPreviousCompleted = false;
+                    break;
+                }
+            }
+            
+            if (allPreviousCompleted) {
+                const tabButton = document.querySelector(`#${sectionId}-tab`);
+                if (tabButton) {
+                    tabButton.removeAttribute('disabled');
+                }
+            }
+        });
+    }
+
+    // Re-check unlocked sections when any field changes
+    document.addEventListener('input', function() {
+        setTimeout(unlockCompletedSections, 100);
+    });
+    
+    document.addEventListener('change', function() {
+        setTimeout(unlockCompletedSections, 100);
+    });
+
     // Tombol Selanjutnya: validasi section aktif sebelum lanjut
     nextButtons.forEach(button => {
         button.addEventListener('click', function(event) {
@@ -383,9 +469,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return false;
             }
             // Jika valid, enable tab berikutnya dan pindah
-            const nextSectionId = this.dataset.next;
-            const nextTabButton = document.querySelector(`#${nextSectionId}-tab`);
-            if (nextTabButton) {
+                const nextSectionId = this.dataset.next;
+                const nextTabButton = document.querySelector(`#${nextSectionId}-tab`);
+                if (nextTabButton) {
                 nextTabButton.removeAttribute('disabled');
                 nextTabButton.click();
             }
@@ -452,9 +538,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <input type=\"text\" class=\"form-control\" name=\"pencipta[${i}][kecamatan]\" required>
                             </div>
                             <div class=\"col-md-6 mb-3\">
-                                <label class=\"form-label\">Kode Pos <span class=\"text-danger\">*</span></label>
-                                <input type=\"text\" class=\"form-control\" name=\"pencipta[${i}][kodepos]\" required pattern=\"^[0-9]{5}$\" maxlength=\"5\">
-                                <div class=\"invalid-feedback\">Kode Pos harus 5 digit angka.</div>
+                                <label class="form-label">Kode Pos <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="pencipta[${i}][kodepos]" required pattern="^[0-9]{5}$" maxlength="5">
+                                <div class="invalid-feedback">Kode Pos harus 5 digit angka.</div>
                             </div>
                         </div>
                     </div>
@@ -469,26 +555,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const nipNidnField = document.getElementById('nip-nidn-field');
     const idSintaField = document.getElementById('id-sinta-field');
     function toggleRoleSpecificFields() {
-        const selectedRoleRadio = document.querySelector('input[name="role"]:checked');
-        const selectedRole = selectedRoleRadio ? selectedRoleRadio.value : '';
+        const selectedRole = document.querySelector('input[name="role"]:checked')?.value || '';
+        const nipInput   = nipNidnField.querySelector('input');
+        const sintaInput = idSintaField.querySelector('input');
+
         if (selectedRole === 'mahasiswa') {
-            // Sembunyikan field NIP/NIDN dan ID Sinta
+            // Sembunyikan & non-aktifkan
             nipNidnField.style.display = 'none';
             idSintaField.style.display = 'none';
-            // Hapus atribut required, JANGAN kosongkan value (agar tetap tersimpan di draft)
-            if (nipNidnField.querySelector('input')) {
-                nipNidnField.querySelector('input').removeAttribute('required');
-            }
-            if (idSintaField.querySelector('input')) {
-                idSintaField.querySelector('input').removeAttribute('required');
-            }
+
+            nipInput.removeAttribute('required');
+            sintaInput.removeAttribute('required');
+            nipInput.setAttribute('disabled', true);
+            sintaInput.setAttribute('disabled', true);
         } else {
-            // Tampilkan kembali field NIP/NIDN dan ID Sinta
+            // Tampilkan & aktifkan (wajib)
             nipNidnField.style.display = '';
             idSintaField.style.display = '';
-            if (nipNidnField.querySelector('input')) {
-                nipNidnField.querySelector('input').setAttribute('required', true);
-            }
+
+            nipInput.removeAttribute('disabled');
+            sintaInput.removeAttribute('disabled');
+            nipInput.setAttribute('required', true);
+            sintaInput.setAttribute('required', true);
         }
     }
     // Panggil fungsi toggle saat pertama kali dimuat untuk mengatur tampilan awal
@@ -498,27 +586,47 @@ document.addEventListener('DOMContentLoaded', function() {
         radio.addEventListener('change', toggleRoleSpecificFields);
     });
 
-    // Field Tahun Usulan otomatis 4 tahun terakhir
-    const tahunUsulanSelect = document.getElementById('tahun_usulan');
-    if (tahunUsulanSelect) {
-        const tahunSekarang = new Date().getFullYear();
-        const tahunLama = "{{ old('tahun_usulan') }}";
-        let tahunList = [];
-        for (let i = 0; i < 4; i++) {
-            tahunList.push((tahunSekarang - i).toString());
+    // Populate tahun usulan dropdown - 5 tahun ke belakang dari sekarang
+    function populateYearDropdown() {
+        const yearSelect = document.getElementById('tahun_usulan');
+        if (!yearSelect) return;
+        
+        const currentYear = new Date().getFullYear();
+        const savedValue = "{{ old('tahun_usulan') }}";
+        
+        // Clear existing options
+        yearSelect.innerHTML = '<option value="">Pilih Tahun</option>';
+        
+        // Generate 5 tahun: tahun sekarang sampai 4 tahun ke belakang
+        let yearList = [];
+        for (let i = 0; i < 5; i++) {
+            yearList.push(currentYear - i);
         }
-        if (tahunLama && !tahunList.includes(tahunLama)) {
-            tahunList.push(tahunLama);
+        
+        // Jika ada nilai tersimpan yang tidak ada di list, tambahkan
+        if (savedValue && !yearList.includes(parseInt(savedValue))) {
+            yearList.push(parseInt(savedValue));
         }
-        tahunList = [...new Set(tahunList)].sort((a,b)=>b-a); // urut desc, unik
-        tahunList.forEach(function(tahun) {
+        
+        // Urutkan descending dan buat unique
+        yearList = [...new Set(yearList)].sort((a, b) => b - a);
+        
+        // Add year options
+        yearList.forEach(function(year) {
             const option = document.createElement('option');
-            option.value = tahun;
-            option.textContent = tahun;
-            if (tahun == tahunLama) option.selected = true;
-            tahunUsulanSelect.appendChild(option);
+            option.value = year;
+            option.textContent = year;
+            
+            if (year.toString() === savedValue) {
+                option.selected = true;
+            }
+            
+            yearSelect.appendChild(option);
         });
     }
+    
+    // Initialize year dropdown
+    populateYearDropdown();
 
     // Sub Jenis Ciptaan dinamis sesuai Jenis Ciptaan
     const identitasCiptaanSelect = document.getElementById('identitas_ciptaan');
@@ -592,16 +700,105 @@ document.addEventListener('DOMContentLoaded', function() {
         if (val && templateLinks[val]) templateLinks[val].classList.remove('d-none');
     });
 
-    document.getElementById('btn-save-draft')?.addEventListener('click', function() {
+    document.getElementById('btn-save-draft')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Pastikan hanya parameter save_as_draft yang dikirim
+        const form = document.getElementById('form-pengajuan');
+        
+        // Hapus semua input submit_final yang mungkin ada
+        const existingSubmitFinal = form.querySelectorAll('input[name="submit_final"]');
+        existingSubmitFinal.forEach(input => input.remove());
+        
+        // Hapus juga tombol submit_final agar tidak ikut terkirim
+        const submitButton = form.querySelector('button[name="submit_final"]');
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.removeAttribute('name');
+        }
+        
+        // Disable tombol dan tampilkan spinner
         this.disabled = true;
         document.getElementById('spinner-draft').classList.remove('d-none');
-        document.getElementById('form-pengajuan').submit();
+        
+        // Submit form
+        form.submit();
     });
-    document.getElementById('btn-submit')?.addEventListener('click', function() {
-        this.disabled = true;
+
+    const submitBtn = document.getElementById('btn-submit');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = document.getElementById('form-pengajuan');
+
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                Swal.fire({
+                    title: 'Data Belum Lengkap',
+                    text: 'Masih ada field wajib yang belum diisi.',
+                    icon: 'warning'
+                });
+                return;
+            }
+
+            // Konfirmasi sebelum submit
+            Swal.fire({
+                title: 'Kirim Pengajuan?',
+                text: 'Pastikan semua data sudah benar.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, kirim',
+                cancelButtonText: 'Batal'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    submitBtn.disabled = true;
         document.getElementById('spinner-submit').classList.remove('d-none');
-        document.getElementById('form-pengajuan').submit();
+                    form.submit();
+                }
+            });
+        });
+    }
+
+    /* =============================
+       Realtime preview file upload
+    ============================== */
+    function attachRealtimePreview(fileInput) {
+        if (!fileInput) return;
+        fileInput.addEventListener('change', function() {
+            if (!this.files || !this.files.length) return;
+
+            const file = this.files[0];
+            const newUrl = URL.createObjectURL(file);
+
+            let previewLink = document.getElementById('preview-' + this.id);
+            if (!previewLink) {
+                previewLink = document.createElement('a');
+                previewLink.id = 'preview-' + this.id;
+                previewLink.className = 'btn btn-sm btn-info mt-2';
+                previewLink.target = '_blank';
+                previewLink.innerHTML = '<i class="fas fa-eye me-1"></i> Lihat File (baru)';
+                this.parentNode.insertBefore(previewLink, this.nextSibling);
+            }
+
+            if (previewLink.dataset.currentUrl) {
+                URL.revokeObjectURL(previewLink.dataset.currentUrl);
+            }
+            previewLink.href = newUrl;
+            previewLink.dataset.currentUrl = newUrl;
+        });
+    }
+
+    const uploadInputs = [
+        'contoh_ciptaan',
+        'surat_pengalihan_hak_cipta',
+        'surat_pernyataan_hak_cipta',
+        'ktp_seluruh_pencipta'
+    ];
+    uploadInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) attachRealtimePreview(el);
     });
+
 });
 </script>
 @endpush

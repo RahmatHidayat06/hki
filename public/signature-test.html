@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Signature Editor Quick Test</title>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-item { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .btn { padding: 8px 16px; margin: 5px; text-decoration: none; border-radius: 4px; display: inline-block; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-warning { background-color: #ffc107; color: black; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Signature Editor Test</h1>
+    
+    <div class='test-item success'>
+        <h3>✅ File Status</h3>
+        <p><strong>PDF Path:</strong> dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf</p>
+        <p><strong>File Size:</strong> 1,233.12 KB</p>
+        <p><strong>Storage URL:</strong> <a href='/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf' target='_blank'>/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf</a></p>
+    </div>
+    
+    <div class='test-item warning'>
+        <h3>🔧 Applied Fixes</h3>
+        <ul>
+            <li>✅ Ultra-optimized PDF.js configuration</li>
+            <li>✅ Emergency loading mode (8 second timeout)</li>
+            <li>✅ Aggressive performance settings</li>
+            <li>✅ Quick file accessibility check (3 second timeout)</li>
+            <li>✅ Fallback mechanisms for slow connections</li>
+            <li>✅ Minimal resource loading</li>
+        </ul>
+    </div>
+    
+    <div class='test-item'>
+        <h3>🚀 Test Actions</h3>
+        <a href='http://127.0.0.1:8000/persetujuan/91/signature/surat_pengalihan' class='btn btn-primary' target='_blank'>
+            🖊️ Open Signature Editor
+        </a>
+        <a href='/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf' class='btn btn-success' target='_blank'>
+            📄 Direct PDF Access
+        </a>
+        <button class='btn btn-warning' onclick='testPDFLoading()'>
+            ⚡ Test PDF Loading Speed
+        </button>
+    </div>
+    
+    <div class='test-item'>
+        <h3>📊 Loading Performance Test</h3>
+        <div id='performance-results'>Click 'Test PDF Loading Speed' to run performance test...</div>
+    </div>
+    
+    <script>
+        function testPDFLoading() {
+            const resultsDiv = document.getElementById('performance-results');
+            resultsDiv.innerHTML = '<p>🔄 Testing PDF loading performance...</p>';
+            
+            const startTime = Date.now();
+            
+            // Test 1: Basic fetch
+            fetch('/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf', { method: 'HEAD' })
+                .then(response => {
+                    const fetchTime = Date.now() - startTime;
+                    let results = '<div class="success"><h4>✅ Basic Fetch Test</h4>';
+                    results += '<p><strong>Response Time:</strong> ' + fetchTime + 'ms</p>';
+                    results += '<p><strong>Status:</strong> ' + response.status + ' ' + response.statusText + '</p>';
+                    results += '<p><strong>Content-Type:</strong> ' + response.headers.get('content-type') + '</p>';
+                    results += '<p><strong>Content-Length:</strong> ' + response.headers.get('content-length') + ' bytes</p>';
+                    results += '</div>';
+                    
+                    // Test 2: Full download
+                    const downloadStart = Date.now();
+                    return fetch('/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf').then(response => response.blob()).then(blob => {
+                        const downloadTime = Date.now() - downloadStart;
+                        results += '<div class="success"><h4>✅ Full Download Test</h4>';
+                        results += '<p><strong>Download Time:</strong> ' + downloadTime + 'ms</p>';
+                        results += '<p><strong>File Size:</strong> ' + blob.size + ' bytes</p>';
+                        results += '<p><strong>Speed:</strong> ' + Math.round((blob.size / 1024) / (downloadTime / 1000)) + ' KB/s</p>';
+                        results += '</div>';
+                        
+                        resultsDiv.innerHTML = results;
+                        
+                        // Performance assessment
+                        let assessment = '<div class="';
+                        if (downloadTime < 2000) {
+                            assessment += 'success"><h4>🚀 Excellent Performance</h4><p>PDF should load very quickly in signature editor.</p>';
+                        } else if (downloadTime < 5000) {
+                            assessment += 'warning"><h4>⚡ Good Performance</h4><p>PDF should load reasonably fast. Emergency mode may activate.</p>';
+                        } else {
+                            assessment += 'error"><h4>🐌 Slow Performance</h4><p>PDF loading may be slow. Emergency mode will likely activate.</p>';
+                        }
+                        assessment += '</div>';
+                        
+                        resultsDiv.innerHTML += assessment;
+                    });
+                })
+                .catch(error => {
+                    resultsDiv.innerHTML = '<div class="error"><h4>❌ Test Failed</h4><p>' + error.message + '</p></div>';
+                });
+        }
+        
+        // Auto-run basic test on page load
+        setTimeout(() => {
+            console.log('Running automatic performance test...');
+            testPDFLoading();
+        }, 1000);
+    </script>
+</body>
+</html>

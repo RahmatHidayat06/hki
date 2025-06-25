@@ -83,8 +83,8 @@
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3" id="id-sinta-field">
-                                <label for="id_sinta" class="form-label">ID Sinta</label>
-                                <input type="text" class="form-control" id="id_sinta" name="id_sinta" value="{{ $pengajuan->id_sinta }}" required>
+                                <label for="id_sinta" class="form-label">ID Sinta <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="id_sinta" name="id_sinta" value="{{ $pengajuan->id_sinta }}">
                                 <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                             </div>
                         </div>
@@ -163,14 +163,8 @@
                         <div class="mb-3">
                             <label for="jumlah_pencipta" class="form-label">Jumlah Pencipta</label>
                             @php 
-                                $oldPencipta = old('pencipta');
-                                if ($oldPencipta) {
-                                    $jumlahPencipta = count($oldPencipta);
-                                    $pencipta = collect($oldPencipta);
-                                } else {
-                                    $pencipta = $pengajuan->pengaju ?? collect();
-                                    $jumlahPencipta = $pencipta->count();
-                                }
+                            $jumlahPencipta = $pengajuan->jumlah_pencipta ? (int) $pengajuan->jumlah_pencipta : 1;
+                            $pencipta = $pengajuan->pengaju->toArray();
                             @endphp
                             <input type="hidden" id="jumlah_pencipta_hidden" value="{{ $jumlahPencipta }}">
                             <select class="form-select" id="jumlah_pencipta" name="jumlah_pencipta">
@@ -255,8 +249,21 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label for="contoh_ciptaan" class="form-label">CONTOH CIPTAAN</label>
-                            @if($pengajuan->file_karya)
+                            <label class="form-label">CONTOH CIPTAAN <span class="text-danger">*</span></label>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="form-check me-3">
+                                    <input class="form-check-input" type="radio" name="contoh_ciptaan_type" id="contoh_ciptaan_upload" value="upload" 
+                                           {{ (old('contoh_ciptaan_type', 'upload') === 'upload') ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="contoh_ciptaan_upload">Upload</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="contoh_ciptaan_type" id="contoh_ciptaan_link" value="link"
+                                           {{ (old('contoh_ciptaan_type') === 'link') ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="contoh_ciptaan_link">Link</label>
+                                </div>
+                            </div>
+                            <div id="contoh-ciptaan-upload-field">
+                            @if($pengajuan->file_karya && !str_starts_with($pengajuan->file_karya, 'http'))
                                 <div class="mb-2 file-lama-exists d-flex align-items-center gap-2">
                                     <a href="{{ asset('storage/'.$pengajuan->file_karya) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
                                     <button type="button" class="btn btn-sm btn-warning" onclick="toggleFileInput('contoh_ciptaan')"><i class="fas fa-sync-alt"></i> Ganti File</button>
@@ -265,46 +272,70 @@
                             @else
                                 <input type="file" class="form-control" id="contoh_ciptaan" name="contoh_ciptaan">
                             @endif
+                                <div class="form-text">Upload 1 supported file: PDF, audio, drawing, image, or video. Max 10 MB.</div>
+                            </div>
+                            <div id="contoh-ciptaan-link-field" style="display:none;">
+                                <input type="url" class="form-control" name="contoh_ciptaan_link" placeholder="https://">
+                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label for="surat_pengalihan_hak_cipta" class="form-label">Surat Pengalihan Hak Cipta (PDF)</label>
-                            @php
-                                $dokumen = $pengajuan->file_dokumen_pendukung;
-                                if (is_string($dokumen)) $dokumen = json_decode($dokumen, true);
-                            @endphp
+                            <label class="form-label">Surat Pengalihan Hak Cipta (Format Pdf) <span class="text-danger">*</span></label>
+                            <label for="jumlah_pencipta_template" class="form-label">Pilih Jumlah Pemegang Hak Cipta (Pencipta)</label>
+                            <select id="jumlah_pencipta_template" class="form-select mb-2">
+                                <option value="">Pilih Jumlah Pencipta</option>
+                                <option value="1">1 Pencipta</option>
+                                <option value="2">2 Pencipta</option>
+                                <option value="3">3 Pencipta</option>
+                                <option value="4">4 Pencipta</option>
+                                <option value="5">5 Pencipta</option>
+                            </select>
+                            <div id="template-download-buttons">
+                                <a href="https://docs.google.com/document/d/1JHJuY8oK3UOMQQ3Q5Ib6lP2y4cb_6TYPzZxbYhXAWyk/edit?tab=t.0" target="_blank" class="btn btn-sm btn-secondary d-none" id="template-link-1"><i class="fas fa-download me-2"></i> Download Template (1 Pencipta)</a>
+                                <a href="https://docs.google.com/document/d/1G9cnmujI2JVc9h6Dirt0JPIWjxmmksF-Dt4-OJtOi64/edit?pli=1&tab=t.0" target="_blank" class="btn btn-sm btn-secondary d-none" id="template-link-2"><i class="fas fa-download me-2"></i> Download Template (2 Pencipta)</a>
+                                <a href="https://docs.google.com/document/d/1uXTmaxGsJJ1Aj23eFVysJM9-EwwH-U7hQDmTq49YU34/edit?tab=t.0" target="_blank" class="btn btn-sm btn-secondary d-none" id="template-link-3"><i class="fas fa-download me-2"></i> Download Template (3 Pencipta)</a>
+                                <a href="https://docs.google.com/document/d/1XPza3uNeThyAovGovW0PfO9acg_Or_FMHOGwFAvTotk/edit?tab=t.0" target="_blank" class="btn btn-sm btn-secondary d-none" id="template-link-4"><i class="fas fa-download me-2"></i> Download Template (4 Pencipta)</a>
+                                <a href="https://docs.google.com/document/d/1kTomZpze6Oz4nxeyZ3wmp0hxfIRj4451wVRI5OSCqcM/edit?tab=t.0" target="_blank" class="btn btn-sm btn-secondary d-none" id="template-link-5"><i class="fas fa-download me-2"></i> Download Template (5 Pencipta)</a>
+                            </div>
+                            @php $dokumen = $pengajuan->file_dokumen_pendukung; if (is_string($dokumen)) $dokumen = json_decode($dokumen, true); @endphp
                             @if(isset($dokumen['surat_pengalihan']) && $dokumen['surat_pengalihan'])
                                 <div class="mb-2 file-lama-exists d-flex align-items-center gap-2">
                                     <a href="{{ asset('storage/'.$dokumen['surat_pengalihan']) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
                                     <button type="button" class="btn btn-sm btn-warning" onclick="toggleFileInput('surat_pengalihan_hak_cipta')"><i class="fas fa-sync-alt"></i> Ganti File</button>
                                 </div>
-                                <input type="file" class="form-control d-none" id="surat_pengalihan_hak_cipta" name="surat_pengalihan_hak_cipta">
+                                <input type="file" class="form-control d-none" id="surat_pengalihan_hak_cipta_hidden" accept="application/pdf">
                             @else
-                                <input type="file" class="form-control" id="surat_pengalihan_hak_cipta" name="surat_pengalihan_hak_cipta">
+                                <input type="file" class="form-control" id="surat_pengalihan_hak_cipta" name="surat_pengalihan_hak_cipta" accept="application/pdf">
                             @endif
+                            <div class="form-text">Upload 1 supported file: PDF. Max 10 MB.</div>
                         </div>
                         <div class="mb-3">
-                            <label for="surat_pernyataan_hak_cipta" class="form-label">Surat Pernyataan Hak Cipta (PDF)</label>
+                            <label for="surat_pernyataan_hak_cipta" class="form-label">Surat Pernyataan Hak Cipta (Format Pdf) <span class="text-danger">*</span></label>
+                            <p class="form-text"><a href="https://bit.ly/TemplatePernyataanHakCipta" target="_blank" class="btn btn-sm btn-secondary"><i class="fas fa-download me-2"></i> Download Template</a></p>
                             @if(isset($dokumen['surat_pernyataan']) && $dokumen['surat_pernyataan'])
                                 <div class="mb-2 file-lama-exists d-flex align-items-center gap-2">
                                     <a href="{{ asset('storage/'.$dokumen['surat_pernyataan']) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
                                     <button type="button" class="btn btn-sm btn-warning" onclick="toggleFileInput('surat_pernyataan_hak_cipta')"><i class="fas fa-sync-alt"></i> Ganti File</button>
                                 </div>
-                                <input type="file" class="form-control d-none" id="surat_pernyataan_hak_cipta" name="surat_pernyataan_hak_cipta">
+                                <input type="file" class="form-control d-none" id="surat_pernyataan_hak_cipta_hidden">
                             @else
                                 <input type="file" class="form-control" id="surat_pernyataan_hak_cipta" name="surat_pernyataan_hak_cipta">
                             @endif
+                            <div class="form-text">Upload 1 supported file: PDF. Max 10 MB.</div>
                         </div>
                         <div class="mb-3">
-                            <label for="ktp_seluruh_pencipta" class="form-label">KTP (SELURUH PENCIPTA)</label>
+                            <label for="ktp_seluruh_pencipta" class="form-label">KTP (SELURUH PENCIPTA) <span class="text-danger">*</span></label>
+                            <p class="form-text"><a href="https://bit.ly/TemplateKTP_HakCipta" target="_blank" class="btn btn-sm btn-secondary"><i class="fas fa-download me-2"></i> Download Template KTP</a> (Lampirkan KTP seluruh pencipta format Pdf)</p>
                             @if(isset($dokumen['ktp']) && $dokumen['ktp'])
                                 <div class="mb-2 file-lama-exists d-flex align-items-center gap-2">
                                     <a href="{{ asset('storage/'.$dokumen['ktp']) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
                                     <button type="button" class="btn btn-sm btn-warning" onclick="toggleFileInput('ktp_seluruh_pencipta')"><i class="fas fa-sync-alt"></i> Ganti File</button>
                                 </div>
-                                <input type="file" class="form-control d-none" id="ktp_seluruh_pencipta" name="ktp_seluruh_pencipta">
+                                <input type="file" class="form-control d-none" id="ktp_seluruh_pencipta_hidden">
                             @else
                                 <input type="file" class="form-control" id="ktp_seluruh_pencipta" name="ktp_seluruh_pencipta">
                             @endif
+                            <div class="form-text">Upload 1 supported file: PDF. Max 10 MB.</div>
                         </div>
                         <div class="d-flex justify-content-between mt-3">
                             <button type="button" class="btn btn-secondary prev-section" data-prev="data-pencipta">
@@ -312,7 +343,7 @@
                             </button>
                             <div>
                                 <button type="submit" name="save_as_draft" value="1" class="btn btn-secondary" formnovalidate>Simpan sebagai Draft</button>
-                                <button type="submit" name="ajukan" value="1" class="btn btn-primary ms-2" id="btn-ajukan" style="display:none;">Kirim</button>
+                                <button type="submit" name="ajukan" value="1" class="btn btn-primary ms-2" id="btn-ajukan">Kirim</button>
                             </div>
                         </div>
                     </div>
@@ -323,38 +354,204 @@
 </div>
 @push('scripts')
 <script>
+// Menunggu hingga semua DOM dan stylesheets dimuat
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
-    // Tahun Usulan otomatis 4 tahun terakhir
-    const tahunUsulanSelect = document.getElementById('tahun_usulan');
-    if (tahunUsulanSelect) {
-        const tahunSekarang = new Date().getFullYear();
-        const tahunTerpilih = "{{ old('tahun_usulan', $pengajuan->tahun_usulan) }}";
-        for (let i = 0; i < 4; i++) {
-            const tahun = tahunSekarang - i;
+    // Tambahkan delay kecil untuk memastikan semua CSS sudah dimuat
+    setTimeout(function() {
+        initializeForm();
+    }, 100);
+});
+
+function initializeForm() {
+    const form = document.getElementById('form-edit-draft');
+    const btnAjukan = document.getElementById('btn-ajukan');
+    
+    if (!form) {
+        console.error('Form tidak ditemukan');
+        return;
+    }
+
+    // Navigasi antar section/tab - sama seperti di create
+    const nextButtons = document.querySelectorAll('.next-section');
+    const prevButtons = document.querySelectorAll('.prev-section');
+    const tabButtons = document.querySelectorAll('#form-tabs button[data-bs-toggle="pill"]');
+    
+    // Disable semua tab navigasi kecuali section pertama
+    tabButtons.forEach((btn, idx) => {
+        if (idx !== 0) btn.setAttribute('disabled', 'disabled');
+    });
+
+    // Function to check if a section is completed
+    function isSectionCompleted(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (!section) return false;
+        
+        const requiredFields = section.querySelectorAll('input[required], select[required], textarea[required]');
+        let isCompleted = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value || !field.value.trim()) {
+                isCompleted = false;
+            }
+        });
+        
+        // Special check for radio buttons
+        const radioGroups = section.querySelectorAll('input[type="radio"][required]');
+        const checkedGroups = new Set();
+        radioGroups.forEach(radio => {
+            if (radio.checked) {
+                checkedGroups.add(radio.name);
+            }
+        });
+        
+        // Get unique radio group names
+        const allGroups = new Set();
+        radioGroups.forEach(radio => allGroups.add(radio.name));
+        
+        if (allGroups.size !== checkedGroups.size) {
+            isCompleted = false;
+        }
+        
+        return isCompleted;
+    }
+
+    // Function to unlock completed sections on page load
+    function unlockCompletedSections() {
+        const sections = ['data-pengusul', 'data-ciptaan', 'data-pencipta', 'dokumen'];
+        
+        sections.forEach((sectionId, index) => {
+            if (index === 0) return; // First section always unlocked
+            
+            // Check if all previous sections are completed
+            let allPreviousCompleted = true;
+            for (let i = 0; i < index; i++) {
+                if (!isSectionCompleted(sections[i])) {
+                    allPreviousCompleted = false;
+                    break;
+                }
+            }
+            
+            if (allPreviousCompleted) {
+                const tabButton = document.querySelector(`#${sectionId}-tab`);
+                if (tabButton) {
+                    tabButton.removeAttribute('disabled');
+                }
+            }
+        });
+    }
+
+    // Call unlock function on page load
+    unlockCompletedSections();
+
+    // Tombol Selanjutnya: validasi section aktif sebelum lanjut
+    nextButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            const currentTabPane = this.closest('.tab-pane');
+            const requiredFields = currentTabPane.querySelectorAll('input[required], select[required], textarea[required]');
+            let isSectionValid = true;
+            let missingFields = [];
+            
+            requiredFields.forEach(field => {
+                if (!field.checkValidity()) {
+                    isSectionValid = false;
+                    field.classList.add('is-invalid');
+                    let label = field.closest('.mb-3,.col-md-6,.col-md-12')?.querySelector('label')?.textContent || field.name || 'Field';
+                    if (label && !missingFields.includes(label)) missingFields.push(label.trim());
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (!isSectionValid) {
+                event.preventDefault();
+                alert('Lengkapi data berikut sebelum melanjutkan:\n- ' + missingFields.join('\n- '));
+                const firstInvalid = currentTabPane.querySelector('.is-invalid');
+                if (firstInvalid) setTimeout(()=>{firstInvalid.focus();}, 300);
+                return false;
+            }
+            
+            // Jika valid, enable tab berikutnya dan pindah
+            const nextSectionId = this.dataset.next;
+            const nextTabButton = document.querySelector(`#${nextSectionId}-tab`);
+            if (nextTabButton) {
+                nextTabButton.removeAttribute('disabled');
+                nextTabButton.click();
+            }
+        });
+    });
+
+    // Tombol Sebelumnya
+    prevButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const prevSection = this.dataset.prev;
+            const prevTabButton = document.querySelector(`#${prevSection}-tab`);
+            if (prevTabButton) {
+                prevTabButton.click();
+            }
+        });
+    });
+
+    // Re-check unlocked sections when any field changes
+    document.addEventListener('input', function() {
+        setTimeout(unlockCompletedSections, 100);
+    });
+    
+    document.addEventListener('change', function() {
+        setTimeout(unlockCompletedSections, 100);
+    });
+
+    // Populate tahun usulan dropdown - 5 tahun ke belakang dari sekarang
+    function populateYearDropdown() {
+        const yearSelect = document.getElementById('tahun_usulan');
+        if (!yearSelect) return;
+        
+        const currentYear = new Date().getFullYear();
+        const savedValue = "{{ old('tahun_usulan', $pengajuan->tahun_usulan) }}";
+        
+        // Clear existing options
+        yearSelect.innerHTML = '<option value="">Pilih Tahun</option>';
+        
+        // Generate 5 tahun: tahun sekarang sampai 4 tahun ke belakang
+        let yearList = [];
+        for (let i = 0; i < 5; i++) {
+            yearList.push(currentYear - i);
+        }
+        
+        // Jika ada nilai tersimpan yang tidak ada di list, tambahkan
+        if (savedValue && !yearList.includes(parseInt(savedValue))) {
+            yearList.push(parseInt(savedValue));
+        }
+        
+        // Urutkan descending dan buat unique
+        yearList = [...new Set(yearList)].sort((a, b) => b - a);
+        
+        // Add year options
+        yearList.forEach(function(year) {
             const option = document.createElement('option');
-            option.value = tahun;
-            option.textContent = tahun;
-            if (tahun == tahunTerpilih) {
+            option.value = year;
+            option.textContent = year;
+            
+            if (year.toString() === savedValue) {
                 option.selected = true;
             }
-            tahunUsulanSelect.appendChild(option);
-        }
+            
+            yearSelect.appendChild(option);
+        });
     }
-    // Sub Jenis Ciptaan dinamis sesuai Jenis Ciptaan
+    
+    // Initialize year dropdown
+    populateYearDropdown();
+
+    // Data sub jenis ciptaan - sama seperti di create
     const identitasCiptaanSelect = document.getElementById('identitas_ciptaan');
     const subJenisCiptaanSelect = document.getElementById('sub_jenis_ciptaan');
+    
     const opsiSubJenis = {
-        'karya tulis': [
-            'Buku', 'E-Book', 'Diktat', 'Modul', 'Buku Panduan/Petunjuk', 'Karya Ilmiah', 'Karya Tulis/Artikel', 'Laporan Penelitian', 'Jurnal'
-        ],
-        'karya audio visual': [
-            'Kuliah', 'Karya Rekaman Video', 'Karya Siaran Video'
-        ],
-        'karya lainnya': [
-            'Program Komputer', 'Permainan Video', 'Basis Data'
-        ]
+        'karya tulis': ['Buku', 'E-Book', 'Diktat', 'Modul', 'Buku Panduan/Petunjuk', 'Karya Ilmiah', 'Karya Tulis/Artikel', 'Laporan Penelitian', 'Jurnal'],
+        'karya audio visual': ['Kuliah', 'Karya Rekaman Video', 'Karya Siaran Video'],
+        'karya lainnya': ['Program Komputer', 'Permainan Video', 'Basis Data']
     };
+
     function updateSubJenisCiptaan() {
         const jenis = identitasCiptaanSelect.value;
         const prevValue = "{{ old('sub_jenis_ciptaan', $pengajuan->sub_jenis_ciptaan) }}";
@@ -372,141 +569,127 @@ document.addEventListener('DOMContentLoaded', function() {
     updateSubJenisCiptaan();
     identitasCiptaanSelect.addEventListener('change', updateSubJenisCiptaan);
 
-    // Toggle field NIP/NIDN dan ID Sinta sesuai role (dosen/mahasiswa)
+    // Toggle field NIP/NIDN dan ID Sinta sesuai role
     const roleRadios = document.querySelectorAll('input[name="role"]');
     const nipNidnField = document.getElementById('nip-nidn-field');
     const idSintaField = document.getElementById('id-sinta-field');
-    function toggleRoleSpecificFields() {
-        const selectedRoleRadio = document.querySelector('input[name="role"]:checked');
-        const selectedRole = selectedRoleRadio ? selectedRoleRadio.value : '';
-        if (selectedRole === 'mahasiswa') {
-            // Sembunyikan field NIP/NIDN dan ID Sinta
-            nipNidnField.style.display = 'none';
-            idSintaField.style.display = 'none';
-            // Hapus required dan kosongkan value
-            if (nipNidnField.querySelector('input')) {
-                nipNidnField.querySelector('input').removeAttribute('required');
-                nipNidnField.querySelector('input').value = '';
+    
+    function toggleRoleFields() {
+        const selectedRole = document.querySelector('input[name="role"]:checked')?.value;
+        const nipInput = document.getElementById('nip_nidn');
+        const sintaInput = document.getElementById('id_sinta');
+
+        if (selectedRole === 'dosen') {
+            nipNidnField?.classList.remove('d-none');
+            idSintaField?.classList.remove('d-none');
+
+            // Aktifkan input & jadikan required
+            if (nipInput) {
+                nipInput.removeAttribute('disabled');
+                nipInput.setAttribute('required', 'required');
             }
-            if (idSintaField.querySelector('input')) {
-                idSintaField.querySelector('input').removeAttribute('required');
-                idSintaField.querySelector('input').value = '';
+            if (sintaInput) {
+                sintaInput.removeAttribute('disabled');
+                sintaInput.setAttribute('required', 'required');
             }
         } else {
-            // Tampilkan kembali field NIP/NIDN dan ID Sinta
-            nipNidnField.style.display = '';
-            idSintaField.style.display = '';
-            if (nipNidnField.querySelector('input')) {
-                nipNidnField.querySelector('input').setAttribute('required', true);
+            nipNidnField?.classList.add('d-none');
+            idSintaField?.classList.add('d-none');
+
+            // Nonaktifkan input & hapus required
+            if (nipInput) {
+                nipInput.removeAttribute('required');
+                nipInput.setAttribute('disabled', 'disabled');
+                nipInput.value = '';
+            }
+            if (sintaInput) {
+                sintaInput.removeAttribute('required');
+                sintaInput.setAttribute('disabled', 'disabled');
+                sintaInput.value = '';
             }
         }
     }
-    toggleRoleSpecificFields();
     roleRadios.forEach(radio => {
-        radio.addEventListener('change', toggleRoleSpecificFields);
+        radio.addEventListener('change', toggleRoleFields);
     });
+    toggleRoleFields();
 
-    // Tampilkan tombol Ajukan jika semua field required di seluruh form terisi (support radio group)
-    const btnAjukan = document.getElementById('btn-ajukan');
-    function cekFieldTerisi() {
-        let filled = true;
-        const requiredFields = form.querySelectorAll('input[required], select[required], textarea[required]');
-        const radioNames = new Set();
-        requiredFields.forEach(function(el) {
-            if (el.type === 'radio') {
-                radioNames.add(el.name);
-            } else if (el.offsetParent !== null && !el.value) {
-                filled = false;
-            }
-        });
-        radioNames.forEach(function(name) {
-            const radios = form.querySelectorAll('input[type="radio"][name="' + name + '"]');
-            let checked = false;
-            radios.forEach(function(radio) { if (radio.checked && radio.offsetParent !== null) checked = true; });
-            if (!checked) filled = false;
-        });
-        btnAjukan.style.display = '';
-        btnAjukan.disabled = !filled;
-    }
-    form.querySelectorAll('input,select,textarea').forEach(function(el) {
-        el.addEventListener('input', cekFieldTerisi);
-        el.addEventListener('change', cekFieldTerisi);
-    });
-    cekFieldTerisi();
+    // Toggle contoh ciptaan upload/link
+    const contohCiptaanRadios = document.querySelectorAll('input[name="contoh_ciptaan_type"]');
+    const uploadField = document.getElementById('contoh-ciptaan-upload-field');
+    const linkField = document.getElementById('contoh-ciptaan-link-field');
 
-    // Tambahkan arahan jika user klik tombol Kirim saat data belum lengkap
-    if (btnAjukan) {
-        btnAjukan.addEventListener('click', function(e) {
-            // Validasi dokumen wajib (frontend)
-            let dokumenError = '';
-            // Cek file lama sudah ada atau belum
-            function dokumenLamaAda(tipe) {
-                // Cek apakah ada tombol "Lihat File" untuk tipe dokumen tsb
-                // tipe: 'surat_pengalihan', 'surat_pernyataan', 'ktp'
-                const dokumen = document.querySelectorAll('.file-lama-exists a');
-                for (let i = 0; i < dokumen.length; i++) {
-                    // Cek href mengandung nama file lama dari value dokumen di backend
-                    if (dokumen[i].href && dokumen[i].href !== '#' && dokumen[i].href !== '') return true;
-                }
-                return false;
-            }
-            // Cek dokumen wajib
-            if (
-                (!document.getElementById('surat_pengalihan_hak_cipta').files.length && !dokumenLamaAda('surat_pengalihan'))
-            ) {
-                dokumenError = 'Surat pengalihan hak cipta wajib diupload.';
-            } else if (
-                (!document.getElementById('surat_pernyataan_hak_cipta').files.length && !dokumenLamaAda('surat_pernyataan'))
-            ) {
-                dokumenError = 'Surat pernyataan hak cipta wajib diupload.';
-            } else if (
-                (!document.getElementById('ktp_seluruh_pencipta').files.length && !dokumenLamaAda('ktp'))
-            ) {
-                dokumenError = 'KTP seluruh pencipta wajib diupload.';
-            }
-            if (dokumenError) {
-                e.preventDefault();
-                alert(dokumenError);
-                return false;
-            }
-            // Validasi field lain (seperti sebelumnya)
-            if (btnAjukan.disabled) {
-                e.preventDefault();
-                alert('Lengkapi semua field wajib sebelum mengirim pengajuan!');
-                return false;
-            }
-        });
-    }
-
-    // Filter baris pencipta kosong sebelum submit form
-    document.getElementById('form-edit-draft').addEventListener('submit', function(e) {
-        // Hanya filter jika ada field pencipta
-        const penciptaContainer = document.getElementById('pencipta-container');
-        if (penciptaContainer) {
-            penciptaContainer.querySelectorAll('.card').forEach(function(card) {
-                const nama = card.querySelector('input[name*="[nama]"]');
-                const email = card.querySelector('input[name*="[email]"]');
-                if (nama && email && (!nama.value.trim() && !email.value.trim())) {
-                    // Hapus semua input di card ini agar tidak terkirim
-                    card.querySelectorAll('input,textarea,select').forEach(function(input) {
-                        input.disabled = true;
-                    });
-                }
-            });
+    function toggleContohCiptaan() {
+        const selectedType = document.querySelector('input[name="contoh_ciptaan_type"]:checked')?.value;
+        if (selectedType === 'upload') {
+            uploadField.style.display = 'block';
+            linkField.style.display = 'none';
+        } else if (selectedType === 'link') {
+            uploadField.style.display = 'none';
+            linkField.style.display = 'block';
         }
+    }
+    contohCiptaanRadios.forEach(radio => {
+        radio.addEventListener('change', toggleContohCiptaan);
     });
+    toggleContohCiptaan();
 
-    // Sinkronisasi value dropdown jumlah_pencipta dengan jumlah data pencipta terakhir
+    // Fungsi untuk menangani form pencipta dinamis
     const jumlahPenciptaSelect = document.getElementById('jumlah_pencipta');
-    const jumlahPenciptaHidden = document.getElementById('jumlah_pencipta_hidden');
-    if (jumlahPenciptaSelect && jumlahPenciptaHidden && !jumlahPenciptaSelect.value) {
-        const val = jumlahPenciptaHidden.value;
-        if (val && parseInt(val) > 0) {
-            jumlahPenciptaSelect.value = val + ' orang';
+    const penciptaContainer = document.getElementById('pencipta-container');
+    
+    // Fungsi render form pencipta dinamis
+    function renderPenciptaForm(jumlah) {
+        const existingData = getPenciptaData();
+        penciptaContainer.innerHTML = '';
+        
+        for (let i = 0; i < jumlah; i++) {
+            const currentData = existingData[i] || {};
+            const cardHtml = `
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Data Pencipta ${i+1}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="pencipta[${i}][nama]" id="pencipta-nama-${i}" value="${currentData.nama || ''}" required>
+                                <div class="invalid-feedback">Nama wajib diisi</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="pencipta[${i}][email]" id="pencipta-email-${i}" value="${currentData.email || ''}" required>
+                                <div class="invalid-feedback">Email wajib diisi</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">No. HP</label>
+                                <input type="tel" class="form-control" name="pencipta[${i}][no_hp]" value="${currentData.no_hp || ''}" pattern="^08[0-9]{8,11}$" maxlength="15">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Alamat</label>
+                                <textarea class="form-control" name="pencipta[${i}][alamat]" rows="2">${currentData.alamat || ''}</textarea>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Kecamatan</label>
+                                <input type="text" class="form-control" name="pencipta[${i}][kecamatan]" value="${currentData.kecamatan || ''}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Kode Pos</label>
+                                <input type="text" class="form-control" name="pencipta[${i}][kodepos]" value="${currentData.kodepos || ''}" pattern="^[0-9]{5}$" maxlength="5">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            penciptaContainer.insertAdjacentHTML('beforeend', cardHtml);
         }
     }
-    // Render field pencipta sesuai value dropdown saat halaman dimuat
-    const penciptaContainer = document.getElementById('pencipta-container');
+
     function getPenciptaData() {
         const data = [];
         penciptaContainer.querySelectorAll('.card').forEach(function(card, i) {
@@ -521,115 +704,241 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         return data;
     }
-    function renderPenciptaForm(jumlah) {
-        const penciptaData = getPenciptaData();
-        penciptaContainer.innerHTML = '';
-        for (let i = 0; i < jumlah; i++) {
-            const p = penciptaData[i] || {};
-            penciptaContainer.insertAdjacentHTML('beforeend', `
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h6 class="mb-0">Data Pencipta ${i+1}</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="pencipta[${i}][nama]" value="${p.nama || ''}" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" name="pencipta[${i}][email]" value="${p.email || ''}" required>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">No. HP <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" name="pencipta[${i}][no_hp]" value="${p.no_hp || ''}" required pattern="^08[0-9]{8,11}$" maxlength="15">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Alamat <span class="text-danger">*</span></label>
-                                <textarea class="form-control" name="pencipta[${i}][alamat]" rows="2" required>${p.alamat || ''}</textarea>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Kecamatan <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="pencipta[${i}][kecamatan]" value="${p.kecamatan || ''}" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Kode Pos <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="pencipta[${i}][kodepos]" value="${p.kodepos || ''}" required pattern="^[0-9]{5}$" maxlength="5">
-                                <div class="invalid-feedback">Kode Pos harus 5 digit angka.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `);
-        }
-    }
+
     if (jumlahPenciptaSelect && penciptaContainer) {
-        // Hanya render field pencipta via JS jika user mengubah dropdown
+        // Render initial form based on existing data
+        const initialJumlah = parseInt(document.getElementById('jumlah_pencipta_hidden')?.value) || 1;
+        if (penciptaContainer.children.length === 0) {
+            renderPenciptaForm(initialJumlah);
+        }
+        
         jumlahPenciptaSelect.addEventListener('change', function() {
             const jumlah = parseInt(this.value) || 0;
             renderPenciptaForm(jumlah);
         });
     }
 
-    // Disable tombol Simpan sebagai Draft jika ada pencipta yang belum isi nama/email
-    function cekPenciptaDraftValid() {
-        let valid = true;
-        const penciptaCards = document.querySelectorAll('#pencipta-container .card');
-        penciptaCards.forEach(function(card, idx) {
-            const nama = card.querySelector('input[name*="[nama]"]');
-            const email = card.querySelector('input[name*="[email]"]');
-            const errorNama = card.querySelector('.invalid-feedback#error-nama-' + idx);
-            const errorEmail = card.querySelector('.invalid-feedback#error-email-' + idx);
-            let filled = false;
-            card.querySelectorAll('input,textarea').forEach(function(input) {
-                if (input.value && input.value.trim() !== '') filled = true;
+    // Handle tombol Kirim dengan validasi yang benar
+    if (btnAjukan) {
+        btnAjukan.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            console.log('Tombol Kirim diklik');
+            
+            // Validasi semua field wajib
+            let isValid = true;
+            let errorMessages = [];
+            
+            // Validasi field utama
+            const requiredFields = [
+                { field: 'judul', name: 'Judul Karya' },
+                { field: 'deskripsi', name: 'Deskripsi' },
+                { field: 'nama_pengusul', name: 'Nama Pengusul' },
+                { field: 'no_hp', name: 'Nomor HP' },
+                { field: 'jumlah_pencipta', name: 'Jumlah Pencipta' },
+                { field: 'identitas_ciptaan', name: 'Jenis Ciptaan' },
+                { field: 'sub_jenis_ciptaan', name: 'Sub Jenis Ciptaan' },
+                { field: 'tanggal_pertama_kali_diumumkan', name: 'Tanggal Pertama Kali Diumumkan' }
+            ];
+            
+            requiredFields.forEach(({field, name}) => {
+                const element = document.getElementById(field) || document.querySelector(`[name="${field}"]`);
+                if (element && !element.value.trim()) {
+                    isValid = false;
+                    errorMessages.push(name);
+                    element.classList.add('is-invalid');
+                    console.log(`Field kosong: ${name}`);
+                } else if (element) {
+                    element.classList.remove('is-invalid');
+                }
             });
-            if (filled && (!nama.value.trim() || !email.value.trim())) {
-                valid = false;
-                if (errorNama && !nama.value.trim()) errorNama.classList.remove('d-none');
-                else if (errorNama) errorNama.classList.add('d-none');
-                if (errorEmail && !email.value.trim()) errorEmail.classList.remove('d-none');
-                else if (errorEmail) errorEmail.classList.add('d-none');
+            
+            // Validasi role
+            const selectedRole = document.querySelector('input[name="role"]:checked');
+            if (!selectedRole) {
+                isValid = false;
+                errorMessages.push('Role (Dosen/Mahasiswa)');
+                console.log('Role tidak dipilih');
             } else {
-                if (errorNama) errorNama.classList.add('d-none');
-                if (errorEmail) errorEmail.classList.add('d-none');
+                console.log('Role dipilih:', selectedRole.value);
+                
+                // Validasi khusus untuk dosen
+                if (selectedRole.value === 'dosen') {
+                    const nipNidn = document.getElementById('nip_nidn');
+                    const idSinta = document.getElementById('id_sinta');
+                    if (nipNidn && !nipNidn.value.trim()) {
+                        isValid = false;
+                        errorMessages.push('NIP/NIDN (wajib untuk dosen)');
+                        nipNidn.classList.add('is-invalid');
+                        console.log('NIP/NIDN kosong untuk dosen');
+                    } else if (nipNidn) {
+                        nipNidn.classList.remove('is-invalid');
+                    }
+                    
+                    if (idSinta && !idSinta.value.trim()) {
+                        isValid = false;
+                        errorMessages.push('ID SINTA (wajib untuk dosen)');
+                        idSinta.classList.add('is-invalid');
+                        console.log('ID SINTA kosong untuk dosen');
+                    } else if (idSinta) {
+                        idSinta.classList.remove('is-invalid');
+                    }
+                }
+            }
+            
+            // Validasi contoh ciptaan
+            const contohCiptaanType = document.querySelector('input[name="contoh_ciptaan_type"]:checked');
+            if (!contohCiptaanType) {
+                isValid = false;
+                errorMessages.push('Tipe Contoh Ciptaan');
+                console.log('Tipe contoh ciptaan tidak dipilih');
+            } else {
+                console.log('Tipe contoh ciptaan:', contohCiptaanType.value);
+                
+                if (contohCiptaanType.value === 'upload') {
+                    const fileInput = document.getElementById('contoh_ciptaan');
+                    const fileExists = document.querySelector('.file-lama-exists a[href*="storage/"]');
+                    
+                    if (fileInput && !fileInput.files.length && !fileExists) {
+                        isValid = false;
+                        errorMessages.push('File Contoh Ciptaan');
+                        console.log('File contoh ciptaan tidak ada');
+                    } else {
+                        console.log('File contoh ciptaan OK:', fileInput?.files.length > 0 ? 'New file' : 'Existing file');
+                    }
+                } else if (contohCiptaanType.value === 'link') {
+                    const linkInput = document.querySelector('input[name="contoh_ciptaan_link"]');
+                    if (linkInput && !linkInput.value.trim()) {
+                        isValid = false;
+                        errorMessages.push('Link Contoh Ciptaan');
+                        console.log('Link contoh ciptaan kosong');
+                    } else if (linkInput) {
+                        console.log('Link contoh ciptaan OK:', linkInput.value);
+                    }
+                }
+            }
+            
+            // cek dokumen pendukung
+            function checkDocument(baseName, displayName) {
+                const hiddenInput = document.getElementById(baseName + '_hidden'); // hanya ada bila file lama tersedia
+                const visibleInput = document.getElementById(baseName); // ada bila belum ada file lama / atau setelah "Ganti" ditekan
+
+                const hasExistingFile = !!hiddenInput; // ada file lama
+                const hasNewFile = (hiddenInput && hiddenInput.files && hiddenInput.files.length > 0) ||
+                                   (visibleInput && visibleInput.files && visibleInput.files.length > 0);
+
+                if (!hasExistingFile && !hasNewFile) {
+                    isValid = false;
+                    errorMessages.push(displayName);
+                    console.log(`${displayName} tidak ada (existing: ${hasExistingFile}, new: ${hasNewFile})`);
+            } else {
+                    console.log(`${displayName} OK:`, hasNewFile ? 'New file' : 'Existing file');
+                }
+            }
+            
+            checkDocument('surat_pengalihan_hak_cipta', 'Surat Pengalihan Hak Cipta');
+            checkDocument('surat_pernyataan_hak_cipta', 'Surat Pernyataan Hak Cipta');
+            checkDocument('ktp_seluruh_pencipta', 'KTP Seluruh Pencipta');
+            
+            // Validasi data pencipta
+            const penciptaCards = document.querySelectorAll('#pencipta-container .card');
+            console.log('Jumlah pencipta cards:', penciptaCards.length);
+            
+            penciptaCards.forEach(function(card, idx) {
+                const nama = card.querySelector('input[name*="[nama]"]');
+                const email = card.querySelector('input[name*="[email]"]');
+                
+                if (!nama || !nama.value.trim()) {
+                    isValid = false;
+                    errorMessages.push(`Nama Pencipta ${idx + 1}`);
+                    if (nama) nama.classList.add('is-invalid');
+                    console.log(`Nama pencipta ${idx + 1} kosong`);
+                } else if (nama) {
+                    nama.classList.remove('is-invalid');
+                }
+                
+                if (!email || !email.value.trim()) {
+                    isValid = false;
+                    errorMessages.push(`Email Pencipta ${idx + 1}`);
+                    if (email) email.classList.add('is-invalid');
+                    console.log(`Email pencipta ${idx + 1} kosong`);
+                } else if (email) {
+                    email.classList.remove('is-invalid');
+                }
+            });
+            
+            console.log('Validasi selesai. Valid:', isValid, 'Errors:', errorMessages);
+            
+            if (!isValid) {
+                alert('Data berikut masih belum lengkap:\n- ' + errorMessages.join('\n- ') + '\n\nSilakan lengkapi semua data wajib sebelum mengirim.');
+                // Scroll ke field pertama yang error
+                const firstInvalidField = document.querySelector('.is-invalid');
+                if (firstInvalidField) {
+                    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => firstInvalidField.focus(), 500);
+                }
+                return false;
+            }
+            
+            // Konfirmasi sebelum submit
+            if (!confirm('Apakah Anda yakin ingin mengirim pengajuan ini? Setelah dikirim, data tidak dapat diubah lagi.')) {
+                console.log('User membatalkan pengiriman');
+            return false;
+            }
+            
+            console.log('User mengkonfirmasi pengiriman');
+            
+            // Tambahkan loading state
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...';
+            
+            // Hapus input ajukan yang mungkin sudah ada
+            const existingInputs = form.querySelectorAll('input[name="ajukan"]');
+            existingInputs.forEach(input => {
+                console.log('Menghapus input ajukan yang sudah ada');
+                input.remove();
+            });
+            
+            // Tambahkan input ajukan
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'ajukan';
+            hiddenInput.value = '1';
+            form.appendChild(hiddenInput);
+            
+            console.log('Input ajukan ditambahkan, form akan disubmit');
+            console.log('Form action:', form.action);
+            console.log('Form method:', form.method);
+            
+            // Submit form secara manual
+            try {
+                form.submit();
+                console.log('Form submitted successfully');
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                this.disabled = false;
+                this.innerHTML = 'Kirim';
+                alert('Terjadi kesalahan saat mengirim form. Silakan coba lagi.');
             }
         });
-        return valid;
     }
-    document.getElementById('pencipta-container')?.addEventListener('input', cekPenciptaDraftValid);
-    cekPenciptaDraftValid();
 
-    // Intercept tombol Simpan sebagai Draft
+    // Handle tombol Simpan sebagai Draft
     document.querySelectorAll('button[name="save_as_draft"]').forEach(function(btn) {
-        btn.disabled = false; // pastikan selalu enable
         btn.addEventListener('click', function(e) {
-            const valid = cekPenciptaDraftValid();
-            const notif = document.getElementById('notif-pencipta-draft');
-            if (!valid) {
-                e.preventDefault();
-                if (notif) {
-                    notif.textContent = 'Lengkapi Nama dan Email untuk setiap pencipta sebelum menyimpan draft.';
-                    notif.classList.remove('d-none');
-                    notif.scrollIntoView({behavior: 'smooth', block: 'center'});
-                }
-            } else if (notif) {
-                notif.classList.add('d-none');
-            }
+            // Hapus input ajukan jika ada
+            const existingAjukanInputs = form.querySelectorAll('input[name="ajukan"]');
+            existingAjukanInputs.forEach(input => input.remove());
         });
     });
 
-    // Simpan tab aktif ke localStorage saat user klik tab
+    // Simpan tab aktif ke localStorage
     document.querySelectorAll('#form-tabs .nav-link').forEach(function(tabBtn) {
         tabBtn.addEventListener('click', function() {
             localStorage.setItem('draftTabActive', this.getAttribute('data-bs-target'));
         });
     });
+
     // Aktifkan tab terakhir saat halaman dimuat
     const lastTab = localStorage.getItem('draftTabActive');
     if (lastTab) {
@@ -639,184 +948,74 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Navigasi otomatis ke tab error, tampilkan daftar link ke tab error
-    form.addEventListener('submit', function(e) {
-        let firstInvalid = null;
-        let errorTab = null;
-        let errorMsg = '';
-        let errorTabs = new Set();
-        let errorFields = [];
-        // Cek semua required field yang visible
-        form.querySelectorAll('input[required], select[required], textarea[required]').forEach(function(el) {
-            if (el.offsetParent !== null && !el.value) {
-                if (!firstInvalid) firstInvalid = el;
-                // Cari tab/section
-                let tabPane = el.closest('.tab-pane');
-                if (tabPane) {
-                    errorTab = tabPane.id;
-                    errorTabs.add(tabPane.id);
-                    let label = tabPane.querySelector('label[for="'+el.id+'"]')?.textContent || el.name || 'Field';
-                    errorFields.push({tab: tabPane.id, label: label, el: el});
-                }
-                el.classList.add('is-invalid');
-                errorMsg = 'Ada field wajib yang belum diisi. Silakan lengkapi.';
-            } else {
-                el.classList.remove('is-invalid');
-            }
-        });
-        // Cek radio group (khusus role)
-        const roleRadios = form.querySelectorAll('input[name="role"]');
-        if (roleRadios.length && !Array.from(roleRadios).some(r=>r.checked && r.offsetParent!==null)) {
-            if (!firstInvalid) firstInvalid = roleRadios[0];
-            let tabPane = roleRadios[0].closest('.tab-pane');
-            if (tabPane) {
-                errorTab = tabPane.id;
-                errorTabs.add(tabPane.id);
-                errorFields.push({tab: tabPane.id, label: 'Peran Pengusul', el: roleRadios[0]});
-            }
-            roleRadios.forEach(r=>r.classList.add('is-invalid'));
-            errorMsg = 'Pilih peran pengusul (Dosen/Mahasiswa)';
-        } else {
-            roleRadios.forEach(r=>r.classList.remove('is-invalid'));
-        }
-        // Highlight tab error
-        document.querySelectorAll('#form-tabs .nav-link').forEach(function(tabBtn) {
-            tabBtn.classList.remove('bg-danger','text-white');
-            let target = tabBtn.getAttribute('data-bs-target')?.replace('#','');
-            if (errorTabs.has(target)) {
-                tabBtn.classList.add('bg-danger','text-white');
-            }
-        });
-        // Tampilkan daftar link ke tab error
-        const errorList = document.getElementById('global-error-list');
-        if (errorTabs.size > 0 && errorList) {
-            let html = '<b>Bagian yang perlu diperbaiki:</b><ul>';
-            let tabNames = {
-                'data-pengusul': 'Data Pengusul',
-                'data-ciptaan': 'Data Ciptaan',
-                'data-pencipta': 'Data Pencipta',
-                'dokumen': 'Dokumen Pendukung'
-            };
-            errorTabs.forEach(function(tab) {
-                html += `<li><a href="#" onclick="gotoTab('${tab}');return false;">${tabNames[tab]||tab}</a></li>`;
-            });
-            html += '</ul>';
-            errorList.innerHTML = html;
-            errorList.classList.remove('d-none');
-            errorList.scrollIntoView({behavior:'smooth', block:'center'});
-        } else if (errorList) {
-            errorList.classList.add('d-none');
-        }
-        if (firstInvalid) {
-            e.preventDefault();
-            // Tampilkan pesan error global
-            const alert = document.getElementById('global-error-alert');
-            if (alert) {
-                alert.textContent = errorMsg || 'Ada field wajib yang belum diisi.';
-                alert.classList.remove('d-none');
-                alert.scrollIntoView({behavior:'smooth', block:'center'});
-            }
-            // Pindah ke tab error
-            if (errorTab) {
-                gotoTab(errorTab);
-            }
-            // Fokus ke field error
-            setTimeout(()=>{firstInvalid.focus();}, 300);
-            return false;
-        } else {
-            const alert = document.getElementById('global-error-alert');
-            if (alert) alert.classList.add('d-none');
-            if (errorList) errorList.classList.add('d-none');
-        }
-        // Tampilkan/hilangkan tanda error di tab dan teks error di judul section
-        ['data-pengusul','data-ciptaan','data-pencipta','dokumen'].forEach(function(tab) {
-            const ind = document.getElementById('err-ind-' + tab.replace('data-','data-'));
-            const txt = document.getElementById('err-text-' + tab.replace('data-','data-'));
-            if (errorTabs.has(tab)) {
-                if (ind) ind.classList.remove('d-none');
-                if (txt) txt.classList.remove('d-none');
-            } else {
-                if (ind) ind.classList.add('d-none');
-                if (txt) txt.classList.add('d-none');
-            }
-        });
-        // Inisialisasi tooltip Bootstrap
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
-            new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-    // Fungsi lompat ke tab tertentu
-    function gotoTab(tabId) {
-        const tabBtn = document.querySelector(`#form-tabs .nav-link[data-bs-target='#${tabId}']`);
-        if (tabBtn) {
-            tabBtn.removeAttribute('disabled');
-            tabBtn.click();
-        }
+    // Toggle file input (accessible from inline onclick)
+    window.toggleFileInput = function(baseName) {
+        const hiddenInput = document.getElementById(baseName + '_hidden');
+        if (!hiddenInput) return;
+
+        // Reveal the hidden input
+        hiddenInput.classList.remove('d-none');
+
+        // Set proper name so it will be uploaded
+        hiddenInput.setAttribute('name', baseName);
+
+        // Optional: add required when user chooses to replace
+        hiddenInput.setAttribute('required', true);
+
+        // Trigger click to open file dialog
+        hiddenInput.click();
     }
 
-    // --- LOGIKA TAB HANYA BISA DIKLIK JIKA SUDAH PERNAH DIISI/DIBUKA ---
-    // Key untuk localStorage
-    const visitedKey = 'draftTabVisited';
-    // Ambil status visited dari localStorage
-    let visitedTabs = JSON.parse(localStorage.getItem(visitedKey) || '{}');
-    // Section urut
-    const sectionIds = ['data-pengusul', 'data-ciptaan', 'data-pencipta', 'dokumen'];
+    // ==============================
+    // Realtime preview untuk file baru
+    // ==============================
+    function attachRealtimePreview(fileInput) {
+        if (!fileInput) return;
 
-    // Enable tab yang sudah pernah diisi/dibuka (visited)
-    sectionIds.forEach((sectionId, idx) => {
-        const tabBtn = document.querySelector(`#${sectionId}-tab`);
-        if (tabBtn) {
-            if (idx === 0 || visitedTabs[sectionId]) {
-                tabBtn.removeAttribute('disabled');
-            } else {
-                tabBtn.setAttribute('disabled', 'disabled');
-            }
-        }
-    });
+        fileInput.addEventListener('change', function () {
+            if (!this.files || !this.files.length) return;
 
-    // Saat klik Selanjutnya, enable tab berikutnya dan tandai visited
-    document.querySelectorAll('.next-section').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            const nextSectionId = btn.dataset.next;
-            const nextTabButton = document.querySelector(`#${nextSectionId}-tab`);
-            if (nextTabButton) {
-                nextTabButton.removeAttribute('disabled');
-                // Tandai visited
-                visitedTabs[nextSectionId] = true;
-                localStorage.setItem(visitedKey, JSON.stringify(visitedTabs));
-                // Aktifkan tab berikutnya
-                new bootstrap.Tab(nextTabButton).show();
+            // Buat/ambil object URL
+            const file = this.files[0];
+            const newUrl = URL.createObjectURL(file);
+
+            // Cari (atau buat) link preview setelah input
+            let previewLink = document.getElementById('preview-' + this.id);
+            if (!previewLink) {
+                previewLink = document.createElement('a');
+                previewLink.id = 'preview-' + this.id;
+                previewLink.className = 'btn btn-sm btn-info mt-2';
+                previewLink.target = '_blank';
+                previewLink.innerHTML = '<i class="fas fa-eye me-1"></i> Lihat File (baru)';
+                // Sisipkan setelah input
+                this.parentNode.insertBefore(previewLink, this.nextSibling);
             }
+
+            // Jika sebelumnya ada URL, revoke
+            if (previewLink.dataset.currentUrl) {
+                URL.revokeObjectURL(previewLink.dataset.currentUrl);
+            }
+
+            previewLink.href = newUrl;
+            previewLink.dataset.currentUrl = newUrl;
         });
-    });
-
-    // Saat klik tab, hanya izinkan jika sudah enable
-    document.querySelectorAll('#form-tabs .nav-link').forEach(function(tabBtn) {
-        tabBtn.addEventListener('click', function(e) {
-            if (tabBtn.hasAttribute('disabled')) {
-                e.preventDefault();
-                e.stopPropagation();
-                return false;
-            }
-            // Tandai tab ini sebagai visited
-            const sectionId = tabBtn.getAttribute('data-bs-target').replace('#','');
-            visitedTabs[sectionId] = true;
-            localStorage.setItem(visitedKey, JSON.stringify(visitedTabs));
-        });
-    });
-
-    // Reset visited jika user reload dan data draft baru (opsional, bisa disesuaikan)
-    // ... existing code ...
-});
-
-function toggleFileInput(id) {
-    var input = document.getElementById(id);
-    if (input) {
-        input.classList.toggle('d-none');
-        input.value = '';
-        input.scrollIntoView({behavior: 'smooth', block: 'center'});
     }
+
+    // Inisialisasi preview untuk semua input file yang relevan
+    const fileInputIds = [
+        'surat_pengalihan_hak_cipta_hidden',
+        'surat_pengalihan_hak_cipta',
+        'surat_pernyataan_hak_cipta_hidden',
+        'surat_pernyataan_hak_cipta',
+        'ktp_seluruh_pencipta_hidden',
+        'ktp_seluruh_pencipta',
+        'contoh_ciptaan'
+    ];
+
+    fileInputIds.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) attachRealtimePreview(input);
+    });
 }
 </script>
 @endpush

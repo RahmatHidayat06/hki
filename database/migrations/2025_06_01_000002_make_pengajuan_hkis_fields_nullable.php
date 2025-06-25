@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::table('pengajuan_hkis', function (Blueprint $table) {
             $table->string('judul_karya')->nullable()->change();
-            $table->string('kategori')->nullable()->change();
             $table->text('deskripsi')->nullable()->change();
         });
     }
@@ -19,7 +18,6 @@ return new class extends Migration
     {
         Schema::table('pengajuan_hkis', function (Blueprint $table) {
             $table->string('judul_karya')->nullable(false)->change();
-            $table->string('kategori')->nullable(false)->change();
             $table->text('deskripsi')->nullable(false)->change();
         });
     }

@@ -1,6 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
+<x-page-header 
+    title="Notifikasi" 
+    description="Kelola notifikasi sistem"
+    icon="fas fa-bell"
+/>
+
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
@@ -57,6 +63,24 @@
                                             Status: {{ $item->pengajuanHki->status ?? 'Tidak tersedia' }}
                                         </small>
                                         <div>
+                                            @php
+                                                $actionRoute = null;
+                                                $actionLabel = null;
+                                                if(auth()->user()->role === 'admin'){
+                                                    if(Str::contains($item->judul, 'Divalidasi')){
+                                                        $actionRoute = route('admin.pengajuan.show', $item->pengajuan_hki_id);
+                                                        $actionLabel = 'Finalisasi';
+                                                    }elseif(Str::contains($item->judul, 'Verifikasi Pembayaran')){
+                                                        $actionRoute = route('admin.pengajuan.show', $item->pengajuan_hki_id);
+                                                        $actionLabel = 'Verifikasi';
+                                                    }
+                                                }
+                                            @endphp
+                                            @if($actionRoute)
+                                                <a href="{{ $actionRoute }}" class="btn btn-sm btn-primary me-2">
+                                                    {{ $actionLabel }}
+                                                </a>
+                                            @endif
                                             @if(!$item->dibaca)
                                                 <form action="{{ route('notifikasi.markAsRead', $item->id) }}" method="POST" class="d-inline">
                                                     @csrf

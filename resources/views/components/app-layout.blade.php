@@ -22,7 +22,7 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('pengajuan.index') }}">Pengajuan</a>
                         </li>
-                        @if(auth()->user()->role === 'admin_p3m')
+                        @if(auth()->user()->role === 'admin')
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('validasi.index') }}">Validasi</a>
                             </li>

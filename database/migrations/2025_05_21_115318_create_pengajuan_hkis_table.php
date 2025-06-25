@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('nomor_pengajuan')->unique();
             $table->string('judul_karya');
             $table->text('deskripsi');
-            $table->string('kategori');
             $table->string('status')->default('pending');
             $table->date('tanggal_pengajuan');
             $table->date('tanggal_selesai')->nullable();

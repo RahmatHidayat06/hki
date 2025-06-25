@@ -4,46 +4,48 @@ namespace App\Http\Controllers;
 
 use App\Models\PengajuanHki;
 use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade as PDF;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Str;
 
 class SuratController extends Controller
 {
     // Generate surat pengalihan
-    public function pengalihan($id)
+    public function pengalihan(PengajuanHki $pengajuan)
     {
-        $pengajuan = PengajuanHki::findOrFail($id);
-        $direktur = $pengajuan->user; // atau ambil user dengan role direktur
-        $ttdPath = $direktur && $direktur->ttd_path ? storage_path('app/public/' . $direktur->ttd_path) : null;
+        // Tanda tangan diambil dari user yang terkait dengan pengajuan (si pengusul)
+        $pengusul = $pengajuan->user; 
+        $ttdPath = ($pengusul && $pengusul->ttd_path) ? storage_path('app/public/' . $pengusul->ttd_path) : null;
+        
+        // Path ke file gambar materai
         $materaiPath = public_path('img/materai10rb.png');
 
-        // Ensure the document has the director's signature
-        if (!$ttdPath) {
-            return back()->with('error', 'Tanda tangan direktur tidak ditemukan.');
-        }
+        $data = [
+            'pengajuan' => $pengajuan,
+            'ttdPath' => $ttdPath,
+            'materaiPath' => $materaiPath,
+        ];
 
-        $pdf = PDF::loadView('surat.pengalihan', compact('pengajuan', 'ttdPath', 'materaiPath'));
-        return $pdf->download('Surat_Pengalihan.pdf');
+        $pdf = Pdf::loadView('surat.pengalihan', $data);
+        return $pdf->download('Surat_Pengalihan_Hak_Cipta_'.Str::slug($pengajuan->judul_karya).'.pdf');
     }
 
     // Generate surat pernyataan
-    public function pernyataan($id)
+    public function pernyataan(PengajuanHki $pengajuan)
     {
-        $pengajuan = PengajuanHki::findOrFail($id);
-        $direktur = $pengajuan->user; // atau ambil user dengan role direktur
-        $ttdPath = $direktur && $direktur->ttd_path ? storage_path('app/public/' . $direktur->ttd_path) : null;
+        // Tanda tangan diambil dari user yang terkait dengan pengajuan (si pengusul)
+        $pengusul = $pengajuan->user;
+        $ttdPath = ($pengusul && $pengusul->ttd_path) ? storage_path('app/public/' . $pengusul->ttd_path) : null;
+
+        // Path ke file gambar materai
         $materaiPath = public_path('img/materai10rb.png');
+        
+        $data = [
+            'pengajuan' => $pengajuan,
+            'ttdPath' => $ttdPath,
+            'materaiPath' => $materaiPath,
+        ];
 
-        // Ensure the document has the director's signature
-        if (!$ttdPath) {
-            return back()->with('error', 'Tanda tangan direktur tidak ditemukan.');
-        }
-
-        // Ensure the document includes a stamp
-        if (!$materaiPath) {
-            return back()->with('error', 'Materai tidak ditemukan.');
-        }
-
-        $pdf = PDF::loadView('surat.pernyataan', compact('pengajuan', 'ttdPath', 'materaiPath'));
-        return $pdf->download('Surat_Pernyataan.pdf');
+        $pdf = Pdf::loadView('surat.pernyataan', $data);
+        return $pdf->download('Surat_Pernyataan_'.Str::slug($pengajuan->judul_karya).'.pdf');
     }
 } 

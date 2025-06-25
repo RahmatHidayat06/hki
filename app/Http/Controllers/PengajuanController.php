@@ -19,11 +19,51 @@ class PengajuanController extends Controller
         $this->redirector = $redirector;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $pengajuan = PengajuanHki::when(Auth::user()->role === 'dosen', function ($query) {
-            return $query->where('user_id', Auth::id());
-        })->latest()->paginate(10);
+        $query = PengajuanHki::query();
+
+        // Batasi hanya pengajuan milik dosen/mahasiswa yang login
+        if (in_array(Auth::user()->role, ['dosen', 'mahasiswa'])) {
+            $query->where('user_id', Auth::id());
+        }
+
+        // Pencarian global
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('judul_karya', 'like', "%{$search}%")
+                  ->orWhere('nama_pengusul', 'like', "%{$search}%")
+                  ->orWhere('nomor_pengajuan', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter status
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        // Rentang tanggal dibuat
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->input('date_from'));
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->input('date_to'));
+        }
+
+        // Sorting
+        switch ($request->input('sort')) {
+            case 'oldest':
+                $query->oldest();
+                break;
+            case 'title':
+                $query->orderBy('judul_karya');
+                break;
+            default: // newest
+                $query->latest();
+        }
+
+        $pengajuan = $query->paginate(10)->appends($request->query());
 
         return view('pengajuan.index', compact('pengajuan'));
     }

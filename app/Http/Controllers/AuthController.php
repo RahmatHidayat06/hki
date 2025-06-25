@@ -36,10 +36,10 @@ class AuthController extends Controller
             // Redirect berdasarkan role
             $user = Auth::user();
             switch($user->role) {
-                case 'admin_p3m':
-                    return $this->redirector->to('/validasi');
+                case 'admin':
+                    return $this->redirector->to('/admin/dashboard');
                 case 'direktur':
-                    return $this->redirector->to('/persetujuan');
+                    return $this->redirector->to('/dashboard');
                 default:
                     return $this->redirector->to('/dashboard');
             }

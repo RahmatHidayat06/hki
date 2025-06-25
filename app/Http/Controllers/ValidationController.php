@@ -15,7 +15,7 @@ class ValidationController extends Controller
     public function __construct(Redirector $redirector)
     {
         $this->middleware('auth');
-        $this->middleware('role:admin_p3m');
+        $this->middleware('role:admin');
         $this->redirector = $redirector;
     }
 

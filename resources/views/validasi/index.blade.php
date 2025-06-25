@@ -25,7 +25,7 @@
                                         <th>Jenis HKI</th>
                                         <th>Pengaju</th>
                                         <th>Tanggal</th>
-                                        <th>Aksi</th>
+                                        <th>Finalisasi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -36,7 +36,11 @@
                                         <td>{{ $item->user->name ?? '-' }}</td>
                                         <td>{{ $item->created_at ? $item->created_at->format('d/m/Y') : '-' }}</td>
                                         <td>
-                                            <a href="{{ route('validasi.show', $item) }}" class="btn btn-success btn-sm" title="Lihat Detail & Validasi">Validasi</a>
+                                            <form action="{{ route('validasi.finalize', $item) }}" method="POST" onsubmit="return confirm('Finalisasi validasi dan ubah status menjadi Menunggu Pembayaran?');">
+                                                @csrf
+                                                @method('PUT')
+                                                <button type="submit" class="btn btn-primary btn-sm">Finalisasi</button>
+                                            </form>
                                         </td>
                                     </tr>
                                     @endforeach

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Test</title>
+</head>
+<body>
+    <h1>PDF Loading Test</h1>
+    <p>Testing PDF: <a href='/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf' target='_blank'>/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf</a></p>
+    <iframe src='/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf' width='100%' height='600px' style='border: 1px solid #ccc;'></iframe>
+    
+    <script>
+        // Test if PDF can be fetched
+        fetch('/storage/dokumen_pengalihan/sRrL48qFOLnSFBWvgvxI7h4eoWOFaaCDnxi5ZyRB.pdf', { method: 'HEAD' })
+            .then(response => {
+                console.log('PDF fetch test:', response.status, response.statusText);
+                if (response.ok) {
+                    document.body.style.backgroundColor = '#d4edda';
+                    document.querySelector('h1').innerHTML = '✅ PDF Accessible!';
+                } else {
+                    document.body.style.backgroundColor = '#f8d7da';
+                    document.querySelector('h1').innerHTML = '❌ PDF Not Accessible!';
+                }
+            })
+            .catch(error => {
+                console.error('PDF fetch error:', error);
+                document.body.style.backgroundColor = '#f8d7da';
+                document.querySelector('h1').innerHTML = '❌ PDF Fetch Failed!';
+            });
+    </script>
+</body>
+</html>
