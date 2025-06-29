@@ -127,408 +127,161 @@
             max-width: 150px !important;
             min-width: 120px !important;
         }
-
-        /* Enhanced Sidebar Styles */
-        body { 
-            background: #f8f9fa; 
-            transition: margin-left 0.3s ease;
-            padding-top: 90px; /* Compact header height */
-        }
-        
+    </style>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <style>
+        body { background: #f8f9fa; }
         .sidebar {
             min-height: 100vh;
             background: #0a2a6c;
             color: #fff;
             width: 250px;
             position: fixed;
-            top: 90px; /* Position below header */
-            left: 0;
-            z-index: 999; /* Below header but above content */
-            transition: transform 0.3s ease;
-            overflow-y: auto;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-            height: calc(100vh - 90px); /* Adjust height for header */
-        }
-        
-        .sidebar.collapsed {
-            transform: translateX(-250px);
-        }
-        
-        .sidebar-toggle {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            z-index: 1100;
-            background: #0a2a6c;
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 5px;
+            top: 0; left: 0;
+            z-index: 1000;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: background 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
+            flex-direction: column;
         }
-        
-        .sidebar-toggle:hover {
-            background: #1e3a8a;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        }
-        
         .sidebar .logo {
-            padding: 20px 15px;
+            padding: 1rem 0.75rem 0.75rem 0.75rem;
             text-align: center;
             border-bottom: 1px solid #233366;
-            background: #233366;
         }
-        
         .sidebar .logo img {
-            max-width: 60px;
-            margin-bottom: 10px;
+            max-width: 100px;
+            margin-bottom: 0.25rem;
         }
-        
-        .sidebar .logo-text {
-            font-size: 16px;
-            font-weight: 600;
-            color: #FFD600;
-        }
-        
         .sidebar .nav-link {
-            color: rgba(255, 255, 255, 0.9) !important;
+            color: #fff !important;
             font-weight: 500;
-            border-radius: 0;
-            margin: 0;
-            padding: 12px 20px;
-            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin: 0.25rem 0;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.2s ease;
             text-decoration: none !important;
-            display: flex !important;
-            align-items: center;
+            display: block !important;
             border: none !important;
             outline: none !important;
             box-shadow: none !important;
-            border-left: 3px solid transparent;
         }
-        
-        .sidebar .nav-link:hover {
-            background: #233366 !important;
-            color: #fff !important;
-            border-left-color: #FFD600;
-        }
-        
-        .sidebar .nav-link.active {
+        .sidebar .nav-link.active, .sidebar .nav-link:hover {
             background: #FFD600 !important;
             color: #0a2a6c !important;
-            border-left-color: #FFC107;
         }
-        
-        .sidebar .nav-link i {
-            font-size: 16px;
-            width: 20px;
-            text-align: center;
-            margin-right: 10px;
+        .sidebar .nav-link:focus {
+            background: #FFD600 !important;
+            color: #0a2a6c !important;
+            box-shadow: none !important;
+            outline: none !important;
         }
-        
-        .sidebar .nav-text {
-            white-space: nowrap;
-        }
-        
         .sidebar .nav-sub-link {
             color: rgba(255, 255, 255, 0.8) !important;
             font-weight: 400;
-            margin: 0 !important;
-            padding: 10px 20px 10px 50px !important;
-            font-size: 14px !important;
-            background: rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border-left: 3px solid transparent;
+            margin: 0.125rem 0.75rem !important;
+            padding: 0.625rem 1rem !important;
+            font-size: 0.875rem !important;
+            position: relative;
         }
-        
         .sidebar .nav-sub-link:hover {
             background: rgba(255, 214, 0, 0.1) !important;
             color: #FFD600 !important;
             border-left-color: #FFD600;
+            transform: translateX(4px);
         }
-        
         .sidebar .nav-sub-link.active {
             background: rgba(255, 214, 0, 0.2) !important;
             color: #FFD600 !important;
             border-left-color: #FFD600;
+            font-weight: 500;
         }
-        
         .sidebar .nav-accordion-toggle {
             cursor: pointer !important;
             user-select: none !important;
         }
-        
         .sidebar .nav-accordion-toggle[data-expanded="true"] .nav-chevron {
             transform: rotate(180deg) !important;
         }
-        
-        .sidebar .nav-chevron {
-            transition: transform 0.3s ease;
-            margin-left: auto;
-        }
-        
         .sidebar .nav-submenu {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease;
         }
-        
         .sidebar .nav-submenu.show {
             max-height: 200px;
         }
-        
-        .main-content { 
-            margin-left: 250px; 
-            padding: 20px; 
-            padding-top: 0; /* Remove top padding since body has padding-top */
-            transition: margin-left 0.3s ease;
-            min-height: calc(100vh - 90px); /* Adjust for header */
+        .sidebar .sidebar-footer {
+            margin-top: auto;
+            padding: 1rem;
+            border-top: 1px solid #233366;
+            text-align: center;
         }
-        
-        .main-content.expanded {
-            margin-left: 0;
-        }
-        
-        .no-sidebar { 
-            margin-left: 0 !important; 
-            padding: 20px !important; 
-        }
-        
-        /* Mobile Responsiveness */
-        @media (max-width: 768px) {
-            body {
-                padding-top: 80px; /* Smaller header on mobile */
-            }
-            
-            .sidebar {
-                top: 80px;
-                height: calc(100vh - 80px);
-                transform: translateX(-250px);
-            }
-            
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
-            
-            .main-content {
-                margin-left: 0 !important;
-                min-height: calc(100vh - 80px);
-            }
-            
-            .sidebar-toggle {
-                left: 15px;
-            }
-            
-            .sidebar-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 998;
-                opacity: 0;
-                visibility: hidden;
-                transition: all 0.3s ease;
-            }
-            
-            .sidebar-overlay.show {
-                opacity: 1;
-                visibility: visible;
-            }
-        }
-        
-        /* Scrollbar Styling */
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .sidebar::-webkit-scrollbar-track {
-            background: #233366;
-        }
-        
-        .sidebar::-webkit-scrollbar-thumb {
-            background: #FFD600;
-            border-radius: 3px;
-        }
-        
-        .sidebar::-webkit-scrollbar-thumb:hover {
-            background: #FFC107;
-        }
-
-        /* Remove duplicate header elements from main content */
-        .main-content .position-absolute {
-            display: none !important;
-        }
-
-        /* Remove padding fix since header is sticky inside flow */
-        .main-content {
-            padding-top: 1rem;
-        }
-
-        /* === Global Header & Sidebar Alignment === */
-        :root {
-            --header-height: 60px; /* adjust if header taller */
-        }
-        .app-header {
-            position: fixed;
-            top: 0;
-            left: 0;
+        .sidebar .sidebar-footer .dropdown-menu {
+            left: auto;
             right: 0;
-            height: var(--header-height);
-            z-index: 1050;
         }
-        .sidebar {
-            top: var(--header-height);
-            height: calc(100% - var(--header-height));
+        @media (max-width: 991.98px) {
+            .sidebar { 
+                width: 100%; 
+                min-height: auto; 
+                position: relative; 
+            }
+            .main-content { 
+                margin-left: 0 !important; 
+            }
         }
-        .sidebar-overlay {
-            top: var(--header-height);
-        }
-        .main-content.has-sidebar {
-            padding-top: var(--header-height);
-        }
-        
-        .modern-header .container-fluid {
-            padding-left: 0;
-        }
+        .main-content { margin-left: 250px; padding: 2rem 1rem 1rem 1rem; }
+        .no-sidebar { margin-left: 0 !important; padding: 0 !important; }
     </style>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
     @php
         $unreadNotifications = auth()->check() ? \App\Models\Notifikasi::where('user_id', auth()->id())->where('dibaca', false)->count() : 0;
         $latestNotifications = auth()->check() ? \App\Models\Notifikasi::where('user_id', auth()->id())->latest()->take(5)->get() : collect();
     @endphp
-    
     @auth
-    <!-- Sidebar Toggle Button -->
-    <button class="sidebar-toggle d-none" id="sidebarToggleOld">
-        <i class="fas fa-bars"></i>
-    </button>
-    
-    <!-- Mobile Overlay -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    
-    <header class="app-header bg-white border-bottom shadow-sm">
-        <div class="container-fluid px-3 d-flex align-items-center justify-content-between">
-            <!-- Left Side -->
-            <div class="d-flex align-items-center gap-3">
-                <a href="{{ route('dashboard') }}" class="d-flex align-items-center text-decoration-none text-dark gap-2">
-                    <img src="/img/logo-hki.png" alt="Logo HKI" style="height:32px;width:auto">
-                    <span class="fw-bold d-none d-md-inline">Sistem Pengajuan HKI</span>
-                </a>
-                <button id="sidebarToggle" class="btn btn-sm btn-outline-secondary">
-                    <i class="fas fa-bars"></i>
-                </button>
-            </div>
-
-            <!-- Right Side -->
-            <div class="d-flex align-items-center gap-3">
-                <div class="d-none d-lg-block text-end">
-                    <div id="header-time" class="text-primary fw-semibold small">--:--:--</div>
-                    <div id="header-date" class="text-muted small">Loading...</div>
-                </div>
-                
-                @php
-                    $unreadCount = auth()->check() ? \App\Models\Notifikasi::where('user_id', auth()->id())->where('dibaca', false)->count() : 0;
-                @endphp
-                <!-- Notifications Dropdown -->
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-light position-relative rounded-circle border-0" 
-                            id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-bell text-secondary"></i>
-                        @if($unreadCount > 0)
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem;">
-                                {{ $unreadCount }}
-                            </span>
-                        @endif
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" style="min-width: 300px;">
-                        <!-- Notification content will be loaded here via JS or livewire for better performance -->
-                        <div class="p-3 text-center text-muted">Notifikasi akan muncul di sini.</div>
-                    </div>
-                </div>
-
-                <!-- User Profile Dropdown -->
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-light dropdown-toggle border-0 rounded-pill px-2 py-1" 
-                            id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <div class="d-flex align-items-center">
-                            <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center text-white fw-bold" 
-                                 style="width: 28px; height: 28px; font-size: 0.75rem;">
-                                {{ strtoupper(substr(auth()->user()->nama_lengkap ?? auth()->user()->name ?? 'U', 0, 1)) }}
-                            </div>
-                            <span class="d-none d-md-inline text-dark fw-medium" style="font-size: 0.85rem;">
-                                {{ \Illuminate\Support\Str::limit(auth()->user()->nama_lengkap ?? auth()->user()->name ?? 'User', 12) }}
-                            </span>
-                        </div>
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" style="min-width: 200px;">
-                        <div class="dropdown-header">
-                            <div class="fw-bold">{{ auth()->user()->nama_lengkap ?? auth()->user()->name ?? 'User' }}</div>
-                            <small class="text-muted text-capitalize">{{ auth()->user()->role ?? 'User' }}</small>
-                        </div>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item py-2" href="{{ route('profile.edit') }}"><i class="fas fa-user-edit me-2 text-secondary"></i> Profile</a>
-                        <div class="dropdown-divider"></div>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="dropdown-item py-2 text-danger"><i class="fas fa-sign-out-alt me-2"></i> Logout</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
+    <div class="sidebar">
+        <div class="logo">
+            <img src="/img/logo-hki.png" alt="Logo HKI" class="img-fluid mb-2">
         </div>
-    </header>
-    
-    <div class="sidebar" id="sidebar">
-        <nav class="nav flex-column px-2 pt-3">
+        <nav class="nav flex-column px-2 mt-3">
             @if(auth()->user()->role === 'admin')
                 <a href="{{ route('admin.dashboard') }}" class="nav-link{{ request()->routeIs('admin.dashboard') ? ' active' : '' }} dashboard-link">
-                    <i class="fas fa-th-large"></i>
-                    <span class="nav-text">Dashboard Admin</span>
+                    <i class="fas fa-th-large me-2"></i> Dashboard Admin
                 </a>
                 <a href="{{ route('admin.pengajuan') }}" class="nav-link{{ request()->routeIs('admin.pengajuan') ? ' active' : '' }}">
-                    <i class="fas fa-list"></i>
-                    <span class="nav-text">Daftar Pengajuan</span>
+                    <i class="fas fa-list me-2"></i> Daftar Pengajuan
                 </a>
                 <a href="{{ route('admin.rekap') }}" class="nav-link{{ request()->routeIs('admin.rekap') ? ' active' : '' }}">
-                    <i class="fas fa-file-excel"></i>
-                    <span class="nav-text">Rekap Data</span>
+                    <i class="fas fa-file-excel me-2"></i> Rekap Data
                 </a>
             @elseif(auth()->user()->role === 'direktur')
                 <a href="{{ route('dashboard') }}" class="nav-link{{ request()->routeIs('dashboard') ? ' active' : '' }} dashboard-link">
-                    <i class="fas fa-th-large"></i>
-                    <span class="nav-text">Dashboard Direktur</span>
+                    <i class="fas fa-th-large me-2"></i> Dashboard Direktur
                 </a>
                 <a href="{{ route('persetujuan.index') }}" class="nav-link{{ request()->routeIs('persetujuan.index') ? ' active' : '' }}">
-                    <i class="fas fa-check-circle"></i>
-                    <span class="nav-text">Persetujuan</span>
+                    <i class="fas fa-check-circle me-2"></i> Persetujuan
                 </a>
             @else
                 <a href="{{ route('dashboard') }}" class="nav-link{{ request()->routeIs('dashboard') ? ' active' : '' }} dashboard-link">
-                    <i class="fas fa-th-large"></i>
-                    <span class="nav-text">Dashboard</span>
+                    <i class="fas fa-th-large me-2"></i> Dashboard
                 </a>
                 
                 <!-- Enhanced Menu for Dosen/Mahasiswa -->
                 <div class="nav-section mt-2">
                     <div class="nav-accordion-toggle nav-link d-flex align-items-center justify-content-between{{ request()->is('pengajuan*') || request()->is('draft*') || request()->routeIs('pengajuan.*') || request()->routeIs('draft.*') ? ' active' : '' }}" 
                          data-target="#hakiSubmenu" 
-                         data-expanded="{{ request()->is('pengajuan*') || request()->is('draft*') || request()->routeIs('pengajuan.*') || request()->routeIs('draft.*') ? 'true' : 'false' }}">
-                        <span class="d-flex align-items-center">
-                            <i class="fas fa-copyright"></i>
-                            <span class="nav-text">Hak Cipta</span>
+                         data-expanded="{{ request()->is('pengajuan*') || request()->is('draft*') || request()->routeIs('pengajuan.*') || request()->routeIs('draft.*') ? 'true' : 'false' }}"
+                         style="cursor: pointer; user-select: none;">
+                        <span>
+                            <i class="fas fa-copyright me-2"></i> Hak Cipta
                         </span>
-                        <i class="fas fa-chevron-down nav-chevron" style="font-size: 0.75rem;"></i>
+                        <i class="fas fa-chevron-down nav-chevron" style="font-size: 0.75rem; transition: transform 0.3s ease; opacity: 0.8;"></i>
                     </div>
                     
-                    <div class="nav-submenu{{ request()->is('pengajuan*') || request()->is('draft*') || request()->routeIs('pengajuan.*') || request()->routeIs('draft.*') ? ' show' : '' }}" id="hakiSubmenu">
+                    <div class="nav-submenu{{ request()->is('pengajuan*') || request()->is('draft*') || request()->routeIs('pengajuan.*') || request()->routeIs('draft.*') ? ' show' : '' }}" id="hakiSubmenu" style="overflow: hidden; transition: max-height 0.3s ease;">
                         <div class="ms-3 mt-2">
                             <a href="{{ route('pengajuan.create') }}" class="nav-link nav-sub-link{{ request()->routeIs('pengajuan.create') ? ' active' : '' }}">
                                 <i class="fas fa-plus-circle me-2" style="font-size: 0.8rem;"></i> Permohonan Baru
@@ -544,28 +297,71 @@
                 </div>
                 <!-- Pembayaran Link -->
                 <a href="{{ route('pembayaran.index') }}" class="nav-link{{ request()->routeIs('pembayaran.*') ? ' active' : '' }}">
-                    <i class="fas fa-wallet"></i>
-                    <span class="nav-text">Pembayaran</span>
+                    <i class="fas fa-wallet me-2"></i> Pembayaran
                 </a>
             @endif
         </nav>
     </div>
     @endauth
-    
-    <main class="main-content @auth has-sidebar @endauth position-relative @guest no-sidebar w-100 p-0 @endguest" id="mainContent">
+    <main class="main-content position-relative @guest no-sidebar w-100 p-0 @endguest">
+        @auth
+        <div class="position-absolute top-0 end-0 mt-3 me-5 d-flex align-items-center gap-2" style="z-index:1100;">
+            <!-- Notification Dropdown -->
+            <div class="dropdown">
+                <a href="#" class="btn btn-light position-relative" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-bell"></i>
+                    @if($unreadNotifications > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ $unreadNotifications }}
+                        </span>
+                    @endif
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end bg-light border-0 shadow-sm" style="min-width: 300px;" aria-labelledby="notifDropdown">
+                    @forelse($latestNotifications as $notif)
+                        <li>
+                            <a href="{{ route('notifikasi.index') }}" class="dropdown-item small {{ $notif->dibaca ? 'text-muted' : '' }}">
+                                {{ \Illuminate\Support\Str::limit($notif->judul ?? $notif->pesan, 50) }}
+                                <br>
+                                <small class="text-muted">{{ $notif->created_at->diffForHumans() }}</small>
+                            </a>
+                        </li>
+                    @empty
+                        <li><span class="dropdown-item text-muted">Tidak ada notifikasi</span></li>
+                    @endforelse
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-center" href="{{ route('notifikasi.index') }}">Lihat Semua</a></li>
+                </ul>
+            </div>
+
+            <!-- Profile Dropdown -->
+            <div class="dropdown">
+                <a href="#" class="btn btn-light dropdown-toggle d-flex align-items-center" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="font-weight:600;">
+                    <i class="fas fa-user-circle me-2"></i> {{ auth()->user()->nama_lengkap ?? auth()->user()->name }}
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end bg-light border-0 shadow-sm" aria-labelledby="userDropdown">
+                    <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Profile</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="dropdown-item">Logout</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        @endauth
         @if(session('success'))
             <div class="container">
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <div class="alert alert-success">
                     {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             </div>
         @endif
         @if(session('error'))
             <div class="container">
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <div class="alert alert-danger">
                     {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             </div>
         @endif
@@ -580,86 +376,7 @@
     <!-- Enhanced Sidebar Functionality -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-
-            
-            // Sidebar functionality
-            const sidebar = document.getElementById('sidebar');
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const sidebarOverlay = document.getElementById('sidebarOverlay');
-            const mainContent = document.getElementById('mainContent');
-            let isMobile = window.innerWidth <= 768;
-            let sidebarOpen = !isMobile; // Default open on desktop, closed on mobile
-            
-            // Initialize sidebar state
-            function initializeSidebar() {
-                if (isMobile) {
-                    sidebar.classList.add('collapsed');
-                    mainContent.classList.add('expanded');
-                    sidebarOpen = false;
-                } else {
-                    sidebar.classList.remove('collapsed');
-                    mainContent.classList.remove('expanded');
-                    sidebarOpen = true;
-                }
-            }
-            
-            // Toggle sidebar
-            function toggleSidebar() {
-                if (isMobile) {
-                    // Mobile behavior - overlay
-                    if (sidebarOpen) {
-                        sidebar.classList.remove('mobile-open');
-                        sidebarOverlay.classList.remove('show');
-                        document.body.style.overflow = '';
-                        sidebarOpen = false;
-                    } else {
-                        sidebar.classList.add('mobile-open');
-                        sidebarOverlay.classList.add('show');
-                        document.body.style.overflow = 'hidden';
-                        sidebarOpen = true;
-                    }
-                } else {
-                    // Desktop behavior - slide
-                    if (sidebarOpen) {
-                        sidebar.classList.add('collapsed');
-                        mainContent.classList.add('expanded');
-                        sidebarOpen = false;
-                    } else {
-                        sidebar.classList.remove('collapsed');
-                        mainContent.classList.remove('expanded');
-                        sidebarOpen = true;
-                    }
-                }
-            }
-            
-            // Event listeners
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', toggleSidebar);
-            }
-            
-            if (sidebarOverlay) {
-                sidebarOverlay.addEventListener('click', function() {
-                    if (isMobile && sidebarOpen) {
-                        toggleSidebar();
-                    }
-                });
-            }
-            
-            // Handle window resize
-            window.addEventListener('resize', function() {
-                const wasMobile = isMobile;
-                isMobile = window.innerWidth <= 768;
-                
-                if (wasMobile !== isMobile) {
-                    // Reset sidebar state when switching between mobile/desktop
-                    sidebar.classList.remove('mobile-open');
-                    sidebarOverlay.classList.remove('show');
-                    document.body.style.overflow = '';
-                    initializeSidebar();
-                }
-            });
-            
-            // Accordion functionality
+            // Custom accordion functionality for sidebar
             const accordionToggles = document.querySelectorAll('.nav-accordion-toggle');
             
             accordionToggles.forEach(toggle => {
@@ -674,12 +391,14 @@
                     
                     if (target) {
                         if (isExpanded) {
+                            // Collapse
                             target.classList.remove('show');
                             this.setAttribute('data-expanded', 'false');
                             if (chevron) {
                                 chevron.style.transform = 'rotate(0deg)';
                             }
                         } else {
+                            // Expand
                             target.classList.add('show');
                             this.setAttribute('data-expanded', 'true');
                             if (chevron) {
@@ -689,7 +408,7 @@
                     }
                 });
                 
-                // Initialize chevron state
+                // Initialize chevron state on page load
                 const chevron = toggle.querySelector('.nav-chevron');
                 const isExpanded = toggle.getAttribute('data-expanded') === 'true';
                 if (chevron && isExpanded) {
@@ -697,26 +416,19 @@
                 }
             });
             
-            // Close mobile sidebar with Escape key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && isMobile && sidebarOpen) {
-                    toggleSidebar();
-                }
-            });
-            
-            // Initialize on page load
-            initializeSidebar();
-            
-            // Auto-close alerts after 5 seconds
-            setTimeout(function() {
-                const alerts = document.querySelectorAll('.alert.show');
-                alerts.forEach(alert => {
-                    const closeBtn = alert.querySelector('.btn-close');
-                    if (closeBtn) {
-                        closeBtn.click();
+            // Add hover effects for better UX
+            const subLinks = document.querySelectorAll('.nav-sub-link');
+            subLinks.forEach(link => {
+                link.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateX(4px)';
+                });
+                
+                link.addEventListener('mouseleave', function() {
+                    if (!this.classList.contains('active')) {
+                        this.style.transform = 'translateX(0)';
                     }
                 });
-            }, 5000);
+            });
         });
     </script>
     

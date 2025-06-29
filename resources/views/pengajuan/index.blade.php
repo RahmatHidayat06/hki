@@ -9,17 +9,7 @@
         ['title' => 'Hak Cipta', 'url' => '#'],
         ['title' => 'Daftar Ciptaan']
     ]"
->
-    <!-- Quick Actions in Header -->
-    <div class="d-flex gap-2">
-        <a href="{{ route('pengajuan.create') }}" class="btn btn-primary shadow-sm">
-            <i class="fas fa-plus me-2"></i>Permohonan Baru
-        </a>
-        <a href="{{ route('draft.index') }}" class="btn btn-outline-secondary shadow-sm">
-            <i class="fas fa-file-alt me-2"></i>Draft ({{ \App\Models\PengajuanHki::where('user_id', auth()->id())->where('status', 'draft')->count() }})
-        </a>
-    </div>
-</x-page-header>
+/>
 
 <div class="container-fluid px-4">
     <div class="row justify-content-center">
@@ -72,9 +62,12 @@
                         <option value="menunggu_validasi" {{ request('status') == 'menunggu_validasi' ? 'selected' : '' }}>
                             Menunggu Validasi
                         </option>
-                        <option value="divalidasi_sedang_diproses" {{ request('status') == 'divalidasi_sedang_diproses' ? 'selected' : '' }}>
-                            Divalidasi & Sedang Diproses
-                        </option>
+                                                 <option value="divalidasi" {{ request('status') == 'divalidasi' ? 'selected' : '' }}>
+                             Divalidasi
+                         </option>
+                        <option value="sedang_di_proses" {{ request('status') == 'sedang_di_proses' ? 'selected' : '' }}>
+                            Sedang Di Proses
+                         </option>
                         <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>
                             Disetujui
                         </option>
@@ -151,9 +144,13 @@
                                             <span class="badge bg-warning text-dark px-3 py-2">
                                                 <i class="fas fa-clock me-1"></i>Menunggu Validasi
                                             </span>
-                                        @elseif($item->status === 'divalidasi_sedang_diproses')
-                                            <span class="badge bg-success">
-                                                <i class="fas fa-check-circle me-1"></i>Divalidasi & Sedang Diproses
+                                        @elseif($item->status === 'divalidasi')
+                                            <span class="badge bg-success px-3 py-2">
+                                                <i class="fas fa-check-circle me-1"></i>Divalidasi
+                                            </span>
+                                        @elseif($item->status === 'sedang_di_proses')
+                                            <span class="badge px-3 py-2" style="background-color: #0056b3; color: white;">
+                                                <i class="fas fa-cogs me-1"></i>Sedang Di Proses
                                             </span>
                                         @elseif($item->status === 'disetujui')
                                             <span class="badge bg-primary px-3 py-2">

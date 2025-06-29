@@ -55,7 +55,7 @@
                             </div>
                         </div>
                                                  <div class="flex-grow-1 ms-3">
-                             <h6 class="text-muted mb-1 fw-normal">Divalidasi & Sedang Diproses</h6>
+                             <h6 class="text-muted mb-1 fw-normal">Divalidasi</h6>
                              <h3 class="mb-0 fw-bold text-dark">{{ $stats['approved'] ?? 0 }}</h3>
                          </div>
                     </div>
@@ -109,9 +109,12 @@
                         <option value="menunggu_validasi" {{ request('status') == 'menunggu_validasi' ? 'selected' : '' }}>
                             Menunggu Validasi
                         </option>
-                                                                             <option value="divalidasi_sedang_diproses" {{ request('status') == 'divalidasi_sedang_diproses' ? 'selected' : '' }}>
-                                Divalidasi & Sedang Diproses
-                            </option>
+                                                 <option value="divalidasi" {{ request('status') == 'divalidasi' ? 'selected' : '' }}>
+                             Divalidasi
+                         </option>
+                        <option value="sedang_di_proses" {{ request('status') == 'sedang_di_proses' ? 'selected' : '' }}>
+                            Sedang Di Proses
+                         </option>
                         <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>
                             Ditolak
                         </option>
@@ -183,7 +186,7 @@
                                     </div>
                                 </th>
                                 <th class="border-0 py-3 fw-semibold text-muted">PENGAJUAN</th>
-                                <th class="border-0 py-3 fw-semibold text-muted">NAMA PENCIPTA</th>
+                                <th class="border-0 py-3 fw-semibold text-muted">PEMOHON</th>
                                 <th class="border-0 py-3 fw-semibold text-muted">STATUS</th>
                                 <th class="border-0 py-3 fw-semibold text-muted">TANGGAL</th>
                                 <th class="border-0 py-3 fw-semibold text-muted text-center">AKSI</th>
@@ -217,7 +220,6 @@
                                     </div>
                                 </td>
                                 <td class="py-3">
-                                    @php $firstCreator = optional($pengajuan->pengaju->first()); @endphp
                                     <div class="d-flex align-items-center">
                                         <div class="flex-shrink-0 me-2">
                                             <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
@@ -225,10 +227,8 @@
                                             </div>
                                         </div>
                                         <div class="flex-grow-1">
-                                            <div class="fw-medium text-dark">{{ $firstCreator->nama ?? '-' }}</div>
-                                            @if(!empty($firstCreator->email))
-                                            <div class="text-muted small text-truncate" title="{{ $firstCreator->email }}">{{ $firstCreator->email }}</div>
-                                            @endif
+                                            <div class="fw-medium text-dark nama-user">{{ $pengajuan->user->name }}</div>
+                                            <div class="text-muted small text-truncate" title="{{ $pengajuan->user->email }}">{{ $pengajuan->user->email }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -237,17 +237,13 @@
                                         <span class="badge bg-warning text-dark px-3 py-2">
                                             <i class="fas fa-clock me-1"></i>Menunggu Validasi
                                         </span>
-                                                                                                         @elseif(in_array($pengajuan->status, ['divalidasi_sedang_diproses']))
-                                    <span class="badge bg-success px-3 py-2">
-                                        <i class="fas fa-check-circle me-1"></i>Divalidasi & Sedang Diproses
-                                    </span>
+                                                                         @elseif($pengajuan->status == 'divalidasi')
+                                         <span class="badge bg-success px-3 py-2">
+                                             <i class="fas fa-check-circle me-1"></i>Divalidasi
+                                         </span>
                                     @elseif($pengajuan->status == 'ditolak')
                                         <span class="badge bg-danger px-3 py-2">
                                             <i class="fas fa-times-circle me-1"></i>Ditolak
-                                        </span>
-                                    @elseif($pengajuan->status == 'selesai')
-                                        <span class="badge bg-secondary px-3 py-2">
-                                            <i class="fas fa-medal me-1"></i>Selesai
                                         </span>
                                     @else
                                         <span class="badge bg-secondary px-3 py-2">

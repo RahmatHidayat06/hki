@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use App\Models\PengajuanHki;
 use setasign\Fpdi\Tcpdf\Fpdi;
-use Illuminate\Support\Str;
 
 class PdfSigningController extends Controller
 {
@@ -38,67 +37,50 @@ class PdfSigningController extends Controller
         try {
             $pdf = new Fpdi();
             
-            // Multi-page: proses seluruh halaman, aplikasi overlay pada halaman terkait
+            // Ambil hanya halaman pertama (logika awal)
             $pageCount = $pdf->setSourceFile($fullOriginalPath);
+            $tplId = $pdf->importPage(1);
+            $size   = $pdf->getTemplateSize($tplId);
 
-            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                $tplId = $pdf->importPage($pageNo);
-                $size   = $pdf->getTemplateSize($tplId);
+            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+            $pdf->useTemplate($tplId);
 
-                $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-                $pdf->useTemplate($tplId);
-
-                foreach ($overlays as $overlay) {
-                    $overlayPage = isset($overlay['page']) ? intval($overlay['page']) : 1;
-                    if ($overlayPage !== $pageNo) continue;
-
-                    // Ekstrak path relatif di dalam disk public dari URL
-                    $rawPath = parse_url($overlay['url'], PHP_URL_PATH) ?: '';
-                    // Hilangkan prefix "storage/" atau "/storage/" jika ada
-                    $imagePath = preg_replace('#^/?storage/#', '', ltrim($rawPath, '/'));
-                    if (!Storage::disk('public')->exists($imagePath)) {
-                        Log::warning("PDF Signing: File gambar overlay tidak ditemukan: {$imagePath}");
-                        continue;
-                    }
-
-                    $fullImagePath = storage_path('app/public/' . $imagePath);
-
-                    $x = ($overlay['x_percent'] / 100) * $size['width'];
-                    $y = ($overlay['y_percent'] / 100) * $size['height'];
-                    $w = ($overlay['width_percent'] / 100) * $size['width'];
-                    $h = 0;
-
-                    $pdf->SetAlpha(1);
-                    $pdf->Image($fullImagePath, $x, $y, $w, $h, 'PNG', '', '', false, 300, '', false, false, 0);
+            // Tempelkan semua overlay (diasumsikan memang untuk halaman 1)
+            foreach ($overlays as $overlay) {
+                $imagePath = ltrim(parse_url($overlay['url'], PHP_URL_PATH), '/storage');
+                if (!Storage::disk('public')->exists($imagePath)) {
+                    Log::warning("PDF Signing: File gambar overlay tidak ditemukan: {$imagePath}");
+                    continue;
                 }
+
+                $fullImagePath = storage_path('app/public/' . $imagePath);
+
+                $x = ($overlay['x_percent'] / 100) * $size['width'];
+                $y = ($overlay['y_percent'] / 100) * $size['height'];
+                $w = ($overlay['width_percent'] / 100) * $size['width'];
+                $h = 0;
+
+                $pdf->SetAlpha(1);
+                $pdf->Image($fullImagePath, $x, $y, $w, $h, 'PNG', '', '', false, 300, '', false, false, 0);
             }
 
-            // 3. Buat nama file baru bertanda tangan
-            $timestamp    = now()->format('Ymd_His');
-            $pengajuName  = str_replace(' ', '_', $pengajuan->user->name);
-            $newFileName  = $pengajuan->id . '_' . $documentType . '_' . $pengajuName . '_' . $timestamp . '.pdf';
-            $newFilePath  = 'signed_documents/' . $newFileName;
+            // 3. Simpan PDF Baru dengan nama yang deskriptif dan mudah diidentifikasi
+            $timestamp = now()->format('Ymd_His');
+            $pengajuName = str_replace(' ', '_', $pengajuan->user->name);
+            $newFileName = $pengajuan->id . '_' . $documentType . '_' . $pengajuName . '_' . $timestamp . '.pdf';
+            $newFilePath = 'signed_documents/' . $newFileName;
             
             Storage::disk('public')->makeDirectory('signed_documents');
-
-            // Hapus file signed lama (sebelum menyimpan yang baru)
-            $allSigned = Storage::disk('public')->files('signed_documents');
-            foreach ($allSigned as $old) {
-                if (Str::startsWith($old, $pengajuan->id . '_' . $documentType . '_')) {
-                    Storage::disk('public')->delete($old);
-                }
-            }
-
-            $fullNewPath = storage_path('app/public/' . $newFilePath);
+            $fullNewPath = storage_path('app/public/'.$newFilePath);
 
             $pdf->Output($fullNewPath, 'F');
             
-            // 4. Simpan path versi signed pada key 'signed' (jangan timpa file asli)
+            // 4. Simpan path versi signed pada key 'signed' dan ganti dokumen asli
             if (!isset($dokumenJson['signed'])) {
                 $dokumenJson['signed'] = [];
             }
             $dokumenJson['signed'][$documentType] = $newFilePath;
-            // Gantikan path dokumen asli agar tampilan detail memuat versi bertanda tangan
+            // Perbarui juga dokumen asli agar halaman detail langsung menggunakan PDF bertanda tangan
             $dokumenJson[$documentType] = $newFilePath;
             $pengajuan->file_dokumen_pendukung = json_encode($dokumenJson);
             $pengajuan->save();

@@ -214,7 +214,6 @@ class PersetujuanController extends Controller
 
         // Normalize overlay data for consistency
         $normalizedOverlays = [];
-        $uniqueMap = [];
         foreach ($overlays as $overlay) {
             $normalizedOverlay = [
                 'type' => $overlay['type'] ?? 'signature',
@@ -224,10 +223,6 @@ class PersetujuanController extends Controller
                 'y_percent' => round(floatval($overlay['y_percent'] ?? 0), 3),
                 'width_percent' => round(floatval($overlay['width_percent'] ?? 20), 3),
                 'height_percent' => round(floatval($overlay['height_percent'] ?? 10), 3),
-                'x_pt' => round(floatval($overlay['x_pt'] ?? -1),1),
-                'y_pt' => round(floatval($overlay['y_pt'] ?? -1),1),
-                'width_pt' => round(floatval($overlay['width_pt'] ?? -1),1),
-                'height_pt' => round(floatval($overlay['height_pt'] ?? -1),1),
             ];
             
             // Validate coordinate ranges
@@ -242,18 +237,8 @@ class PersetujuanController extends Controller
                 continue; // Skip invalid overlays
             }
             
-            // Generate unique key based on type & page only to remove duplicate signatures per page
-            $key = $normalizedOverlay['type'].'_'.$normalizedOverlay['page'];
-
-            // If an overlay with same key already exists, keep the one that is positioned
-            // further DOWN the page (lebih besar y_percent). Berdasarkan feedback, overlay
-            // duplikat dengan koordinat lebih kecil (lebih ke atas) harus dibuang.
-            if (!isset($uniqueMap[$key]) || $normalizedOverlay['y_percent'] > ($uniqueMap[$key]['y_percent'] ?? -1)) {
-                $uniqueMap[$key] = $normalizedOverlay;
-            }
+            $normalizedOverlays[] = $normalizedOverlay;
         }
-
-        $normalizedOverlays = array_values($uniqueMap);
 
         if (empty($normalizedOverlays)) {
             return response()->json(['message' => 'Tidak ada overlay yang valid untuk diproses'], 422);
@@ -271,23 +256,90 @@ class PersetujuanController extends Controller
 
             $dokumenJson['overlays'][$documentType] = $normalizedOverlays;
 
-            // Persist updated overlays immediately so PdfSigner can read the latest data
+            // Generate signed PDF file with descriptive filename
+            $sourcePath = $dokumenJson[$documentType] ?? null;
+            $signedFileName = null;
+            $originalPageCount = 0;
+            $finalPageCount = 0;
+            
+            if($sourcePath && Storage::disk('public')->exists($sourcePath)){
+                // Count original pages before processing
+                $originalPageCount = $this->countPdfPages(storage_path('app/public/' . $sourcePath));
+                
+                $timestamp = now()->format('Ymd_His');
+                $pengajuName = str_replace(' ', '_', $pengajuan->user->name);
+                $signedFileName = $pengajuan->id . '_' . $documentType . '_' . $pengajuName . '_' . $timestamp . '.pdf';
+                $signedPath = 'signed_documents/' . $signedFileName;
+                
+                Log::info("Starting PDF signing process", [
+                    'pengajuan_id' => $pengajuan->id,
+                    'document_type' => $documentType,
+                    'source_path' => $sourcePath,
+                    'signed_path' => $signedPath,
+                    'original_pages' => $originalPageCount,
+                    'overlays_count' => count($normalizedOverlays),
+                    'overlays_normalized' => $normalizedOverlays
+                ]);
+                
+                $this->generateSignedPdf($sourcePath, $normalizedOverlays, $signedPath);
+                
+                // Verify the final file
+                if (Storage::disk('public')->exists($signedPath)) {
+                    $finalPageCount = $this->countPdfPages(storage_path('app/public/' . $signedPath));
+                }
+                
+                // Save the signed version path
+                if (!isset($dokumenJson['signed'])) {
+                    $dokumenJson['signed'] = [];
+                }
+                $dokumenJson['signed'][$documentType] = $signedPath;
+                
+                Log::info("PDF signing completed", [
+                    'pengajuan_id' => $pengajuan->id,
+                    'original_pages' => $originalPageCount,
+                    'final_pages' => $finalPageCount,
+                    'pages_preserved' => ($originalPageCount === $finalPageCount),
+                    'signed_file' => $signedFileName
+                ]);
+            }
+
             $pengajuan->file_dokumen_pendukung = json_encode($dokumenJson);
             $pengajuan->save();
 
-            // Generate signed PDF immediately so preview/detail show latest version
-            $pdfSigner = new PdfSigningController();
-            $signedPath = $pdfSigner->signPdf($pengajuan, $documentType);
-
-            // Clear caches so fresh data appears
-            cache()->forget("persetujuan_show_{$pengajuan->id}");
+            // Clear caches so indicator & detail page get fresh data
             cache()->forget("validation_wizard_{$pengajuan->id}");
+            cache()->forget("persetujuan_show_{$pengajuan->id}");
 
-            return response()->json([
-                'message' => 'Overlay disimpan & dokumen ditandatangani',
+            $response = [
+                'message' => 'Dokumen berhasil ditandatangani dan overlay disimpan.',
+                'filename' => $signedFileName,
+                'document_type' => ucfirst(str_replace('_', ' ', $documentType)),
+                'pengaju' => $pengajuan->user->name,
                 'overlays_applied' => count($normalizedOverlays),
-                'signed_path' => $signedPath,
+                'overlays_data' => $normalizedOverlays
+            ];
+
+            // Add page information if available
+            if ($originalPageCount > 0) {
+                $response['page_info'] = [
+                    'original_pages' => $originalPageCount,
+                    'final_pages' => $finalPageCount,
+                    'pages_preserved' => ($originalPageCount === $finalPageCount),
+                    'status' => ($originalPageCount === $finalPageCount) 
+                        ? 'Semua halaman berhasil dipertahankan' 
+                        : 'Peringatan: Jumlah halaman berubah'
+                ];
+            }
+
+            Log::info("Overlay application completed successfully", [
+                'pengajuan_id' => $pengajuan->id,
+                'document_type' => $documentType,
+                'overlays_count' => count($normalizedOverlays),
+                'page_consistency' => ($originalPageCount === $finalPageCount),
+                'response' => $response
             ]);
+
+            return response()->json($response);
 
         } catch (\Exception $e) {
             Log::error("Error applying overlay for pengajuan {$pengajuan->id}", [
@@ -509,8 +561,8 @@ class PersetujuanController extends Controller
             
             // Update status pengajuan. Perlu di-refresh karena signPdf() juga melakukan save.
             $pengajuan->refresh(); 
-            $pengajuan->status = 'divalidasi_sedang_diproses';
-            $pengajuan->catatan_admin = $request->catatan_admin ?? 'Disetujui dan sedang diproses oleh Direktur.';
+            $pengajuan->status = 'divalidasi';
+            $pengajuan->catatan_admin = $request->catatan_admin ?? 'Disetujui oleh Direktur.';
             $pengajuan->tanggal_validasi = now();
             $pengajuan->save();
 
@@ -523,7 +575,7 @@ class PersetujuanController extends Controller
             'user_id' => $pengajuan->user_id,
             'pengajuan_hki_id' => $pengajuan->id,
             'judul' => 'Pengajuan HKI Divalidasi',
-                                    'pesan' => "Pengajuan HKI Anda dengan judul '{$pengajuan->judul_karya}' telah divalidasi dan sedang diproses oleh direktur.",
+                'pesan' => "Pengajuan HKI Anda dengan judul '{$pengajuan->judul_karya}' telah divalidasi dan ditandatangani oleh direktur.",
             'status' => 'unread',
             'dibaca' => false
         ]);
@@ -535,7 +587,7 @@ class PersetujuanController extends Controller
                     'user_id' => $admin->id,
                     'pengajuan_hki_id' => $pengajuan->id,
                     'judul' => 'Pengajuan HKI Divalidasi',
-                    'pesan' => 'Pengajuan HKI dengan judul "' . $pengajuan->judul_karya . '" telah divalidasi & sedang diproses, menunggu penyiapan billing / finalisasi.',
+                    'pesan' => 'Pengajuan HKI dengan judul "' . $pengajuan->judul_karya . '" telah divalidasi dan menunggu penyiapan billing / finalisasi.',
                     'status' => 'unread',
                     'dibaca' => false
                 ]);
@@ -700,7 +752,7 @@ class PersetujuanController extends Controller
             $pengajuan = PengajuanHki::find($id);
             if ($pengajuan && $pengajuan->status === 'menunggu_validasi') {
                 $pengajuan->update([
-                    'status' => 'divalidasi_sedang_diproses',
+                    'status' => 'divalidasi',
                     'catatan_admin' => $comment,
                 ]);
 
@@ -709,7 +761,7 @@ class PersetujuanController extends Controller
                     'user_id' => $pengajuan->user_id,
                     'pengajuan_hki_id' => $pengajuan->id,
                     'judul' => 'Pengajuan HKI Divalidasi',
-                    'pesan' => 'Pengajuan HKI Anda dengan judul "' . $pengajuan->judul_karya . '" telah divalidasi & sedang diproses oleh direktur. Catatan: ' . $comment,
+                    'pesan' => 'Pengajuan HKI Anda dengan judul "' . $pengajuan->judul_karya . '" telah divalidasi oleh direktur. Catatan: ' . $comment,
                     'status' => 'unread',
                     'dibaca' => false
                 ]);
@@ -721,7 +773,7 @@ class PersetujuanController extends Controller
                         'user_id' => $admin->id,
                         'pengajuan_hki_id' => $pengajuan->id,
                         'judul' => 'Pengajuan HKI Divalidasi',
-                        'pesan' => 'Pengajuan HKI dengan judul "' . $pengajuan->judul_karya . '" telah divalidasi & sedang diproses, menunggu tindakan admin.',
+                        'pesan' => 'Pengajuan HKI dengan judul "' . $pengajuan->judul_karya . '" telah divalidasi dan menunggu tindakan admin.',
                         'status' => 'unread',
                         'dibaca' => false
                     ]);
@@ -785,8 +837,6 @@ class PersetujuanController extends Controller
 
             $pencipta = $pengajuan->pengaju;
 
-            $preferSigned = $pengajuan->status !== 'menunggu_validasi';
-
             $documents = [
                 'contoh_ciptaan' => [
                     'label' => 'Contoh Ciptaan',
@@ -800,21 +850,21 @@ class PersetujuanController extends Controller
                     'description' => 'Dokumen pengalihan hak cipta (jika ada).',
                     'icon' => 'fas fa-exchange-alt',
                     'color' => 'info',
-                    'file_info' => $this->getFileInfoFromDokumen($dokumen, 'surat_pengalihan', $preferSigned)
+                    'file_info' => $this->getFileInfoFromDokumen($dokumen, 'surat_pengalihan')
                 ],
                 'surat_pernyataan' => [
                     'label' => 'Surat Pernyataan',
                     'description' => 'Surat pernyataan keaslian karya.',
                     'icon' => 'fas fa-file-signature',
                     'color' => 'warning',
-                    'file_info' => $this->getFileInfoFromDokumen($dokumen, 'surat_pernyataan', $preferSigned)
+                    'file_info' => $this->getFileInfoFromDokumen($dokumen, 'surat_pernyataan')
                 ],
                 'ktp' => [
                     'label' => 'KTP Pencipta',
                     'description' => 'Kartu Tanda Penduduk pencipta.',
                     'icon' => 'fas fa-id-card',
                     'color' => 'success',
-                    'file_info' => $this->getFileInfoFromDokumen($dokumen, 'ktp', $preferSigned)
+                    'file_info' => $this->getFileInfoFromDokumen($dokumen, 'ktp')
                 ]
             ];
             
@@ -839,71 +889,103 @@ class PersetujuanController extends Controller
         $dokumen = is_string($pengajuan->file_dokumen_pendukung)
             ? json_decode($pengajuan->file_dokumen_pendukung, true) : ($pengajuan->file_dokumen_pendukung ?? []);
 
-        // Ambil path original & signed
+        // Check both original and signed files
         $originalPath = $dokumen[$documentType] ?? null;
-        $signedPath   = $dokumen['signed'][$documentType] ?? null;
+        $signedPath = $dokumen['signed'][$documentType] ?? null;
         
-        // Tentukan preferensi file berdasarkan status pengajuan
-        $preferSigned = $pengajuan->status !== 'menunggu_validasi';
-
-        // Inisialisasi
-        $filePath    = null;
+        // Default to signed file if available, but validate it has same page count as original
+        $filePath = null;
         $useOriginal = false;
         
-        if ($preferSigned && $signedPath) {
-            // Prioritaskan file signed ketika sudah divalidasi
+        if ($signedPath) {
             $signedPath = ltrim($signedPath, '/');
             if (Storage::disk('public')->exists($signedPath)) {
-                $filePath    = $signedPath;
-                $useOriginal = false;
-            }
-        }
-
-        // Jika belum dapat file (misalnya sebelum validasi), gunakan original
-        if (!$filePath && $originalPath) {
+                // Check if signed file has correct page count
+                if ($originalPath) {
+                    $originalPath = ltrim($originalPath, '/');
+                    if (Storage::disk('public')->exists($originalPath)) {
+                        try {
+                            $originalFullPath = storage_path('app/public/' . $originalPath);
+                            $signedFullPath = storage_path('app/public/' . $signedPath);
+                            
+                            // Use a simple PDF library to count pages
+                            $originalPages = $this->countPdfPages($originalFullPath);
+                            $signedPages = $this->countPdfPages($signedFullPath);
+                            
+                            Log::info("PDF Preview Debug", [
+                                'document_type' => $documentType,
+                                'original_path' => $originalPath,
+                                'signed_path' => $signedPath,
+                                'original_pages' => $originalPages,
+                                'signed_pages' => $signedPages
+                            ]);
+                            
+                            // Use signed file if it has same or more pages than original
+                            // This handles cases where signing process might add extra content
+                            if ($signedPages >= $originalPages && $signedPages > 0) {
+                                $filePath = $signedPath;
+                                Log::info("Using signed file", [
+                                    'original_pages' => $originalPages,
+                                    'signed_pages' => $signedPages,
+                                    'reason' => 'signed_file_valid'
+                                ]);
+                            } else {
+                                Log::warning("Signed file has fewer pages than original, using original", [
+                                    'original_pages' => $originalPages,
+                                    'signed_pages' => $signedPages,
+                                    'reason' => 'page_count_mismatch'
+                                ]);
+                                $filePath = $originalPath;
+                                $useOriginal = true;
+                            }
+                        } catch (\Exception $e) {
+                            Log::error("Error checking PDF pages", ['error' => $e->getMessage()]);
+                            $filePath = $originalPath;
+                            $useOriginal = true;
+                        }
+                    } else {
+                        $filePath = $signedPath;
+                    }
+                } else {
+                    $filePath = $signedPath;
+                }
+            } else if ($originalPath) {
                 $originalPath = ltrim($originalPath, '/');
                 if (Storage::disk('public')->exists($originalPath)) {
-                $filePath    = $originalPath;
+                    $filePath = $originalPath;
                     $useOriginal = true;
                 }
             }
-
-        // Jika preferSigned=false tapi signed tersedia & original tidak ada, fallback ke signed
-        if (!$filePath && $signedPath) {
-            $signedPath = ltrim($signedPath, '/');
-            if (Storage::disk('public')->exists($signedPath)) {
-                $filePath    = $signedPath;
-                $useOriginal = !$preferSigned; // Jika fallback berarti status menunggu_validasi tapi original hilang
+        } else if ($originalPath) {
+            $originalPath = ltrim($originalPath, '/');
+            if (Storage::disk('public')->exists($originalPath)) {
+                $filePath = $originalPath;
+                $useOriginal = true;
             }
         }
         
-        // Jika masih belum ada file, abort
         if (!$filePath || !Storage::disk('public')->exists($filePath)) {
             abort(404, 'File dokumen tidak ditemukan.');
         }
 
-        // Tentukan overlay: hanya tampilkan overlay jika menggunakan dokumen original
+        // IMPORTANT: Don't show overlays for signed documents to prevent doubling
+        // Signed documents already have signatures embedded, so overlays would appear doubled
         $overlayData = $useOriginal ? ($dokumen['overlays'][$documentType] ?? []) : [];
+        $fileUrl = Storage::url($filePath);
 
-        // Full path absolute untuk mtime
+        // Get accurate page count for the file being displayed
         $fullPath = storage_path('app/public/' . ltrim($filePath, '/'));
-
-        // Tambahkan query param versi (mtime) agar browser ambil file terbaru
-        $fileMTime = @file_exists($fullPath) ? @filemtime($fullPath) : time();
-        $fileUrl = Storage::url($filePath) . '?v=' . $fileMTime;
-
-        // Ambil page count aktual
         $actualPageCount = $this->countPdfPages($fullPath);
 
         return view('persetujuan.preview', [
-            'pengajuan'        => $pengajuan,
-            'documentType'     => $documentType,
-            'fileUrl'          => $fileUrl,
-            'overlays'         => $overlayData,
-            'dokumen'          => $dokumen,
-            'actualPageCount'  => $actualPageCount,
-            'useOriginal'      => $useOriginal,
-            'isSignedDocument' => !$useOriginal,
+            'pengajuan' => $pengajuan,
+            'documentType' => $documentType,
+            'fileUrl' => $fileUrl,
+            'overlays' => $overlayData,
+            'dokumen' => $dokumen, // Pass full dokumen array for debug
+            'actualPageCount' => $actualPageCount,
+            'useOriginal' => $useOriginal,
+            'isSignedDocument' => !$useOriginal, // Flag to indicate if showing signed version
         ]);
     }
     
@@ -1171,9 +1253,8 @@ class PersetujuanController extends Controller
                             continue;
                         }
                         
-                        // PERBAIKAN: Gunakan koordinat langsung dari ukuran kertas penuh
-                        // Template surat sudah memiliki margin built-in, jadi overlay ditempatkan
-                        // berdasarkan koordinat persentase dari ukuran kertas penuh
+                        // Calculate coordinates based on PDF page size with pixel-perfect precision
+                        // Convert percentage coordinates to absolute coordinates
                         $x = round(($ov['x_percent'] / 100) * $size['width'], 2);
                         $y = round(($ov['y_percent'] / 100) * $size['height'], 2);
                         $w = round(($ov['width_percent'] / 100) * $size['width'], 2);

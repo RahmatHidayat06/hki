@@ -2,30 +2,10 @@
 
 @section('content')
 <x-page-header 
-    title="Pembayaran & Sertifikat" 
-    description="Kelola pembayaran dan unduh sertifikat HKI Anda"
+    title="Pembayaran Pengajuan HKI" 
+    description="Kelola proses pembayaran dan unduh sertifikat"
     icon="fas fa-wallet"
-    :breadcrumbs="[
-        ['title' => 'Pembayaran & Sertifikat']
-    ]"
->
-    <!-- Quick Actions in Header -->
-    <div class="d-flex gap-2">
-        <a href="{{ route('pengajuan.index') }}" class="btn btn-outline-primary shadow-sm">
-            <i class="fas fa-arrow-left me-2"></i>Kembali ke Pengajuan
-        </a>
-        @php
-            $pendingPayment = \App\Models\PengajuanHki::where('user_id', auth()->id())
-                ->where('status', 'menunggu_pembayaran')
-                ->count();
-        @endphp
-        @if($pendingPayment > 0)
-            <span class="btn btn-warning shadow-sm">
-                <i class="fas fa-exclamation-triangle me-2"></i>{{ $pendingPayment }} Menunggu Bayar
-            </span>
-        @endif
-    </div>
-</x-page-header>
+/>
 
 <div class="container-fluid px-4">
 
@@ -41,7 +21,7 @@
         </div>
         <div class="card-body p-0">
             @if($pengajuans->isEmpty())
-                <div class="alert alert-info">Belum ada riwayat pembayaran.</div>
+                <div class="alert alert-info">Tidak ada pengajuan yang menunggu pembayaran.</div>
             @else
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
@@ -115,6 +95,11 @@
                                             @default
                                                 <span class="text-muted">-</span>
                                         @endswitch
+
+                                        <!-- Certificate button (always shown) -->
+                                        <a href="{{ $canDownload ? route('sertifikat.download', $p->id) : '#' }}" class="btn btn-sm btn-primary ms-1 {{ $canDownload ? '' : 'disabled' }}" title="Unduh Sertifikat">
+                                            <i class="fas fa-download me-1"></i>Unduh Sertifikat
+                                        </a>
                                     </td>
                                 </tr>
                             @endforeach

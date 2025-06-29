@@ -1,11 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-@php
-    // Daftar status yang dianggap sudah melewati proses validasi
-    $validatedStatuses = ['divalidasi', 'sedang_di_proses', 'menunggu_pembayaran', 'menunggu_verifikasi_pembayaran', 'selesai', 'disetujui'];
-@endphp
-
 <x-page-header 
     title="{{ $pengajuan->judul_karya }}" 
     description="Detail pengajuan oleh {{ $pengajuan->user->name }} • {{ $pengajuan->created_at->format('d M Y, H:i') }}{{ $pengajuan->nomor_pengajuan ? ' • #' . $pengajuan->nomor_pengajuan : '' }}"
@@ -16,7 +11,7 @@
     ]"
 />
 
-<div class="container-fluid px-4 {{ auth()->user()->role === 'admin' ? 'premium-admin' : '' }}">
+<div class="container-fluid px-4">
 
         <!-- Main Content -->
     <div class="row g-4">
@@ -250,13 +245,6 @@
                                             <i class="fas fa-times me-1"></i>Tidak Ada
                                         </span>
                                         @endif
-                                    @if(in_array($pengajuan->status, $validatedStatuses) && isset($dokumen['signed'][$field]))
-                                        <div class="mt-2">
-                                            <span class="badge bg-info text-white">
-                                                <i class="fas fa-check-double me-1"></i>Sudah Ditandatangani
-                                            </span>
-                                        </div>
-                                    @endif
                                                     </div>
                                                     </div>
                         @endforeach
@@ -300,12 +288,10 @@
                                                                             @php
                                         $signedPath = ltrim($dokumen['signed']['surat_pengalihan'], '/');
                                         $fileExists = Storage::disk('public')->exists($signedPath);
-                                        // Hitung mtime untuk cache-buster
-                                        $fullPath = storage_path('app/public/' . $signedPath);
-                                        $v = file_exists($fullPath) ? filemtime($fullPath) : time();
+                                        
                                         // URL untuk preview dan download
-                                        $previewUrl = route('persetujuan.preview', [$pengajuan->id, 'surat_pengalihan']) . '?v=' . $v;
-                                        $downloadUrl = route('signed.document.serve', [$pengajuan->id, 'surat_pengalihan']) . '?v=' . $v;
+                                        $previewUrl = route('persetujuan.preview', [$pengajuan->id, 'surat_pengalihan']);
+                                        $downloadUrl = route('signed.document.serve', [$pengajuan->id, 'surat_pengalihan']);
                                     @endphp
                                         <a href="{{ $previewUrl }}" target="_blank" class="btn btn-outline-success btn-sm" title="Preview Dokumen">
                                             <i class="fas fa-eye"></i>
@@ -341,11 +327,10 @@
                                                                             @php
                                         $signedPath = ltrim($dokumen['signed']['surat_pernyataan'], '/');
                                         $fileExists = Storage::disk('public')->exists($signedPath);
-                                        $fullPath = storage_path('app/public/' . $signedPath);
-                                        $v = file_exists($fullPath) ? filemtime($fullPath) : time();
+                                        
                                         // URL untuk preview dan download
-                                        $previewUrl = route('persetujuan.preview', [$pengajuan->id, 'surat_pernyataan']) . '?v=' . $v;
-                                        $downloadUrl = route('signed.document.serve', [$pengajuan->id, 'surat_pernyataan']) . '?v=' . $v;
+                                        $previewUrl = route('persetujuan.preview', [$pengajuan->id, 'surat_pernyataan']);
+                                        $downloadUrl = route('signed.document.serve', [$pengajuan->id, 'surat_pernyataan']);
                                     @endphp
                                         <a href="{{ $previewUrl }}" target="_blank" class="btn btn-outline-success btn-sm" title="Preview Dokumen">
                                             <i class="fas fa-eye"></i>
@@ -784,45 +769,6 @@ function previewPaymentProof(url, type, filename) {
     .card-body {
         padding: 1.5rem !important;
     }
-}
-
-/* High DPI display support */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-    #pdfCanvas {
-        image-rendering: -webkit-optimize-contrast;
-        image-rendering: crisp-edges;
-    }
-}
-
-/* ================= Premium Admin Styling ================= */
-.premium-admin {
-    background: linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%);
-}
-.premium-admin .card {
-    border: none !important;
-    border-radius: 1rem !important;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.05);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.premium-admin .card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
-}
-.premium-admin .card-header {
-    background-color: #ffffff !important;
-    border-bottom: 1px solid #dee2e6 !important;
-    border-top-left-radius: 1rem;
-    border-top-right-radius: 1rem;
-}
-.premium-admin .card-body {
-    background-color: #ffffff !important;
-    border-bottom-left-radius: 1rem;
-    border-bottom-right-radius: 1rem;
-}
-.premium-admin .badge {
-    border-radius: 0.5rem;
-    font-size: 0.75rem;
-    padding: 0.35em 0.6em;
 }
 </style>
 @endsection 

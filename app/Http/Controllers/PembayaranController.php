@@ -63,14 +63,8 @@ class PembayaranController extends Controller
      */
     public function index()
     {
-        // Menampilkan riwayat pembayaran lengkap (termasuk selesai) agar user mudah mengunduh sertifikat
         $pengajuans = PengajuanHki::where('user_id', Auth::id())
-            ->whereIn('status', [
-                'menunggu_pembayaran', 
-                'menunggu_verifikasi_pembayaran',
-                'disetujui',
-                'selesai'
-            ])
+            ->whereIn('status', ['menunggu_pembayaran', 'menunggu_verifikasi_pembayaran'])
             ->latest()
             ->get();
 

@@ -35,24 +35,18 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'username' => ['required', 'string', 'max:50', Rule::unique('users')->ignore($user->id)],
-            'nama_lengkap' => ['required', 'string', 'max:100'],
-            'email' => ['required', 'string', 'email', 'max:100', Rule::unique('users')->ignore($user->id)],
-            'no_hp' => ['nullable', 'string', 'max:15'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
 
         $data = [
-            'username' => $validated['username'],
-            'nama_lengkap' => $validated['nama_lengkap'],
+            'name' => $validated['name'],
             'email' => $validated['email'],
-            'no_hp' => $validated['no_hp'],
         ];
-        
         if ($request->filled('password')) {
             $data['password'] = Hash::make($validated['password']);
         }
-        
         $user->update($data);
 
         return Redirect::to(route('profile.edit'))
