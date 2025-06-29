@@ -18,7 +18,7 @@ class ValidasiController extends Controller
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            if (!in_array(auth()->user()->role, ['admin', 'direktur', 'admin_p3m'])) {
+            if (!in_array(auth()->user()->role, ['admin', 'direktur'])) {
                 abort(403, 'Unauthorized access');
             }
             return $next($request);
