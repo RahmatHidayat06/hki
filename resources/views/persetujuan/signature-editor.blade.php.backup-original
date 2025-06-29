@@ -851,7 +851,6 @@ $(function() {
                 overlaysData.push({
                     type: item.find('img').attr('alt'),
                     url: item.find('img').attr('src'),
-                    page: item.data('page') || window.currentPage,
                 x_percent: parseFloat(x_percent.toFixed(4)),
                 y_percent: parseFloat(y_percent.toFixed(4)),
                 width_percent: parseFloat(width_percent.toFixed(4)),
@@ -868,20 +867,8 @@ $(function() {
             return;
         }
 
-        // Deduplicate: keep overlay with bigger y_percent when type & page are identical
-        var deduped = {};
-        overlaysData.forEach(function(ov) {
-            var key = (ov.type || 'signature') + '_' + (ov.page || 1);
-            if (!deduped[key] || ov.y_percent > deduped[key].y_percent) {
-                deduped[key] = ov;
-            }
-        });
-
-        // Convert back to array preserving insertion order for preview
-        var uniqueOverlays = Object.values(deduped);
-
         var previewHtml = '<div class="text-center"><strong>Preview Posisi Tanda Tangan:</strong></div><hr>';
-        uniqueOverlays.forEach(function(overlay, index) {
+        overlaysData.forEach(function(overlay, index) {
             previewHtml += '<div class="mb-2"><strong>Tanda Tangan ' + (index + 1) + ':</strong><br>';
             previewHtml += 'Posisi: ' + overlay.x_percent.toFixed(2) + '%, ' + overlay.y_percent.toFixed(2) + '%<br>';
             previewHtml += 'Ukuran: ' + overlay.width_percent.toFixed(2) + '% x ' + overlay.height_percent.toFixed(2) + '%</div>';
@@ -1010,8 +997,7 @@ $(function() {
                     });
                 },
             error: function(xhr) { 
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error tidak diketahui.';
-                Swal.fire('Error', msg, 'error'); 
+                Swal.fire('Error', 'Gagal menyimpan: ' + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error tidak diketahui.'), 'error'); 
             },
             complete: function() { 
                 $('#saveBtn').prop('disabled', false).html('<i class="fas fa-save me-2"></i>Simpan & Tandatangani Dokumen').removeClass('loading');
@@ -1344,109 +1330,6 @@ $(function() {
             // Not locked => remove overlay
                     item.remove(); 
             if ($('.placed-item').length === 0) $('.placeholder-text').show();
-        }
-    });
-});
-</script>
-
-/* ================================ */
-/*  PENAMBAHAN: LOGIKA TANDA TANGAN */
-/* ================================ */
-
-<script>
-// ----- Inisialisasi Signature Pad (Tab "Gambar") -----
-const canvas = document.getElementById('signaturePad');
-if (canvas) {
-    const signaturePad = new SignaturePad(canvas, {
-        backgroundColor: 'rgba(0,0,0,0)', // transparan
-        penColor: '#000'
-    });
-
-    // Bersihkan kanvas
-    window.clearSignature = function() {
-        signaturePad.clear();
-    }
-
-    // Simpan hasil gambar
-    document.getElementById('saveSignatureBtn').addEventListener('click', function () {
-        if (signaturePad.isEmpty()) {
-            Swal.fire('Info', 'Silakan gambar tanda tangan terlebih dahulu.', 'info');
-            return;
-        }
-
-        const dataUrl = signaturePad.toDataURL('image/png');
-
-        $.ajax({
-            url: '{{ url("/signature/save") }}',
-            method: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                signature_data: dataUrl
-            },
-            beforeSend: function () {
-                $('#saveSignatureBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan...');
-            },
-            success: function (res) {
-                Swal.fire('Berhasil', res.message || 'Tanda tangan tersimpan.', 'success').then(()=> location.reload());
-            },
-            error: function (err) {
-                var msg = (err.responseJSON && err.responseJSON.message) ? err.responseJSON.message : 'Tidak dapat menyimpan tanda tangan.';
-                Swal.fire('Gagal', msg, 'error');
-            },
-            complete: function () {
-                $('#saveSignatureBtn').prop('disabled', false).html('<i class="fas fa-save me-1"></i>Simpan TTD');
-            }
-        });
-    });
-}
-
-// ----- Logika Upload Tanda Tangan (Tab "Upload") -----
-$('#signatureFile').on('change', function () {
-    const file = this.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        $('#signatureImage').attr('src', e.target.result);
-        $('#signaturePreview').show();
-    };
-    reader.readAsDataURL(file);
-});
-
-window.removeSignatureFile = function () {
-    $('#signatureFile').val('');
-    $('#signaturePreview').hide();
-};
-
-$('#saveUploadBtn').on('click', function () {
-    const fileInput = document.getElementById('signatureFile');
-    if (!fileInput.files.length) {
-        Swal.fire('Info', 'Silakan pilih file tanda tangan terlebih dahulu.', 'info');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('_token', '{{ csrf_token() }}');
-    formData.append('signature_file', fileInput.files[0]);
-
-    $.ajax({
-        url: '{{ url("/signature/save") }}',
-        method: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        beforeSend: function () {
-            $('#saveUploadBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan...');
-        },
-        success: function (res) {
-            Swal.fire('Berhasil', res.message || 'Tanda tangan tersimpan.', 'success').then(()=> location.reload());
-        },
-        error: function (err) {
-            var msg = (err.responseJSON && err.responseJSON.message) ? err.responseJSON.message : 'Tidak dapat menyimpan tanda tangan.';
-            Swal.fire('Gagal', msg, 'error');
-        },
-        complete: function () {
-            $('#saveUploadBtn').prop('disabled', false).html('<i class="fas fa-save me-1"></i>Simpan TTD Upload');
         }
     });
 });

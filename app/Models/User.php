@@ -15,9 +15,10 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
-        'name',
-        'email',
         'username',
+        'nama_lengkap',
+        'email',
+        'no_hp',
         'password',
         'role',
         'ttd_path',
@@ -41,5 +42,21 @@ class User extends Authenticatable
     public function notifikasis()
     {
         return $this->hasMany(Notifikasi::class);
+    }
+
+    /**
+     * Accessor for backward compatibility with 'name' attribute
+     */
+    public function getNameAttribute()
+    {
+        return $this->nama_lengkap;
+    }
+
+    /**
+     * Mutator for backward compatibility with 'name' attribute
+     */
+    public function setNameAttribute($value)
+    {
+        $this->attributes['nama_lengkap'] = $value;
     }
 }

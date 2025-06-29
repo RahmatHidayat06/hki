@@ -1,191 +1,36 @@
-@extends('layouts.app')
+<x-app-layout>
+    <div class="container-fluid py-4">
+        <!-- Konten Dashboard -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Hak Cipta Terdaftar</h5>
+                <p class="card-text fs-1 fw-bold text-primary">{{ $totalSelesai }}</p>
+            </div>
+        </div>
 
-@section('content')
-<x-page-header 
-    title="Dashboard {{ ucfirst(auth()->user()->role) }}" 
-    description="Selamat datang di Sistem Pengajuan HKI"
-    icon="fas fa-tachometer-alt"
-/>
-
-<div class="container-fluid px-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-4">
-                    @if(auth()->user()->role === 'dosen')
-                        <div class="row g-4">
-                            <div class="col-lg-4 col-md-6">
-                                <div class="card border-0 shadow-sm h-100">
-                                    <div class="card-body p-4 text-center">
-                                        <div class="bg-primary bg-opacity-10 rounded-3 p-3 mb-3 d-inline-block">
-                                            <i class="fas fa-plus-circle text-primary fs-2"></i>
-                                        </div>
-                                        <h5 class="fw-bold text-dark mb-2">Pengajuan HKI</h5>
-                                        <p class="text-muted mb-3">Buat pengajuan HKI baru atau kelola pengajuan yang sudah ada.</p>
-                                        <a href="{{ route('pengajuan.index') }}" class="btn btn-primary">
-                                            <i class="fas fa-file-plus me-2"></i>Kelola Pengajuan
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @elseif(auth()->user()->role === 'admin')
-                        <div class="row g-4">
-                            <div class="col-lg-4 col-md-6">
-                                <div class="card border-0 shadow-sm h-100">
-                                    <div class="card-body p-4 text-center">
-                                        <div class="bg-success bg-opacity-10 rounded-3 p-3 mb-3 d-inline-block">
-                                            <i class="fas fa-check-circle text-success fs-2"></i>
-                                        </div>
-                                        <h5 class="fw-bold text-dark mb-2">Validasi Pengajuan</h5>
-                                        <p class="text-muted mb-3">Validasi pengajuan HKI dari dosen.</p>
-                                        <a href="{{ route('validasi.index') }}" class="btn btn-success">
-                                            <i class="fas fa-clipboard-check me-2"></i>Lihat Pengajuan
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @elseif(auth()->user()->role === 'direktur')
-                        <div class="row g-4 mb-4">
-                            <div class="col-md-4">
-                                <div class="card border-0 shadow-sm h-100">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex align-items-center">
-                                            <div class="flex-shrink-0">
-                                                <div class="bg-warning bg-opacity-10 rounded-3 p-3">
-                                                    <i class="fas fa-clock text-warning fs-4"></i>
-                                                </div>
-                                            </div>
-                                            <div class="flex-grow-1 ms-3">
-                                                <h6 class="text-muted mb-1 fw-normal">Menunggu Persetujuan</h6>
-                                                <h3 class="mb-0 fw-bold text-dark">{{ $menunggu }}</h3>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card border-0 shadow-sm h-100">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex align-items-center">
-                                            <div class="flex-shrink-0">
-                                                <div class="bg-success bg-opacity-10 rounded-3 p-3">
-                                                    <i class="fas fa-check-circle text-success fs-4"></i>
-                                                </div>
-                                            </div>
-                                            <div class="flex-grow-1 ms-3">
-                                                <h6 class="text-muted mb-1 fw-normal">Disetujui</h6>
-                                                <h3 class="mb-0 fw-bold text-dark">{{ $disetujui }}</h3>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card border-0 shadow-sm h-100">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex align-items-center">
-                                            <div class="flex-shrink-0">
-                                                <div class="bg-danger bg-opacity-10 rounded-3 p-3">
-                                                    <i class="fas fa-times-circle text-danger fs-4"></i>
-                                                </div>
-                                            </div>
-                                            <div class="flex-grow-1 ms-3">
-                                                <h6 class="text-muted mb-1 fw-normal">Ditolak</h6>
-                                                <h3 class="mb-0 fw-bold text-dark">{{ $ditolak }}</h3>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-header bg-gradient-primary text-white border-0">
-                                <h5 class="mb-0 fw-semibold">
-                                    <i class="fas fa-clock me-2"></i>Pengajuan Menunggu Persetujuan Terbaru
-                                    @if($pengajuanBaru->count() > 0)
-                                        <span class="badge bg-light text-primary ms-2">
-                                            @if($menunggu <= 5)
-                                                {{ $menunggu }} total
-                                            @else
-                                                {{ $pengajuanBaru->count() }} dari {{ $menunggu }} total
-                                            @endif
-                                        </span>
-                                    @elseif($menunggu > 0)
-                                        <span class="badge bg-warning text-dark ms-2">{{ $menunggu }} menunggu</span>
-                                    @endif
-                                </h5>
-                            </div>
-                            <div class="card-body p-0 table-container">
-                                @if($pengajuanBaru->count() > 0)
-                                <div class="table-responsive">
-                                    <table class="table table-hover mb-0">
-                                        <thead class="bg-light">
-                                            <tr>
-                                                <th class="border-0 py-3 fw-semibold text-muted">JUDUL KARYA</th>
-                                                <th class="border-0 py-3 fw-semibold text-muted">PENCIPTA</th>
-                                                <th class="border-0 py-3 fw-semibold text-muted">TANGGAL</th>
-                                                <th class="border-0 py-3 fw-semibold text-muted text-center">AKSI</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($pengajuanBaru as $item)
-                                            <tr>
-                                                <td class="py-3 col-judul">
-                                                    <h6 class="mb-1 fw-semibold text-dark">{{ $item->judul_karya }}</h6>
-                                                    @if($item->nomor_pengajuan)
-                                                        <small class="text-muted">No: {{ $item->nomor_pengajuan }}</small>
-                                                    @endif
-                                                </td>
-                                                <td class="py-3 col-nama">
-                                                    <div class="nama-pencipta fw-medium text-dark">
-                                                        {{ optional($item->pengaju->first())->nama ?? $item->nama_pengusul ?? '-' }}
-                                                    </div>
-                                                </td>
-                                                <td class="py-3 text-dark">
-                                                    {{ $item->tanggal_pengajuan ? $item->tanggal_pengajuan->format('d/m/Y H:i') : '-' }}
-                                                </td>
-                                                <td class="py-3 text-center">
-                                                    <a href="{{ route('persetujuan.show', $item->id) }}" class="btn btn-info btn-sm">
-                                                        <i class="fas fa-eye me-1"></i>Detail
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                                @else
-                                <div class="text-center py-5 text-muted">
-                                    <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
-                                    <h6 class="mb-2">Tidak ada pengajuan menunggu persetujuan</h6>
-                                    <p class="mb-0 small">Semua pengajuan telah diproses</p>
-                                </div>
-                                @endif
-                                
-                                @if($menunggu > 5)
-                                <div class="card-footer bg-light border-0 text-center py-3">
-                                    <a href="{{ route('persetujuan.index') }}" class="btn btn-outline-primary btn-sm">
-                                        <i class="fas fa-list me-2"></i>Lihat Semua {{ $menunggu }} Pengajuan
-                                    </a>
-                                </div>
-                                @elseif($pengajuanBaru->count() > 0)
-                                <div class="card-footer bg-light border-0 text-center py-2">
-                                    <a href="{{ route('persetujuan.index') }}" class="btn btn-link btn-sm text-decoration-none">
-                                        <i class="fas fa-external-link-alt me-1"></i>Buka Halaman Persetujuan
-                                    </a>
-                                </div>
-                                @endif
-                            </div>
-                        </div>
-                    @endif
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Hak Cipta Yang Tidak Lengkap</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Pengguna</th>
+                                <th>Judul</th>
+                                <th>Tanggal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">Tidak ada data</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</x-app-layout>
 
 <style>
 /* Dashboard Table Layout Fixes */
@@ -240,7 +85,7 @@
     box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
 }
 
-/* Responsive improvements for direktur dashboard */
+/* Responsive improvements for direktur */
 @media (max-width: 768px) {
     .btn.w-100.py-3 {
         padding: 1rem !important;
@@ -299,4 +144,3 @@
     background: transparent !important;
 }
 </style>
-@endsection

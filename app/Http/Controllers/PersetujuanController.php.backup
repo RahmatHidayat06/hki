@@ -244,13 +244,7 @@ class PersetujuanController extends Controller
             
             // Generate unique key based on type & page only to remove duplicate signatures per page
             $key = $normalizedOverlay['type'].'_'.$normalizedOverlay['page'];
-
-            // If an overlay with same key already exists, keep the one that is positioned
-            // further DOWN the page (lebih besar y_percent). Berdasarkan feedback, overlay
-            // duplikat dengan koordinat lebih kecil (lebih ke atas) harus dibuang.
-            if (!isset($uniqueMap[$key]) || $normalizedOverlay['y_percent'] > ($uniqueMap[$key]['y_percent'] ?? -1)) {
-                $uniqueMap[$key] = $normalizedOverlay;
-            }
+            $uniqueMap[$key] = $normalizedOverlay; // override previous if any
         }
 
         $normalizedOverlays = array_values($uniqueMap);

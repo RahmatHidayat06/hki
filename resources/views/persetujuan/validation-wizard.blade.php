@@ -202,6 +202,60 @@
             </div>
             @endif
 
+            <!-- Data Pencipta (Relasi) -->
+            @if(isset($pencipta) && $pencipta->count() > 0)
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-gradient-success text-white border-0">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="fas fa-users me-2"></i>
+                        Data Pencipta
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    @foreach($pencipta as $index => $creator)
+                    <div class="pencipta-item {{ $index > 0 ? 'border-top pt-4 mt-4' : '' }}">
+                        <h6 class="text-primary fw-bold mb-3">
+                            <i class="fas fa-user-circle me-2"></i>
+                            @if($index == 0)
+                                Nama Pencipta
+                            @else
+                                Pencipta {{ $index + 1 }}
+                            @endif
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-medium">Nama Lengkap</label>
+                                <p class="mb-0 fw-semibold">{{ $creator->nama ?? '-' }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-medium">No. HP</label>
+                                <p class="mb-0">{{ $creator->no_hp ?? '-' }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-medium">Email</label>
+                                <p class="mb-0">{{ $creator->email ?? '-' }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-medium">Kecamatan</label>
+                                <p class="mb-0">{{ $creator->kecamatan ?? '-' }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-medium">Kode Pos</label>
+                                <p class="mb-0">{{ $creator->kodepos ?? '-' }}</p>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-muted small fw-medium">Alamat Lengkap</label>
+                                <div class="p-3 bg-light rounded-3">
+                                    <p class="mb-0">{{ $creator->alamat ?? '-' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
             <!-- Dokumen yang Diupload -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-gradient-info text-white border-0">
@@ -335,7 +389,7 @@
                         @if($allSigned)
                             <div class="alert alert-success py-2 mb-0">
                                 <i class="fas fa-check-circle me-2"></i>
-                                Semua dokumen telah ditandatangani
+                                Semua dokumen telah ditandatangani, siap untuk divalidasi & sedang diproses
                             </div>
                         @else
                             <div class="alert alert-warning py-2 mb-0">
@@ -739,7 +793,7 @@ document.addEventListener('DOMContentLoaded', function(){
             });
         } else {
             Swal.fire({
-                title: 'Belum Dapat Divalidasi',
+                title: 'Belum Dapat Divalidasi & Diproses',
                 html: `
                     <div class="text-start">
                         <p>Pastikan semua dokumen telah ditandatangani:</p>

@@ -1,11 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-<x-page-header 
-    title="Dashboard" 
-    description="Ringkasan pengajuan HKI Anda"
-    icon="fas fa-chart-bar"
-/>
 
 <div class="container-fluid py-4">
     <div class="row">

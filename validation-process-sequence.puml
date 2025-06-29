@@ -1,0 +1,41 @@
+@startuml Proses Validasi Admin
+!theme plain
+title Sequence Diagram - Proses Validasi Admin
+
+actor Direktur as "Direktur"
+actor Admin as "Admin"
+participant Browser as "Browser"
+participant System as "System"
+participant Database as "Database"
+participant FileStorage as "File Storage\nService"
+
+== Persetujuan Direktur ==
+
+Direktur -> Browser: 1: login direktur
+Browser -> System: 2: authenticate
+System -> Browser: 3: dashboard direktur
+
+Direktur -> Browser: 4: review pengajuan
+Browser -> System: 5: get pengajuan detail
+System -> Database: 6: pengajuan data
+Database -> System: 6: return data
+
+Direktur -> Browser: 7: approve pengajuan
+Browser -> System: 8: update status = 'divalidasi'
+System -> Database: 9: save status
+System -> Admin: 10: notifikasi untuk finalisasi
+
+== Finalisasi Admin ==
+
+Admin -> Browser: 11: akses pengajuan tervalidasi
+Browser -> System: 12: get validated submissions
+System -> Database: 13: query validated data
+
+Admin -> Browser: 14: proses tanda tangan final
+Browser -> System: 15: process final signature
+System -> FileStorage: 16: save final signed documents
+System -> Database: 17: update status = 'menunggu_pembayaran'
+
+note over Direktur, FileStorage: Proses validasi selesai, siap untuk pembayaran
+
+@enduml 

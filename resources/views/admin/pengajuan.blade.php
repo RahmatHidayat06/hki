@@ -2,14 +2,44 @@
 
 @section('content')
 <x-page-header 
-    title="Pengajuan HKI (Admin)" 
-    description="Kelola seluruh pengajuan HKI"
-    icon="fas fa-clipboard-list"
+    title="Kelola Pengajuan HKI" 
+    description="Kelola semua pengajuan HKI dari mahasiswa dan dosen"
+    icon="fas fa-list-check"
     :breadcrumbs="[
         ['title' => 'Admin', 'url' => route('admin.dashboard')],
-        ['title' => 'Pengajuan HKI']
+        ['title' => 'Daftar Pengajuan']
     ]"
-/>
+>
+    <!-- Quick Actions in Header -->
+    <div class="d-flex gap-2">
+        <a href="{{ route('admin.rekap') }}" class="btn btn-success shadow-sm">
+            <i class="fas fa-file-excel me-2"></i>Export Excel
+        </a>
+        <div class="dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-filter me-2"></i>Filter Status
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ route('admin.pengajuan') }}">
+                    <i class="fas fa-list me-2"></i>Semua Status
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{{ route('admin.pengajuan') }}?status=menunggu_validasi">
+                    <i class="fas fa-clock me-2 text-warning"></i>Menunggu Validasi
+                </a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.pengajuan') }}?status=divalidasi_sedang_diproses">
+                    <i class="fas fa-check-circle me-2 text-info"></i>Sedang Diproses
+                </a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.pengajuan') }}?status=menunggu_verifikasi_pembayaran">
+                    <i class="fas fa-search-dollar me-2 text-primary"></i>Verifikasi Pembayaran
+                </a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.pengajuan') }}?status=selesai">
+                    <i class="fas fa-check me-2 text-success"></i>Selesai
+                </a></li>
+            </ul>
+        </div>
+    </div>
+</x-page-header>
 
 <div class="container-fluid px-4">
     <div class="row mb-4">
@@ -68,8 +98,7 @@
                     <select name="status" class="form-select status-filter-dropdown" data-current-status="{{ request('status') }}">
                         <option value="" data-status="">Semua Status</option>
                         <option value="menunggu_validasi" {{ request('status')=='menunggu_validasi'?'selected':'' }} data-status="menunggu_validasi">Menunggu Validasi</option>
-                        <option value="divalidasi" {{ request('status')=='divalidasi'?'selected':'' }} data-status="divalidasi">Divalidasi</option>
-                        <option value="sedang_di_proses" {{ request('status')=='sedang_di_proses'?'selected':'' }} data-status="sedang_di_proses">Sedang Di Proses</option>
+                        <option value="divalidasi_sedang_diproses" {{ request('status')=='divalidasi_sedang_diproses'?'selected':'' }} data-status="divalidasi_sedang_diproses">Divalidasi & Sedang Diproses</option>
                         <option value="menunggu_pembayaran" {{ request('status')=='menunggu_pembayaran'?'selected':'' }} data-status="menunggu_pembayaran">Menunggu Pembayaran</option>
                         <option value="menunggu_verifikasi_pembayaran" {{ request('status')=='menunggu_verifikasi_pembayaran'?'selected':'' }} data-status="menunggu_verifikasi_pembayaran">Verifikasi Pembayaran</option>
                         <option value="selesai" {{ request('status')=='selesai'?'selected':'' }} data-status="selesai">Selesai</option>
@@ -143,16 +172,15 @@
                                     // Definisi urutan status
                                     $statusOrder = [
                                         'menunggu_validasi' => 1,
-                                        'divalidasi' => 2,
-                                        'sedang_di_proses' => 3,
-                                        'menunggu_pembayaran' => 4,
-                                        'menunggu_verifikasi_pembayaran' => 5,
-                                        'selesai' => 6,
+                                        'divalidasi_sedang_diproses' => 2,
+                                        'menunggu_pembayaran' => 3,
+                                        'menunggu_verifikasi_pembayaran' => 4,
+                                        'selesai' => 5,
                                         'ditolak' => 99 // Status khusus
                                     ];
                                     
                                     $currentStatusLevel = $statusOrder[$item->status] ?? 1;
-                                    $allStatuses = ['menunggu_validasi','divalidasi','sedang_di_proses','menunggu_pembayaran','menunggu_verifikasi_pembayaran','selesai'];
+                                    $allStatuses = ['menunggu_validasi','divalidasi_sedang_diproses','menunggu_pembayaran','menunggu_verifikasi_pembayaran','selesai'];
                                     
                                     // Filter status yang bisa dipilih (hanya yang sama level atau lebih tinggi)
                                     $availableStatuses = array_filter($allStatuses, function($st) use ($statusOrder, $currentStatusLevel) {
@@ -167,7 +195,11 @@
                                         <select name="status" class="form-select form-select-sm me-1 status-dropdown" data-current-status="{{ $item->status }}">
                                             @foreach($availableStatuses as $st)
                                                 <option value="{{ $st }}" {{ $item->status==$st ? 'selected' : '' }} data-status="{{ $st }}">
-                                                    {{ ucfirst(str_replace('_',' ',$st)) }}
+                                                    @if($st === 'divalidasi_sedang_diproses')
+                                                        Divalidasi & Sedang Diproses
+                                                    @else
+                                                        {{ ucfirst(str_replace('_',' ',$st)) }}
+                                                    @endif
                                                 </option>
                                             @endforeach
                                         </select>
@@ -210,38 +242,27 @@
                                 @endif
                             </td>
                             <td class="py-3 text-center">
-                                <div class="btn-group btn-group-sm" role="group" aria-label="Aksi Pengajuan">
-                                    <a href="{{ route('admin.pengajuan.show', $item->id) }}" class="btn btn-info">Detail</a>
+                                <div class="d-flex flex-wrap justify-content-center gap-1">
+                                    <a href="{{ route('admin.pengajuan.show', $item->id) }}" class="btn btn-info btn-sm">Detail</a>
                                 @if($item->status === 'menunggu_validasi')
-                                        <a href="{{ route('pengajuan.edit', $item->id) }}" class="btn btn-warning">Edit</a>
+                                        <a href="{{ route('pengajuan.edit', $item->id) }}" class="btn btn-warning btn-sm">Edit</a>
                                 @else
-                                        <button type="button" class="btn btn-secondary" onclick="alert('Pengajuan hanya dapat diedit jika statusnya Menunggu Validasi');">Edit</button>
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="alert('Pengajuan hanya dapat diedit jika statusnya Menunggu Validasi');">Edit</button>
                                 @endif
-                                </div>
-                                
-                                <div class="btn-group btn-group-sm mt-1" role="group" aria-label="Aksi Rekap">
                                 @php
-                                    $rekapReady = in_array($item->status, ['divalidasi','sedang_di_proses','menunggu_pembayaran','menunggu_verifikasi_pembayaran','selesai','disetujui']);
+                                    $rekapReady = in_array($item->status, ['divalidasi_sedang_diproses','menunggu_pembayaran','menunggu_verifikasi_pembayaran','selesai','disetujui']);
                                 @endphp
                                 @if($rekapReady)
-                                        <a href="{{ route('admin.pengajuan.rekapPdf', $item->id) }}" class="btn btn-outline-primary" title="Rekap PDF">
-                                        <i class="fas fa-file-pdf"></i>
-                                    </a>
-                                        <a href="{{ route('admin.pengajuan.rekapExcel', $item->id) }}" class="btn btn-outline-success" title="Rekap Excel">
-                                        <i class="fas fa-file-excel"></i>
-                                    </a>
+                                        <a href="{{ route('admin.pengajuan.rekapPdf', $item->id) }}" class="btn btn-outline-primary btn-sm" title="Rekap PDF"><i class="fas fa-file-pdf"></i></a>
+                                        <a href="{{ route('admin.pengajuan.rekapExcel', $item->id) }}" class="btn btn-outline-success btn-sm" title="Rekap Excel"><i class="fas fa-file-excel"></i></a>
                                 @else
-                                        <button class="btn btn-outline-secondary" title="Rekap tersedia setelah validasi" disabled>
-                                        <i class="fas fa-file-pdf"></i>
-                                    </button>
-                                        <button class="btn btn-outline-secondary" title="Rekap tersedia setelah validasi" disabled>
-                                        <i class="fas fa-file-excel"></i>
-                                    </button>
+                                        <button class="btn btn-outline-secondary btn-sm" title="Rekap tersedia setelah validasi" disabled><i class="fas fa-file-pdf"></i></button>
+                                        <button class="btn btn-outline-secondary btn-sm" title="Rekap tersedia setelah validasi" disabled><i class="fas fa-file-excel"></i></button>
                                 @endif
                                 <form action="{{ route('pengajuan.destroy', $item->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     @method('DELETE')
-                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Yakin hapus data?')">Hapus</button>
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Yakin hapus data?')">Hapus</button>
                                 </form>
                                 </div>
                             </td>
@@ -372,16 +393,10 @@ td .btn-group {
     border-color: #ffeaa7 !important;
 }
 
-.status-dropdown[data-current-status="divalidasi"] {
+.status-dropdown[data-current-status="divalidasi_sedang_diproses"] {
     background-color: #d1ecf1 !important;
     color: #0c5460 !important;
     border-color: #bee5eb !important;
-}
-
-.status-dropdown[data-current-status="sedang_di_proses"] {
-    background-color: #e7f3ff !important;
-    color: #0056b3 !important;
-    border-color: #b3d9ff !important;
 }
 
 .status-dropdown[data-current-status="menunggu_pembayaran"] {
@@ -414,14 +429,9 @@ td .btn-group {
     color: #856404;
 }
 
-.status-dropdown option[data-status="divalidasi"] {
+.status-dropdown option[data-status="divalidasi_sedang_diproses"] {
     background-color: #d1ecf1;
     color: #0c5460;
-}
-
-.status-dropdown option[data-status="sedang_di_proses"] {
-    background-color: #e7f3ff;
-    color: #0056b3;
 }
 
 .status-dropdown option[data-status="menunggu_pembayaran"] {
@@ -460,16 +470,10 @@ td .btn-group {
     border-color: #ffeaa7 !important;
 }
 
-.status-filter-dropdown[data-current-status="divalidasi"] {
+.status-filter-dropdown[data-current-status="divalidasi_sedang_diproses"] {
     background-color: #d1ecf1 !important;
     color: #0c5460 !important;
     border-color: #bee5eb !important;
-}
-
-.status-filter-dropdown[data-current-status="sedang_di_proses"] {
-    background-color: #e7f3ff !important;
-    color: #0056b3 !important;
-    border-color: #b3d9ff !important;
 }
 
 .status-filter-dropdown[data-current-status="menunggu_pembayaran"] {
@@ -552,19 +556,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Status order definition
     const statusOrder = {
         'menunggu_validasi': 1,
-        'divalidasi': 2,
-        'sedang_di_proses': 3,
-        'menunggu_pembayaran': 4,
-        'menunggu_verifikasi_pembayaran': 5,
-        'selesai': 6,
+        'divalidasi_sedang_diproses': 2,
+        'menunggu_pembayaran': 3,
+        'menunggu_verifikasi_pembayaran': 4,
+        'selesai': 5,
         'ditolak': 99
     };
 
     // Status labels for user feedback
     const statusLabels = {
         'menunggu_validasi': 'Menunggu Validasi',
-        'divalidasi': 'Divalidasi',
-        'sedang_di_proses': 'Sedang Di Proses',
+        'divalidasi_sedang_diproses': 'Divalidasi & Sedang Diproses',
         'menunggu_pembayaran': 'Menunggu Pembayaran',
         'menunggu_verifikasi_pembayaran': 'Menunggu Verifikasi Pembayaran',
         'selesai': 'Selesai',

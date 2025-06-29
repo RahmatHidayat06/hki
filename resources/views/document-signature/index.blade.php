@@ -47,7 +47,7 @@
                             <div class="info-item">
                                 <label class="text-muted small">Status</label>
                                 <div>
-                                    <span class="badge bg-{{ $pengajuan->status == 'divalidasi' ? 'success' : 'warning' }}">
+                                    <span class="badge bg-{{ $pengajuan->status == 'divalidasi_sedang_diproses' ? 'success' : 'warning' }}">
                                         {{ ucfirst(str_replace('_', ' ', $pengajuan->status)) }}
                                     </span>
                                 </div>

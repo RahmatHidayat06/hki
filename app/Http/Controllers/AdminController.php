@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\PengajuanHkiSingleExport;
-use App\Models\QrLink;
+
 
 class AdminController extends Controller
 {
@@ -28,8 +28,8 @@ class AdminController extends Controller
         $total = PengajuanHki::where('status', '!=', 'draft')->count();
         $totalSelesai = PengajuanHki::where('status', 'selesai')->count();
         $totalMenunggu = PengajuanHki::where('status', 'menunggu_validasi')->count();
-        $totalDivalidasi = PengajuanHki::where('status', 'divalidasi')->count();
-        $totalSedangDiProses = PengajuanHki::where('status', 'sedang_di_proses')->count();
+        $totalDivalidasi = PengajuanHki::whereIn('status', ['divalidasi', 'sedang_di_proses', 'divalidasi_sedang_diproses'])->count();
+        $totalSedangDiProses = 0; // Tidak digunakan lagi karena digabung dengan divalidasi
         $totalMenungguPembayaran = PengajuanHki::where('status', 'menunggu_pembayaran')->count();
         $totalMenungguVerifikasi = PengajuanHki::where('status', 'menunggu_verifikasi_pembayaran')->count();
         $totalDitolak = PengajuanHki::where('status', 'ditolak')->count();
@@ -169,7 +169,7 @@ class AdminController extends Controller
         }
         
         $pencipta = $pengajuan->pengaju;
-        $preferSigned = in_array($pengajuan->status, ['divalidasi','sedang_di_proses','menunggu_pembayaran','menunggu_verifikasi_pembayaran','selesai']);
+        $preferSigned = in_array($pengajuan->status, ['divalidasi','sedang_di_proses','divalidasi_sedang_diproses','menunggu_pembayaran','menunggu_verifikasi_pembayaran','selesai']);
 
         // Konfigurasi dokumen dengan prioritas file bertanda tangan
         $documents = [
@@ -203,7 +203,7 @@ class AdminController extends Controller
             ]
         ];
 
-        // Gunakan tampilan detail terpisah khusus admin
+        // Kembalikan tampilan detail khusus admin yang mencakup fitur persetujuan, verifikasi & pembayaran
         return view('admin.show', compact('pengajuan', 'dokumen', 'pencipta', 'documents'));
     }
 
@@ -230,7 +230,7 @@ class AdminController extends Controller
         }
 
         $request->validate([
-            'status' => 'required|in:menunggu_validasi,divalidasi,sedang_di_proses,menunggu_pembayaran,menunggu_verifikasi_pembayaran,disetujui,selesai,ditolak'
+            'status' => 'required|in:menunggu_validasi,divalidasi_sedang_diproses,menunggu_pembayaran,menunggu_verifikasi_pembayaran,disetujui,selesai,ditolak'
         ]);
 
         $oldStatus = $pengajuan->status;
@@ -829,22 +829,18 @@ class AdminController extends Controller
             'file_karya' => [
                 'label' => 'File Karya Ciptaan',
                 'file_info' => $this->getFileInfoFromFileKarya($pengajuan->file_karya),
-                'scan_url' => $pengajuan->file_karya ? $this->ensureQrLink($pengajuan->file_karya) : null,
             ],
             'surat_pengalihan' => [
                 'label' => 'Surat Pengalihan (Signed)',
                 'file_info' => ($dokumen['signed']['surat_pengalihan'] ?? ($this->searchSignedFile($pengajuan->id,'surat_pengalihan'))) ? $this->getFileInfo($dokumen['signed']['surat_pengalihan'] ?? $this->searchSignedFile($pengajuan->id,'surat_pengalihan')) : null,
-                'scan_url' => ($dokumen['signed']['surat_pengalihan'] ?? ($this->searchSignedFile($pengajuan->id,'surat_pengalihan'))) ? $this->ensureQrLink($dokumen['signed']['surat_pengalihan'] ?? $this->searchSignedFile($pengajuan->id,'surat_pengalihan')) : null,
             ],
             'surat_pernyataan' => [
                 'label' => 'Surat Pernyataan (Signed)',
                 'file_info' => ($dokumen['signed']['surat_pernyataan'] ?? ($this->searchSignedFile($pengajuan->id,'surat_pernyataan'))) ? $this->getFileInfo($dokumen['signed']['surat_pernyataan'] ?? $this->searchSignedFile($pengajuan->id,'surat_pernyataan')) : null,
-                'scan_url' => ($dokumen['signed']['surat_pernyataan'] ?? ($this->searchSignedFile($pengajuan->id,'surat_pernyataan'))) ? $this->ensureQrLink($dokumen['signed']['surat_pernyataan'] ?? $this->searchSignedFile($pengajuan->id,'surat_pernyataan')) : null,
             ],
             'ktp' => [
                 'label' => 'KTP Pencipta',
                 'file_info' => $this->getFileInfoFromDokumen($dokumen,'ktp',$preferSigned),
-                'scan_url' => isset($dokumen['ktp']) ? $this->ensureQrLink($dokumen['ktp']) : null,
             ],
         ];
     }
@@ -913,10 +909,132 @@ class AdminController extends Controller
         return null;
     }
 
-    private function ensureQrLink($path): string
+
+
+    public function finalisasi(PengajuanHki $pengajuan)
     {
-        if(!$path) return '';
-        $link = QrLink::findOrCreate($path, basename($path));
-        return route('dokumen.serve', $link->hash);
+        if(auth()->user()->role !== 'admin'){
+            abort(403);
+        }
+
+        if($pengajuan->status !== 'divalidasi'){
+            return Redirect::back()->with('error','Pengajuan belum dalam status divalidasi.');
+        }
+
+        $pengajuan->update([
+            'status' => 'menunggu_pembayaran',
+            'tanggal_validasi' => now(),
+            'catatan_admin' => 'Finalisasi oleh admin, menunggu pembayaran.'
+        ]);
+
+        // Notifikasi ke pemohon
+        Notifikasi::create([
+            'user_id' => $pengajuan->user_id,
+            'pengajuan_hki_id' => $pengajuan->id,
+            'judul' => 'Menunggu Pembayaran',
+            'pesan' => 'Pengajuan HKI Anda telah selesai divalidasi dan menunggu pembayaran.',
+            'status' => 'unread',
+            'dibaca' => false
+        ]);
+
+        return Redirect::back()->with('success','Status pengajuan diubah menjadi menunggu pembayaran.');
+    }
+
+    public function konfirmasiPembayaran(PengajuanHki $pengajuan)
+    {
+        if(auth()->user()->role !== 'admin'){
+            abort(403);
+        }
+
+        if($pengajuan->status !== 'menunggu_verifikasi_pembayaran'){
+            return Redirect::back()->with('error','Pengajuan tidak dalam status menunggu verifikasi pembayaran.');
+        }
+
+        $pengajuan->update([
+            'status' => 'disetujui',
+            'catatan_admin' => 'Pembayaran telah diverifikasi dan disetujui oleh admin.'
+        ]);
+
+        // Notifikasi ke pemohon
+        Notifikasi::create([
+            'user_id' => $pengajuan->user_id,
+            'pengajuan_hki_id' => $pengajuan->id,
+            'judul' => 'Pembayaran Disetujui',
+            'pesan' => 'Pembayaran Anda telah diverifikasi dan pengajuan HKI telah disetujui.'
+        ]);
+
+        return Redirect::back()->with('success','Pembayaran berhasil dikonfirmasi dan pengajuan disetujui.');
+    }
+
+    public function uploadSertifikat(Request $request, PengajuanHki $pengajuan)
+    {
+        if(auth()->user()->role !== 'admin'){
+            abort(403);
+        }
+
+        if($pengajuan->status !== 'disetujui'){
+            return Redirect::back()->with('error','Hanya pengajuan dengan status disetujui yang dapat diupload sertifikat.');
+        }
+
+        $request->validate([
+            'sertifikat' => 'required|file|mimes:pdf|max:5120' // max 5MB
+        ]);
+
+        try {
+            // Delete old certificate if exists
+            if ($pengajuan->sertifikat && Storage::disk('public')->exists($pengajuan->sertifikat)) {
+                Storage::disk('public')->delete($pengajuan->sertifikat);
+            }
+
+            // Store new certificate
+            $file = $request->file('sertifikat');
+            $filename = 'sertifikat_' . $pengajuan->id . '_' . time() . '.pdf';
+            $path = $file->storeAs('certificates', $filename, 'public');
+
+            // Update pengajuan
+            $pengajuan->update([
+                'sertifikat' => $path,
+                'status' => 'selesai'
+            ]);
+
+            // Create notification
+            Notifikasi::create([
+                'user_id' => $pengajuan->user_id,
+                'pengajuan_hki_id' => $pengajuan->id,
+                'judul' => 'Sertifikat HKI Tersedia',
+                'pesan' => 'Sertifikat HKI Anda telah tersedia dan dapat diunduh.'
+            ]);
+
+            return Redirect::back()->with('success', 'Sertifikat berhasil diupload dan pengajuan telah selesai.');
+        } catch (\Exception $e) {
+            return Redirect::back()->with('error', 'Gagal mengupload sertifikat: ' . $e->getMessage());
+        }
+    }
+
+    public function serveSertifikat(PengajuanHki $pengajuan)
+    {
+        if (!auth()->check()) {
+            abort(401);
+        }
+
+        $user = auth()->user();
+        $canAccess = $user->role === 'admin' || 
+                     $user->role === 'direktur' || 
+                     $user->id === $pengajuan->user_id;
+
+        if (!$canAccess) {
+            abort(403);
+        }
+
+        if (!$pengajuan->sertifikat || !Storage::disk('public')->exists($pengajuan->sertifikat)) {
+            abort(404, 'Sertifikat tidak ditemukan');
+        }
+
+        $filename = 'Sertifikat_HKI_' . $pengajuan->id . '_' . str_replace(' ', '_', $pengajuan->user->name) . '.pdf';
+        
+        return response()->download(
+            storage_path('app/public/' . $pengajuan->sertifikat),
+            $filename
+        );
     }
 }
