@@ -12,7 +12,7 @@
     ]"
 />
 
-<div class="container-fluid px-4">
+<div class="container-fluid px-4 premium-admin">
 
         <!-- Main Content -->
     <div class="row g-4">
@@ -308,15 +308,11 @@
                                                 <tbody>
                                                     <tr>
                                                         <td class="border-0 py-2">Biaya Pendaftaran HKI</td>
-                                                        <td class="border-0 py-2 text-end fw-semibold">Rp 150.000</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="border-0 py-2">Biaya Materai</td>
-                                                        <td class="border-0 py-2 text-end fw-semibold">Rp 10.000</td>
+                                                        <td class="border-0 py-2 text-end fw-semibold">Rp 200.000</td>
                                                     </tr>
                                                     <tr class="border-top">
                                                         <td class="py-2 fw-bold">Total Biaya</td>
-                                                        <td class="py-2 text-end fw-bold text-primary fs-5">Rp 160.000</td>
+                                                        <td class="py-2 text-end fw-bold text-primary fs-5">Rp 200.000</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -338,254 +334,67 @@
                     </h5>
                 </div>
                         <div class="card-body p-4">
-                            @php
-                                // Prepare document cards with validation status
-                                $documentCards = [
-                                    'file_karya' => [
-                                        'title' => 'File Karya Ciptaan',
-                                        'description' => 'File utama hasil karya yang akan didaftarkan HKI',
-                                        'icon' => 'fas fa-file-pdf',
-                                        'color' => 'primary',
-                                        'path' => $pengajuan->file_karya,
-                                        'type' => 'karya'
-                                    ],
-                                    'surat_pengalihan' => [
-                                        'title' => 'Surat Pengalihan Hak',
-                                        'description' => 'Dokumen pengalihan hak cipta kepada institusi',
-                                        'icon' => 'fas fa-file-signature',
-                                        'color' => 'info',
-                                        'path' => $dokumen['surat_pengalihan'] ?? null,
-                                        'type' => 'surat_pengalihan',
-                                        'can_be_signed' => true
-                                    ],
-                                    'surat_pernyataan' => [
-                                        'title' => 'Surat Pernyataan',
-                                        'description' => 'Surat pernyataan keaslian karya dan kepemilikan',
-                                        'icon' => 'fas fa-file-contract',
-                                        'color' => 'warning',
-                                        'path' => $dokumen['surat_pernyataan'] ?? null,
-                                        'type' => 'surat_pernyataan',
-                                        'can_be_signed' => true
-                                    ],
-                                    'ktp' => [
-                                        'title' => 'KTP/Identitas',
-                                        'description' => 'Kartu identitas pemohon',
-                                        'icon' => 'fas fa-id-card',
-                                        'color' => 'secondary',
-                                        'path' => $dokumen['ktp'] ?? null,
-                                        'type' => 'ktp'
-                                    ]
-                                ];
-                            @endphp
+                    <div class="row g-3">
+                        @foreach($documents as $field => $docInfo)
+                            <div class="col-md-6">
+                                @php
+                                    // Extract file info helper
+                                    $fileInfo = $docInfo['file_info'];
+                                    $hasFile = $fileInfo['exists'] ?? false;
+                                    $cardClass = $hasFile ? 'border-success bg-success bg-opacity-10' : 'border-danger bg-danger bg-opacity-10';
+                                @endphp
+                                <div class="border rounded-3 p-3 h-100 {{ $cardClass }}">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="{{ $docInfo['icon'] }} text-{{ $docInfo['color'] }} fs-5 me-2"></i>
+                                        <h6 class="mb-0 fw-medium">{{ $docInfo['label'] }}</h6>
+                                    </div>
+                                    <p class="text-muted small mb-2">{{ $docInfo['description'] }}</p>
 
-                            <div class="row g-4">
-                                @foreach($documentCards as $key => $doc)
-                                <div class="col-lg-6 col-md-12">
-                                    <div class="document-validation-card border rounded-3 p-3 h-100 position-relative">
-                                        @php
-                                            // Check file existence
-                                            $fileExists = false;
-                                            $fileUrl = null;
-                                            $fileName = null;
-                                            $fileSize = null;
-                                            
-                                            if ($doc['path']) {
-                                                $normalizedPath = ltrim($doc['path'], '/');
-                                                if (str_starts_with($normalizedPath, 'storage/')) {
-                                                    $normalizedPath = substr($normalizedPath, strlen('storage/'));
-                                                }
-                                                $fileExists = Storage::disk('public')->exists($normalizedPath);
-                                                if ($fileExists) {
-                                                    $fileUrl = Storage::url($normalizedPath);
-                                                    $fileName = basename($doc['path']);
-                                                    $fileSize = Storage::disk('public')->size($normalizedPath);
-                                                }
-                                            }
-                                            
-                                            // Check signature status for signable documents
-                                            $hasOverlay = false;
-                                            $overlayCount = 0;
-                                            $signedFileExists = false;
-                                            $signedFileUrl = null;
-                                            
-                                            if (isset($doc['can_be_signed']) && $doc['can_be_signed']) {
-                                                $overlayData = $dokumen['overlays'][$doc['type']] ?? [];
-                                                $hasOverlay = !empty($overlayData);
-                                                $overlayCount = count($overlayData);
-                                                
-                                                // Check signed file
-                                                $signedPath = $dokumen['signed'][$doc['type']] ?? null;
-                                                if ($signedPath) {
-                                                    // Handle case where signed path might be an array (take the latest)
-                                                    if (is_array($signedPath)) {
-                                                        $signedPath = end($signedPath); // Take last element (latest)
-                                                    }
-                                                    
-                                                    if ($signedPath && is_string($signedPath)) {
-                                                        $normalizedSignedPath = ltrim($signedPath, '/');
-                                                        if (str_starts_with($normalizedSignedPath, 'storage/')) {
-                                                            $normalizedSignedPath = substr($normalizedSignedPath, strlen('storage/'));
-                                                        }
-                                                        $signedFileExists = Storage::disk('public')->exists($normalizedSignedPath);
-                                                        if ($signedFileExists) {
-                                                            if ($doc['type'] === 'surat_pengalihan') {
-                                                                $signedFileUrl = route('admin.pengajuan.suratPengalihanSigned', $pengajuan->id);
-                                                            } elseif ($doc['type'] === 'surat_pernyataan') {
-                                                                $signedFileUrl = route('admin.pengajuan.suratPernyataanSigned', $pengajuan->id);
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        @endphp
+                                    @if($hasFile)
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Tersedia
+                                            </span>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ $fileInfo['url'] }}?v={{ $pengajuan->updated_at->timestamp }}" target="_blank" class="btn btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{{ $fileInfo['url'] }}" download class="btn btn-outline-success">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                            </div>
+                                        </div>
 
-                                        <!-- Status Badge -->
-                                        <div class="position-absolute top-0 end-0 m-2">
-                                            @if($fileExists)
-                                                @if(isset($doc['can_be_signed']) && $doc['can_be_signed'])
-                                                    @if($signedFileExists)
-                                                        <span class="badge bg-success">
-                                                            <i class="fas fa-certificate me-1"></i>Ditandatangani
-                                                        </span>
-                                                    @elseif($hasOverlay)
-                                                        <span class="badge bg-warning">
-                                                            <i class="fas fa-signature me-1"></i>Dioverlay
-                                                        </span>
-                                                    @else
-                                                        <span class="badge bg-info">
-                                                            <i class="fas fa-clock me-1"></i>Siap Ditandatangani
-                                                        </span>
-                                                    @endif
-                                                @else
-                                                    <span class="badge bg-success">
-                                                        <i class="fas fa-check me-1"></i>Tersedia
-                                                    </span>
-                                                @endif
-                                            @else
-                                                <span class="badge bg-danger">
-                                                    <i class="fas fa-times me-1"></i>Tidak Ada
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-file me-1"></i>{{ $fileInfo['filename'] ?? 'File' }}
+                                                <span class="ms-2">
+                                                    <i class="fas fa-weight me-1"></i>{{ $fileInfo['size_formatted'] ?? '-' }}
                                                 </span>
-                                            @endif
+                                            </small>
                                         </div>
 
-                                        <!-- Header with Icon and Title -->
-                                        <div class="d-flex align-items-center mb-3">
-                                            <div class="document-icon bg-{{ $doc['color'] }} bg-opacity-10 rounded-3 p-3 me-3">
-                                                <i class="{{ $doc['icon'] }} fa-2x text-{{ $doc['color'] }}"></i>
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <h6 class="fw-bold mb-1">{{ $doc['title'] }}</h6>
-                                                <small class="text-muted">{{ $doc['description'] }}</small>
-                                            </div>
-                                        </div>
-
-                                        @if($fileExists)
-                                            <!-- File Information -->
-                                            <div class="file-info mb-3 p-2 bg-light rounded-2">
-                                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-file me-1"></i>{{ $fileName }}
-                                                    </small>
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-weight me-1"></i>{{ number_format($fileSize / 1024, 1) }} KB
-                                                    </small>
-                                                </div>
-                                            </div>
-
-                                            <!-- Signature Status for Signable Documents -->
-                                            @if(isset($doc['can_be_signed']) && $doc['can_be_signed'])
-                                                <div class="signature-status mb-3">
-                                                    <h6 class="fw-semibold mb-2 text-muted">Status Signature Editor:</h6>
-                                                    
-                                                    @if($hasOverlay)
-                                                        <div class="overlay-info p-2 bg-warning bg-opacity-10 rounded-2 mb-2">
-                                                            <div class="d-flex justify-content-between align-items-center">
-                                                                <small class="fw-medium text-warning">
-                                                                    <i class="fas fa-signature me-1"></i>{{ $overlayCount }} Overlay Applied
-                                                                </small>
-                                                                <small class="text-success">✓ Sudah di-overlay</small>
-                                                            </div>
-                                                        </div>
-                                                    @else
-                                                        <div class="overlay-info p-2 bg-secondary bg-opacity-10 rounded-2 mb-2">
-                                                            <div class="d-flex justify-content-between align-items-center">
-                                                                <small class="fw-medium text-secondary">
-                                                                    <i class="fas fa-clock me-1"></i>Belum di-overlay
-                                                                </small>
-                                                                <small class="text-muted">Menunggu direktur</small>
-                                                            </div>
-                                                        </div>
-                                                    @endif
-
-                                                    @if($signedFileExists)
-                                                        <div class="signed-info p-2 bg-success bg-opacity-10 rounded-2">
-                                                            <div class="d-flex justify-content-between align-items-center">
-                                                                <small class="fw-medium text-success">
-                                                                    <i class="fas fa-certificate me-1"></i>File Bertanda Tangan
-                                                                </small>
-                                                                <small class="text-success">✓ Tersedia</small>
-                                                            </div>
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                            @endif
-
-                                            <!-- Action Buttons -->
-                                            <div class="action-buttons">
-                                                <div class="d-flex flex-wrap gap-2">
-                                                    <!-- Original File Actions -->
-                                                    <a href="{{ $fileUrl }}" 
-                                                       target="_blank" 
-                                                       class="btn btn-outline-{{ $doc['color'] }} btn-sm">
-                                                        <i class="fas fa-eye me-1"></i>Lihat Original
-                                                    </a>
-                                                    <a href="{{ $fileUrl }}" 
-                                                       download 
-                                                       class="btn btn-outline-secondary btn-sm">
-                                                        <i class="fas fa-download me-1"></i>Download
-                                                    </a>
-
-                                                    <!-- Signed File Actions -->
-                                                    @if($signedFileExists)
-                                                        <a href="{{ $signedFileUrl }}" 
-                                                           target="_blank" 
-                                                           class="btn btn-success btn-sm">
-                                                            <i class="fas fa-certificate me-1"></i>Lihat Signed
-                                                        </a>
-                                                    @endif
-
-                                                    <!-- Signature Editor Access -->
-                                                    @if(isset($doc['can_be_signed']) && $doc['can_be_signed'] && in_array($pengajuan->status, ['divalidasi', 'sedang_di_proses']))
-                                                        <a href="{{ route('persetujuan.signature.editor', [$pengajuan->id, $doc['type']]) }}" 
-                                                           target="_blank" 
-                                                           class="btn btn-outline-warning btn-sm">
-                                                            <i class="fas fa-signature me-1"></i>Signature Editor
-                                                        </a>
-                                                    @endif
-                                                </div>
-                                            </div>
-
-                                        @else
-                                            <!-- Empty State -->
-                                            <div class="text-center py-4">
-                                                <i class="fas fa-file-slash fa-3x text-muted mb-2"></i>
-                                                <p class="text-muted mb-0">File belum tersedia</p>
-                                                @if(isset($doc['can_be_signed']) && $doc['can_be_signed'])
-                                                    <small class="text-muted">Dokumen harus ada sebelum bisa ditandatangani</small>
-                                                @endif
+                                        @if(($fileInfo['is_signed'] ?? false))
+                                            <div class="mt-2">
+                                                <span class="badge bg-info">
+                                                    <i class="fas fa-key me-1"></i>Sudah Ditandatangani
+                                                </span>
                                             </div>
                                         @endif
-                                    </div>
+                                    @else
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times me-1"></i>Tidak Ada
+                                        </span>
+                                    @endif
                                 </div>
-                                @endforeach
                             </div>
-                        </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
 
             <!-- Baris 5: Status Overlay & Tanda Tangan Direktur -->
-            @if(in_array($pengajuan->status, ['divalidasi', 'sedang_di_proses', 'menunggu_pembayaran', 'menunggu_verifikasi_pembayaran', 'selesai']))
+                                    @if(in_array($pengajuan->status, ['divalidasi_sedang_diproses', 'menunggu_pembayaran', 'menunggu_verifikasi_pembayaran', 'selesai']))
             <div class="row g-3 mb-4">
                 <div class="col-12">
                     <div class="card border-0 shadow-sm">
@@ -818,74 +627,13 @@
                     </div>
                 </div>
             </div>
-            @endif
-
-            <!-- Action Buttons -->
-            <div class="row g-3">
-                <div class="col-12">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body p-4">
-                            <div class="d-flex flex-wrap gap-2">
-                                <a href="{{ route('admin.pengajuan') }}" class="btn btn-secondary">
-                                    <i class="fas fa-arrow-left me-1"></i>Kembali
-                                </a>
-                                <a href="{{ route('admin.surat.pengalihan', $pengajuan->id) }}" class="btn btn-success" target="_blank">
-                                    <i class="fas fa-file-export me-1"></i>Generate Surat Pengalihan
-                                </a>
-                                <a href="{{ route('admin.surat.pernyataan', $pengajuan->id) }}" class="btn btn-primary" target="_blank">
-                                    <i class="fas fa-file-signature me-1"></i>Generate Surat Pernyataan
-                                </a>
-                                
-                                @php
-                                    // Check if signed documents actually exist
-                                    $signedPengalihanExists = false;
-                                    $signedPernyataanExists = false;
-                                    
-                                    if(is_array($dokumen) && isset($dokumen['signed']['surat_pengalihan'])) {
-                                        $signedPath = $dokumen['signed']['surat_pengalihan'];
-                                        $normalizedPath = ltrim($signedPath, '/');
-                                        if (str_starts_with($normalizedPath, 'storage/')) {
-                                            $normalizedPath = substr($normalizedPath, strlen('storage/'));
-                                        }
-                                        $signedPengalihanExists = \Illuminate\Support\Facades\Storage::disk('public')->exists($normalizedPath);
-                                    }
-                                    
-                                    if(is_array($dokumen) && isset($dokumen['signed']['surat_pernyataan'])) {
-                                        $signedPath = $dokumen['signed']['surat_pernyataan'];
-                                        $normalizedPath = ltrim($signedPath, '/');
-                                        if (str_starts_with($normalizedPath, 'storage/')) {
-                                            $normalizedPath = substr($normalizedPath, strlen('storage/'));
-                                        }
-                                        $signedPernyataanExists = \Illuminate\Support\Facades\Storage::disk('public')->exists($normalizedPath);
-                                    }
-                                @endphp
-
-                                @if($signedPengalihanExists)
-                                    <a href="{{ route('admin.pengajuan.suratPengalihanSigned', $pengajuan->id) }}" 
-                                       class="btn btn-outline-success" target="_blank" 
-                                       title="Lihat surat pengalihan yang telah diberi overlay direktur">
-                                        <i class="fas fa-eye me-1"></i>Lihat Surat Pengalihan Signed
-                                    </a>
                                 @endif
-                                
-                                @if($signedPernyataanExists)
-                                    <a href="{{ route('admin.pengajuan.suratPernyataanSigned', $pengajuan->id) }}" 
-                                       class="btn btn-outline-warning" target="_blank" 
-                                       title="Lihat surat pernyataan yang telah diberi overlay direktur">
-                                        <i class="fas fa-eye me-1"></i>Lihat Surat Pernyataan Signed
-                                    </a>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Right Column -->
-        <div class="col-lg-4">
+        <div class="col-lg-4 d-flex flex-column gap-4">
             <!-- Timeline Status -->
-            <div class="card border-0 shadow-sm mb-4">
+            <div class="card border-0 shadow-sm mb-4 order-lg-2">
                 <div class="card-header bg-light border-0 py-3">
                     <h5 class="mb-0 fw-semibold text-dark">
                         <i class="fas fa-history text-primary me-2"></i>Timeline Status
@@ -909,11 +657,11 @@
                                 </div>
                             </div>
 
-                            @if($pengajuan->status == 'divalidasi')
+                            @if(in_array($pengajuan->status, ['divalidasi_sedang_diproses']))
                             <div class="timeline-item active">
                                 <div class="timeline-marker bg-success"></div>
                                 <div class="timeline-content">
-                                    <h6 class="fw-semibold mb-1">Pengajuan Divalidasi</h6>
+                                    <h6 class="fw-semibold mb-1">Pengajuan Divalidasi & Sedang Diproses</h6>
                                     <p class="text-muted small mb-0">{{ $pengajuan->tanggal_validasi ? $pengajuan->tanggal_validasi->format('d M Y, H:i') : $pengajuan->updated_at->format('d M Y, H:i') }}</p>
                                     @if($pengajuan->catatan_admin)
                                         <div class="mt-2 p-2 bg-success bg-opacity-10 rounded-2">
@@ -926,7 +674,7 @@
                             <div class="timeline-item active">
                                 <div class="timeline-marker bg-success"></div>
                                 <div class="timeline-content">
-                                    <h6 class="fw-semibold mb-1">Pengajuan Divalidasi</h6>
+                                    <h6 class="fw-semibold mb-1">Pengajuan Divalidasi & Sedang Diproses</h6>
                                     <p class="text-muted small mb-0">{{ $pengajuan->tanggal_validasi ? $pengajuan->tanggal_validasi->format('d M Y, H:i') : $pengajuan->updated_at->format('d M Y, H:i') }}</p>
                                 </div>
                             </div>
@@ -941,7 +689,7 @@
                             <div class="timeline-item active">
                                 <div class="timeline-marker bg-success"></div>
                                 <div class="timeline-content">
-                                    <h6 class="fw-semibold mb-1">Pengajuan Divalidasi</h6>
+                                    <h6 class="fw-semibold mb-1">Pengajuan Divalidasi & Sedang Diproses</h6>
                                     <p class="text-muted small mb-0">{{ $pengajuan->tanggal_validasi ? $pengajuan->tanggal_validasi->format('d M Y, H:i') : $pengajuan->updated_at->format('d M Y, H:i') }}</p>
                                 </div>
                             </div>
@@ -986,7 +734,7 @@
                     </div>
 
             <!-- Quick Info -->
-            <div class="card border-0 shadow-sm mb-4">
+            <div class="card border-0 shadow-sm mb-4 order-lg-3">
                 <div class="card-header bg-light border-0 py-3">
                     <h5 class="mb-0 fw-semibold text-dark">
                         <i class="fas fa-info text-info me-2"></i>Informasi Cepat
@@ -1049,7 +797,7 @@
                 </div>
 
             <!-- Action Panel -->
-            <div class="card border-0 shadow-sm mb-4">
+            <div class="card border-0 shadow-sm mb-4 order-lg-1">
                 <div class="card-header bg-light border-0 py-3">
                     <h5 class="mb-0 fw-semibold text-dark">
                         <i class="fas fa-cogs text-warning me-2"></i>Panel Aksi
@@ -1067,7 +815,7 @@
                                 </div>
                             @endif
 
-                            @if(in_array($pengajuan->status, ['divalidasi', 'sedang_di_proses']))
+                            @if(in_array($pengajuan->status, ['divalidasi_sedang_diproses']))
                                 @if(!$pengajuan->billing_code)
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#billingModal">
                                         <i class="fas fa-barcode me-2"></i>Set Kode Billing
@@ -1091,6 +839,20 @@
                                 <div class="alert alert-warning py-2 mb-2">
                                     <small><i class="fas fa-clock me-1"></i>Menunggu verifikasi bukti pembayaran</small>
                                 </div>
+                            @endif
+
+                            @if($pengajuan->status === 'disetujui')
+                                @if(!$pengajuan->sertifikat)
+                                    <!-- Upload Sertifikat Button -->
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadSertifikatModal">
+                                        <i class="fas fa-file-upload me-2"></i>Upload Sertifikat
+                                    </button>
+                                @else
+                                    <!-- Sertifikat already uploaded -->
+                                    <a href="{{ route('sertifikat.serve', $pengajuan->id) }}" target="_blank" class="btn btn-success">
+                                        <i class="fas fa-file-download me-2"></i>Lihat / Download Sertifikat
+                                    </a>
+                                @endif
                             @endif
 
                             <hr class="my-3">
@@ -1309,6 +1071,31 @@
     background-color: #f8f9fa !important;
     border-color: #dee2e6 !important;
 }
+
+/* ================= Premium Admin Wrapper ================= */
+.premium-admin {
+    background: linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.premium-admin .card {
+    border-radius: 1rem !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+}
+
+.premium-admin .card:hover {
+    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+    transform: translateY(-4px);
+}
+
+.premium-admin .card-header, .premium-admin .card-body {
+    background-color: #ffffff !important;
+}
+
+.premium-admin .badge {
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.6rem;
+}
 </style>
 
 <!-- Modal untuk Set Billing Code -->
@@ -1369,6 +1156,34 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Upload Sertifikat -->
+@if($pengajuan->status === 'disetujui' && !$pengajuan->sertifikat)
+<div class="modal fade" id="uploadSertifikatModal" tabindex="-1" aria-labelledby="uploadSertifikatLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="uploadSertifikatLabel">Upload Sertifikat HKI</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ route('sertifikat.upload', $pengajuan->id) }}" method="POST" enctype="multipart/form-data">
+        @csrf
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="sertifikatFile" class="form-label">File Sertifikat (PDF)</label>
+            <input type="file" class="form-control" id="sertifikatFile" name="sertifikat" accept="application/pdf" required>
+            <div class="form-text">Unggah file sertifikat berformat PDF, maksimal 5&nbsp;MB.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-upload me-1"></i>Upload</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+@endif
 
 <script>
 // Function untuk copy billing code

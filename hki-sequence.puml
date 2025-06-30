@@ -1,0 +1,29 @@
+@startuml
+!theme plain
+title Sequence Diagram Overview Sistem HKI
+
+actor User as "User"
+actor Direktur as "Direktur"
+actor AdminP3M as "Admin P3M"
+actor Admin as "Admin"
+participant System as "Sistem HKI"
+
+User -> System: 1. Submit Pengajuan HKI
+System -> Direktur: 2. Notifikasi Pengajuan Baru
+
+Direktur -> System: 3. Review dan Persetujuan
+System -> AdminP3M: 4. Notifikasi untuk Validasi
+
+AdminP3M -> System: 5. Validasi dan Tanda Tangan
+System -> User: 6. Notifikasi Siap Pembayaran
+
+User -> System: 7. Lakukan Pembayaran
+System -> Admin: 8. Notifikasi Verifikasi Pembayaran
+
+Admin -> System: 9. Konfirmasi Pembayaran
+Admin -> System: 10. Upload Sertifikat
+
+System -> User: 11. Notifikasi Sertifikat Tersedia
+User -> System: 12. Download Sertifikat
+
+@enduml

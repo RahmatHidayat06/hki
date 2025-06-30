@@ -483,7 +483,54 @@ class PengajuanHkiController extends Controller
             return Redirect::to(route('pengajuan.index'))
                 ->with('error', 'Anda tidak memiliki akses ke pengajuan ini');
         }
-        return view('pengajuan.show', compact('pengajuan'));
+
+        // Load relasi yang diperlukan
+        $pengajuan->load(['user', 'pengaju']);
+
+        // Proses dokumen pendukung untuk menampilkan file terbaru/bertanda tangan
+        $dokumen = [];
+        if($pengajuan->file_dokumen_pendukung){
+            $dokumen = is_string($pengajuan->file_dokumen_pendukung)
+                ? json_decode($pengajuan->file_dokumen_pendukung, true)
+                : $pengajuan->file_dokumen_pendukung;
+        }
+        
+        $pencipta = $pengajuan->pengaju;
+        $preferSigned = in_array($pengajuan->status, ['divalidasi_sedang_diproses','menunggu_pembayaran','menunggu_verifikasi_pembayaran','selesai']);
+
+        // Konfigurasi dokumen dengan prioritas file bertanda tangan
+        $documents = [
+            'contoh_ciptaan' => [
+                'label'=>'Contoh Ciptaan',
+                'description'=>'File contoh karya yang diajukan',
+                'icon'=>'fas fa-palette',
+                'color'=>'primary',
+                'file_info'=>$this->getFileInfoFromFileKarya($pengajuan->file_karya)
+            ],
+            'surat_pengalihan' => [
+                'label'=>'Surat Pengalihan Hak',
+                'description'=>'Dokumen pengalihan hak cipta',
+                'icon'=>'fas fa-exchange-alt',
+                'color'=>'info',
+                'file_info'=>$this->getFileInfoFromDokumen($dokumen,'surat_pengalihan',$preferSigned)
+            ],
+            'surat_pernyataan' => [
+                'label'=>'Surat Pernyataan',
+                'description'=>'Surat pernyataan keaslian karya',
+                'icon'=>'fas fa-file-signature',
+                'color'=>'warning',
+                'file_info'=>$this->getFileInfoFromDokumen($dokumen,'surat_pernyataan',$preferSigned)
+            ],
+            'ktp'=>[
+                'label'=>'KTP Pencipta',
+                'description'=>'Kartu Tanda Penduduk',
+                'icon'=>'fas fa-id-card',
+                'color'=>'success',
+                'file_info'=>$this->getFileInfoFromDokumen($dokumen,'ktp',$preferSigned)
+            ]
+        ];
+
+        return view('pengajuan.show', compact('pengajuan', 'dokumen', 'pencipta', 'documents'));
     }
 
     /**
@@ -1133,5 +1180,226 @@ class PengajuanHkiController extends Controller
         }
         return Redirect::to(route('draft.edit', $pengajuan->id))
             ->with($success ? 'success' : 'error', $success ? 'File berhasil dihapus.' : 'File tidak ditemukan.');
+    }
+
+    /* --------- Helper methods for file processing --------- */
+
+    private function getFileInfoFromDokumen($dokumen, $key, bool $preferSigned = false)
+    {
+        if (!is_array($dokumen)) {
+            return [
+                'exists' => false,
+                'url' => null,
+                'filename' => null,
+                'extension' => null,
+                'size' => null,
+                'is_signed' => false,
+                'original_exists' => false,
+                'signed_exists' => false
+            ];
+        }
+
+        $originalFile = $dokumen[$key] ?? null;
+        $signedFile = $dokumen['signed'][$key] ?? null;
+        
+        // Tentukan file mana yang akan digunakan
+        $useSignedFile = $preferSigned && $signedFile;
+        $selectedFile = $useSignedFile ? $signedFile : $originalFile;
+        
+        if (!$selectedFile) {
+            return [
+                'exists' => false,
+                'url' => null,
+                'filename' => null,
+                'extension' => null,
+                'size' => null,
+                'is_signed' => false,
+                'original_exists' => (bool)$originalFile,
+                'signed_exists' => (bool)$signedFile
+            ];
+        }
+
+        // Dapatkan info file utama
+        $fileInfo = $this->getFileInfo($selectedFile);
+        if (!$fileInfo) {
+            return [
+                'exists' => false,
+                'url' => null,
+                'filename' => null,
+                'extension' => null,
+                'size' => null,
+                'is_signed' => false,
+                'original_exists' => (bool)$originalFile,
+                'signed_exists' => (bool)$signedFile
+            ];
+        }
+
+        // Cek keberadaan file original dan signed
+        $originalExists = $originalFile ? $this->fileExists($originalFile) : false;
+        $signedExists = $signedFile ? $this->fileExists($signedFile) : false;
+        
+        return [
+            'exists' => true,
+            'url' => $fileInfo['url'],
+            'filename' => $fileInfo['filename'],
+            'extension' => $fileInfo['extension'],
+            'size' => $fileInfo['size'],
+            'is_signed' => $useSignedFile,
+            'original_exists' => $originalExists,
+            'signed_exists' => $signedExists,
+            'original_url' => $originalExists && $originalFile ? $this->getFileUrl($originalFile) : null,
+            'signed_url' => $signedExists && $signedFile ? $this->getFileUrl($signedFile) : null,
+            'original_filename' => $originalFile ? basename($originalFile) : null,
+            'signed_filename' => $signedFile ? basename($signedFile) : null
+        ];
+    }
+
+    private function getFileInfoFromFileKarya($fileKarya)
+    {
+        if (!$fileKarya) {
+            return [
+                'exists' => false,
+                'url' => null,
+                'filename' => null,
+                'extension' => null,
+                'size' => null,
+                'is_signed' => false
+            ];
+        }
+
+        // Jika URL eksternal, kembalikan info dasar
+        if (filter_var($fileKarya, FILTER_VALIDATE_URL)) {
+            return [
+                'exists' => true,
+                'url' => $fileKarya,
+                'filename' => basename($fileKarya),
+                'extension' => strtoupper(pathinfo($fileKarya, PATHINFO_EXTENSION)),
+                'size' => 0,
+                'is_signed' => false // File karya tidak ditandatangani
+            ];
+        }
+
+        $fileInfo = $this->getFileInfo($fileKarya);
+        if (!$fileInfo) {
+            return [
+                'exists' => false,
+                'url' => null,
+                'filename' => null,
+                'extension' => null,
+                'size' => null,
+                'is_signed' => false
+            ];
+        }
+
+        return [
+            'exists' => true,
+            'url' => $fileInfo['url'],
+            'filename' => $fileInfo['filename'],
+            'extension' => $fileInfo['extension'],
+            'size' => $fileInfo['size'],
+            'is_signed' => false // File karya tidak ditandatangani
+        ];
+    }
+
+    private function fileExists($filePath)
+    {
+        if (!$filePath) return false;
+        
+        // Normalize path
+        $normalized = ltrim($filePath, '/');
+        if (str_starts_with($normalized, 'storage/')) {
+            $normalized = substr($normalized, strlen('storage/'));
+        }
+        
+        return Storage::disk('public')->exists($normalized);
+    }
+
+    private function getFileUrl($filePath)
+    {
+        if (!$filePath) return null;
+        
+        // Jika sudah URL, return as is
+        if (filter_var($filePath, FILTER_VALIDATE_URL)) {
+            return $filePath;
+        }
+        
+        // Normalize path dan return storage URL
+        $normalized = ltrim($filePath, '/');
+        if (str_starts_with($normalized, 'storage/')) {
+            $normalized = substr($normalized, strlen('storage/'));
+        }
+        
+        return Storage::url($normalized);
+    }
+
+    private function getFileInfo($filePath)
+    {
+        if (!$filePath) return null;
+        
+        // Normalize various forms: leading slash, /storage/, full URL
+        $normalized = ltrim($filePath, '/');
+        if(!Storage::disk('public')->exists($normalized)){
+            // Strip 'storage/' prefix if present
+            if(str_starts_with($normalized, 'storage/')){
+                $maybe = substr($normalized, strlen('storage/'));
+                if(Storage::disk('public')->exists($maybe)){
+                    $normalized = $maybe;
+                }
+            } elseif(filter_var($normalized, FILTER_VALIDATE_URL)){
+                $maybeRel = $this->storageUrlToRelative($normalized);
+                if($maybeRel && Storage::disk('public')->exists($maybeRel)){
+                    $normalized = $maybeRel;
+                }
+            }
+        }
+
+        if (!Storage::disk('public')->exists($normalized)) return null;
+
+        $size = Storage::disk('public')->size($normalized);
+        $extension = pathinfo($normalized, PATHINFO_EXTENSION);
+
+        return [
+            'size' => $size,
+            'size_formatted' => $this->formatFileSize($size),
+            'extension' => strtoupper($extension),
+            'filename' => basename($normalized),
+            'icon_class' => $this->getFileTypeIcon($extension),
+            'url' => Storage::url($normalized),
+        ];
+    }
+
+    private function formatFileSize($bytes)
+    {
+        if ($bytes >= 1073741824) {
+            return number_format($bytes / 1073741824, 2) . ' GB';
+        } elseif ($bytes >= 1048576) {
+            return number_format($bytes / 1048576, 2) . ' MB';
+        } elseif ($bytes >= 1024) {
+            return number_format($bytes / 1024, 2) . ' KB';
+        } else {
+            return $bytes . ' B';
+        }
+    }
+
+    private function getFileTypeIcon($extension)
+    {
+        $ext = strtolower($extension);
+        return match($ext) {
+            'pdf' => 'fas fa-file-pdf text-danger',
+            'doc','docx' => 'fas fa-file-word text-primary',
+            'xls','xlsx','csv' => 'fas fa-file-excel text-success',
+            'ppt','pptx' => 'fas fa-file-powerpoint text-warning',
+            'jpg','jpeg','png','gif','svg','webp' => 'fas fa-file-image text-info',
+            default => 'fas fa-file'
+        };
+    }
+
+    private function storageUrlToRelative(string $url): ?string
+    {
+        $storageUrl = Storage::url('');
+        if (str_starts_with($url, $storageUrl)) {
+            return substr($url, strlen($storageUrl));
+        }
+        return null;
     }
 } 

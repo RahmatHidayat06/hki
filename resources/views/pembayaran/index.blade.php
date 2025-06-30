@@ -21,7 +21,7 @@
         </div>
         <div class="card-body p-0">
             @if($pengajuans->isEmpty())
-                <div class="alert alert-info">Tidak ada pengajuan yang menunggu pembayaran.</div>
+                <div class="alert alert-info">Belum ada riwayat pembayaran.</div>
             @else
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
@@ -95,11 +95,6 @@
                                             @default
                                                 <span class="text-muted">-</span>
                                         @endswitch
-
-                                        <!-- Certificate button (always shown) -->
-                                        <a href="{{ $canDownload ? route('sertifikat.download', $p->id) : '#' }}" class="btn btn-sm btn-primary ms-1 {{ $canDownload ? '' : 'disabled' }}" title="Unduh Sertifikat">
-                                            <i class="fas fa-download me-1"></i>Unduh Sertifikat
-                                        </a>
                                     </td>
                                 </tr>
                             @endforeach

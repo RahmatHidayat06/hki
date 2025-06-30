@@ -42,10 +42,11 @@
                         @endif
                     </div>
                 </div>
-                <div class="text-end">
-                    <span class="badge bg-light text-dark fs-6 px-3 py-2">
-                        <i class="fas fa-calendar-day me-1"></i>{{ now()->format('d M Y') }}
-                    </span>
+                <div class="d-flex align-items-center text-muted" style="font-size: 0.9rem;">
+                    <i class="fas fa-clock me-2"></i>
+                    <div id="page-header-time" class="fw-medium">08.00.30</div>
+                    <div class="mx-2 text-black-50">|</div>
+                    <div id="page-header-date" class="text-dark">Jum, 27 Jun 2025</div>
                 </div>
             </div>
         </div>
@@ -74,5 +75,47 @@
         text-overflow: ellipsis;
         white-space: nowrap;
     }
+    
+    /* Hide clock on mobile for cleaner look */
+    #page-header-time,
+    #page-header-date,
+    .fa-clock {
+        display: none !important;
+    }
 }
-</style> 
+</style>
+
+<script>
+// Clock functionality for page header
+document.addEventListener('DOMContentLoaded', function() {
+    function updatePageHeaderClock() {
+        const now = new Date();
+        
+        // Format time as HH.MM.SS
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const timeString = `${hours}.${minutes}.${seconds}`;
+        
+        // Format date as "Day, DD Mon YYYY"
+        const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        
+        const dayName = days[now.getDay()];
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = months[now.getMonth()];
+        const year = now.getFullYear();
+        const dateString = `${dayName}, ${day} ${month} ${year}`;
+        
+        const timeElement = document.getElementById('page-header-time');
+        const dateElement = document.getElementById('page-header-date');
+        
+        if (timeElement) timeElement.textContent = timeString;
+        if (dateElement) dateElement.textContent = dateString;
+    }
+    
+    // Update clock immediately and then every second
+    updatePageHeaderClock();
+    setInterval(updatePageHeaderClock, 1000);
+});
+</script> 

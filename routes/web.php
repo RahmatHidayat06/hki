@@ -93,6 +93,9 @@ Route::middleware('auth')->group(function () {
         // Routes untuk melihat surat yang sudah ditandatangani
         Route::get('/pengajuan/{pengajuan}/surat-pengalihan-signed', [\App\Http\Controllers\AdminController::class, 'viewSignedSuratPengalihan'])->name('pengajuan.suratPengalihanSigned');
         Route::get('/pengajuan/{pengajuan}/surat-pernyataan-signed', [\App\Http\Controllers\AdminController::class, 'viewSignedSuratPernyataan'])->name('pengajuan.suratPernyataanSigned');
+        Route::get('/pengajuan/{pengajuan}/finalisasi', [\App\Http\Controllers\AdminController::class, 'finalisasi'])->name('pengajuan.finalisasi');
+        Route::get('/pengajuan/{pengajuan}/konfirmasi-pembayaran', [\App\Http\Controllers\AdminController::class, 'konfirmasiPembayaran'])->name('pengajuan.konfirmasiPembayaran');
+        Route::post('/pengajuan/{pengajuan}/upload-sertifikat', [\App\Http\Controllers\AdminController::class, 'uploadSertifikat'])->name('pengajuan.uploadSertifikat');
     });
 
     // Route untuk document signature overlay
@@ -143,7 +146,7 @@ Route::middleware('auth')->group(function () {
 
     // Routes untuk sertifikat
     Route::post('/sertifikat/upload/{pengajuan}', [\App\Http\Controllers\PembayaranController::class, 'uploadSertifikat'])->name('sertifikat.upload')->middleware('auth');
-    Route::get('/sertifikat/{pengajuan}', [\App\Http\Controllers\PembayaranController::class, 'serveSertifikat'])->name('sertifikat.serve')->middleware('auth');
+    Route::get('/sertifikat/{pengajuan}', [\App\Http\Controllers\AdminController::class, 'serveSertifikat'])->name('sertifikat.serve')->middleware('auth');
 
     Route::get('/pembayaran', [\App\Http\Controllers\PembayaranController::class, 'index'])->name('pembayaran.index');
 
@@ -185,7 +188,10 @@ Route::middleware('auth')->group(function () {
         $pengajuName = str_replace(' ', '_', $pengajuan->user->name);
         $displayName = $pengajuan->id . '_' . $documentType . '_' . $pengajuName . '_signed.pdf';
         
-        return \Illuminate\Support\Facades\Storage::disk('public')->download($signedPath, $displayName);
+        return response()->download(
+            storage_path('app/public/' . $signedPath), 
+            $displayName
+        );
     })->name('signed.document.serve');
 
 });

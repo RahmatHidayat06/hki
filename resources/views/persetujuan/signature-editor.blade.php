@@ -610,6 +610,7 @@ $(function() {
     window.scale = 1;
     window.documentDimensions = { width: 0, height: 0 }; // Consistent document dimensions storage
     window.overlaysLoaded = false; // Flag to prevent double loading
+    window.creatingOverlay = false; // Flag to prevent duplicate overlay creation
 
     // Pre-load existing overlays
     var existingOverlays = {!! json_encode($overlays) !!};
@@ -630,9 +631,26 @@ $(function() {
             var dropX = ui.offset.left - containerOffset.left + (ui.helper.width() / 2);
             var dropY = ui.offset.top - containerOffset.top + (ui.helper.height() / 2);
             
-            // High-precision percentage calculation with 4 decimal places
-            var x_percent = parseFloat(((dropX / window.documentDimensions.width) * 100).toFixed(4));
-            var y_percent = parseFloat(((dropY / window.documentDimensions.height) * 100).toFixed(4));
+            // PERBAIKAN: Konversi koordinat scaled ke document coordinates
+            // Gunakan scale factor untuk konsistensi dengan PDF generation
+            var documentX = dropX / window.scale;
+            var documentY = dropY / window.scale;
+            
+            // Gunakan dimensi dokumen asli (unscaled) untuk percentage calculation
+            var fullWidth = window.documentDimensions.width / window.scale;
+            var fullHeight = window.documentDimensions.height / window.scale;
+            
+            var x_percent = parseFloat(((documentX / fullWidth) * 100).toFixed(4));
+            var y_percent = parseFloat(((documentY / fullHeight) * 100).toFixed(4));
+            
+            console.log('PERBAIKAN Drop coordinates:', {
+                scaled_coordinates: {dropX: dropX, dropY: dropY},
+                document_coordinates: {documentX: documentX, documentY: documentY},
+                canvas_dimensions: {width: window.documentDimensions.width, height: window.documentDimensions.height},
+                document_dimensions: {width: fullWidth, height: fullHeight},
+                scale_factor: window.scale,
+                percentages: {x_percent: x_percent, y_percent: y_percent}
+            });
             
             $('.placeholder-text').hide();
             createPlacedItem(type, url, x_percent, y_percent);
@@ -710,11 +728,30 @@ $(function() {
     function updateItemPercentages(item) {
         if (!window.documentDimensions.width || !window.documentDimensions.height) return;
         
-        // Calculate high-precision percentages with 4 decimal places
-        var x_percent = parseFloat(((item.position().left / window.documentDimensions.width) * 100).toFixed(4));
-        var y_percent = parseFloat(((item.position().top / window.documentDimensions.height) * 100).toFixed(4));
-        var width_percent = parseFloat(((item.width() / window.documentDimensions.width) * 100).toFixed(4));
-        var height_percent = parseFloat(((item.height() / window.documentDimensions.height) * 100).toFixed(4));
+        // PERBAIKAN: Konversi koordinat scaled ke document coordinates untuk konsistensi
+        // Gunakan scale factor untuk konsistensi dengan PDF generation  
+        var documentX = item.position().left / window.scale;
+        var documentY = item.position().top / window.scale;
+        var documentWidth = item.width() / window.scale;
+        var documentHeight = item.height() / window.scale;
+        
+        // Gunakan dimensi dokumen asli (unscaled) untuk percentage calculation
+        var fullWidth = window.documentDimensions.width / window.scale;
+        var fullHeight = window.documentDimensions.height / window.scale;
+        
+        var x_percent = parseFloat(((documentX / fullWidth) * 100).toFixed(4));
+        var y_percent = parseFloat(((documentY / fullHeight) * 100).toFixed(4));
+        var width_percent = parseFloat(((documentWidth / fullWidth) * 100).toFixed(4));
+        var height_percent = parseFloat(((documentHeight / fullHeight) * 100).toFixed(4));
+        
+        console.log('PERBAIKAN Update percentages:', {
+            scaled_position: {left: item.position().left, top: item.position().top, width: item.width(), height: item.height()},
+            document_position: {x: documentX, y: documentY, width: documentWidth, height: documentHeight},
+            canvas_dimensions: {width: window.documentDimensions.width, height: window.documentDimensions.height},
+            document_dimensions: {width: fullWidth, height: fullHeight},
+            scale_factor: window.scale,
+            percentages: {x: x_percent, y: y_percent, w: width_percent, h: height_percent}
+        });
         
         // Store updated percentages
         item.data('x-percent', x_percent);
@@ -814,6 +851,7 @@ $(function() {
                 overlaysData.push({
                     type: item.find('img').attr('alt'),
                     url: item.find('img').attr('src'),
+                    page: item.data('page') || window.currentPage,
                 x_percent: parseFloat(x_percent.toFixed(4)),
                 y_percent: parseFloat(y_percent.toFixed(4)),
                 width_percent: parseFloat(width_percent.toFixed(4)),
@@ -830,8 +868,20 @@ $(function() {
             return;
         }
 
+        // Deduplicate: keep overlay with bigger y_percent when type & page are identical
+        var deduped = {};
+        overlaysData.forEach(function(ov) {
+            var key = (ov.type || 'signature') + '_' + (ov.page || 1);
+            if (!deduped[key] || ov.y_percent > deduped[key].y_percent) {
+                deduped[key] = ov;
+            }
+        });
+
+        // Convert back to array preserving insertion order for preview
+        var uniqueOverlays = Object.values(deduped);
+
         var previewHtml = '<div class="text-center"><strong>Preview Posisi Tanda Tangan:</strong></div><hr>';
-        overlaysData.forEach(function(overlay, index) {
+        uniqueOverlays.forEach(function(overlay, index) {
             previewHtml += '<div class="mb-2"><strong>Tanda Tangan ' + (index + 1) + ':</strong><br>';
             previewHtml += 'Posisi: ' + overlay.x_percent.toFixed(2) + '%, ' + overlay.y_percent.toFixed(2) + '%<br>';
             previewHtml += 'Ukuran: ' + overlay.width_percent.toFixed(2) + '% x ' + overlay.height_percent.toFixed(2) + '%</div>';
@@ -960,7 +1010,8 @@ $(function() {
                     });
                 },
             error: function(xhr) { 
-                Swal.fire('Error', 'Gagal menyimpan: ' + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error tidak diketahui.'), 'error'); 
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error tidak diketahui.';
+                Swal.fire('Error', msg, 'error'); 
             },
             complete: function() { 
                 $('#saveBtn').prop('disabled', false).html('<i class="fas fa-save me-2"></i>Simpan & Tandatangani Dokumen').removeClass('loading');
@@ -1200,30 +1251,68 @@ $(function() {
         console.log('Document calibrated as:', documentType, 'Scale:', window.scale);
     }
 
-    // Click handler: directly use signature without drag ("+" button)
+    // PERBAIKAN: Click handler untuk tombol "+" - dengan pencegahan duplikasi
     $(document).on('click', '.use-signature', function(e) {
         e.preventDefault();
-        e.stopPropagation(); // prevent bubbling to parent dropdown-item
+        e.stopPropagation();
+        
+        // PERBAIKAN: Prevent duplicate overlay creation
+        if (window.creatingOverlay) {
+            console.log('Already creating overlay, ignoring duplicate click');
+            return;
+        }
+        window.creatingOverlay = true;
+        
         var url = $(this).data('url');
-        if (!url) return;
-        // Place at top-center (x 50%, y 10%) so user can see it langsung
+        if (!url) {
+            window.creatingOverlay = false;
+            return;
+        }
+        
         createPlacedItem('signature', url, 50, 10);
         $('.placeholder-text').hide();
+        
+        // Reset flag after short delay
+        setTimeout(function() {
+            window.creatingOverlay = false;
+        }, 500);
     });
 
-    // Click on draggable signature/stamp list item (dropdown or quick-access) to place it
+    // PERBAIKAN: Click handler untuk container - dengan pencegahan duplikasi
     $(document).on('click', '.draggable-item', function(e) {
-        // Ignore if click was on internal .use-signature button (already handled)
-        if ($(e.target).closest('.use-signature').length) return;
-        // If the item is being dragged, ignore click to avoid duplicate
-        if ($(this).hasClass('ui-draggable-dragging')) return;
+        // Enhanced detection untuk internal buttons (+ dan trash)
+        if ($(e.target).closest('.use-signature, .delete-signature').length) {
+            console.log('Click on internal button, ignoring draggable-item click');
+            return;
+        }
+        
+        // Prevent drag-induced duplicates
+        if ($(this).hasClass('ui-draggable-dragging')) {
+            console.log('Item is being dragged, ignoring click');
+            return;
+        }
+        
+        // PERBAIKAN: Prevent duplicate overlay creation
+        if (window.creatingOverlay) {
+            console.log('Already creating overlay, ignoring duplicate click');
+            return;
+        }
+        window.creatingOverlay = true;
 
         var url = $(this).data('url');
         var type = $(this).data('type') || 'signature';
-        if (!url) return;
-        // Place at top-center
+        if (!url) {
+            window.creatingOverlay = false;
+            return;
+        }
+        
         createPlacedItem(type, url, 50, 10);
         $('.placeholder-text').hide();
+        
+        // Reset flag after short delay
+        setTimeout(function() {
+            window.creatingOverlay = false;
+        }, 500);
     });
 
     // Overlay lock/unlock handlers
@@ -1255,6 +1344,109 @@ $(function() {
             // Not locked => remove overlay
                     item.remove(); 
             if ($('.placed-item').length === 0) $('.placeholder-text').show();
+        }
+    });
+});
+</script>
+
+/* ================================ */
+/*  PENAMBAHAN: LOGIKA TANDA TANGAN */
+/* ================================ */
+
+<script>
+// ----- Inisialisasi Signature Pad (Tab "Gambar") -----
+const canvas = document.getElementById('signaturePad');
+if (canvas) {
+    const signaturePad = new SignaturePad(canvas, {
+        backgroundColor: 'rgba(0,0,0,0)', // transparan
+        penColor: '#000'
+    });
+
+    // Bersihkan kanvas
+    window.clearSignature = function() {
+        signaturePad.clear();
+    }
+
+    // Simpan hasil gambar
+    document.getElementById('saveSignatureBtn').addEventListener('click', function () {
+        if (signaturePad.isEmpty()) {
+            Swal.fire('Info', 'Silakan gambar tanda tangan terlebih dahulu.', 'info');
+            return;
+        }
+
+        const dataUrl = signaturePad.toDataURL('image/png');
+
+        $.ajax({
+            url: '{{ url("/signature/save") }}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                signature_data: dataUrl
+            },
+            beforeSend: function () {
+                $('#saveSignatureBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan...');
+            },
+            success: function (res) {
+                Swal.fire('Berhasil', res.message || 'Tanda tangan tersimpan.', 'success').then(()=> location.reload());
+            },
+            error: function (err) {
+                var msg = (err.responseJSON && err.responseJSON.message) ? err.responseJSON.message : 'Tidak dapat menyimpan tanda tangan.';
+                Swal.fire('Gagal', msg, 'error');
+            },
+            complete: function () {
+                $('#saveSignatureBtn').prop('disabled', false).html('<i class="fas fa-save me-1"></i>Simpan TTD');
+            }
+        });
+    });
+}
+
+// ----- Logika Upload Tanda Tangan (Tab "Upload") -----
+$('#signatureFile').on('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        $('#signatureImage').attr('src', e.target.result);
+        $('#signaturePreview').show();
+    };
+    reader.readAsDataURL(file);
+});
+
+window.removeSignatureFile = function () {
+    $('#signatureFile').val('');
+    $('#signaturePreview').hide();
+};
+
+$('#saveUploadBtn').on('click', function () {
+    const fileInput = document.getElementById('signatureFile');
+    if (!fileInput.files.length) {
+        Swal.fire('Info', 'Silakan pilih file tanda tangan terlebih dahulu.', 'info');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('_token', '{{ csrf_token() }}');
+    formData.append('signature_file', fileInput.files[0]);
+
+    $.ajax({
+        url: '{{ url("/signature/save") }}',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        beforeSend: function () {
+            $('#saveUploadBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan...');
+        },
+        success: function (res) {
+            Swal.fire('Berhasil', res.message || 'Tanda tangan tersimpan.', 'success').then(()=> location.reload());
+        },
+        error: function (err) {
+            var msg = (err.responseJSON && err.responseJSON.message) ? err.responseJSON.message : 'Tidak dapat menyimpan tanda tangan.';
+            Swal.fire('Gagal', msg, 'error');
+        },
+        complete: function () {
+            $('#saveUploadBtn').prop('disabled', false).html('<i class="fas fa-save me-1"></i>Simpan TTD Upload');
         }
     });
 });

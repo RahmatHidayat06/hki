@@ -18,7 +18,7 @@ class ValidasiController extends Controller
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            if (!in_array(auth()->user()->role, ['admin', 'direktur'])) {
+            if (!in_array(auth()->user()->role, ['admin', 'direktur', 'admin_p3m'])) {
                 abort(403, 'Unauthorized access');
             }
             return $next($request);
@@ -28,7 +28,7 @@ class ValidasiController extends Controller
     public function index(): View
     {
         // Tampilkan pengajuan yang sudah divalidasi direktur dan menunggu finalisasi admin
-        $pengajuan = PengajuanHki::where('status', 'divalidasi')->paginate(10);
+        $pengajuan = PengajuanHki::whereIn('status', ['divalidasi_sedang_diproses'])->paginate(10);
         return view('validasi.index', compact('pengajuan'));
     }
 
@@ -283,11 +283,11 @@ class ValidasiController extends Controller
             'catatan_validasi' => 'required_if:status_validasi,ditolak|nullable|string'
         ]);
 
-        $status = $request->status_validasi === 'disetujui' ? 'divalidasi' : 'ditolak';
+        $status = $request->status_validasi === 'disetujui' ? 'divalidasi_sedang_diproses' : 'ditolak';
         $catatan = $request->catatan_validasi;
 
         // Jika disetujui, panggil PDF signer
-        if ($status === 'divalidasi') {
+        if ($status === 'divalidasi_sedang_diproses') {
             $pdfSigner = new PdfSigningController();
             
                     // Get documents from file_dokumen_pendukung field (consistent with PersetujuanController)
@@ -319,7 +319,7 @@ class ValidasiController extends Controller
             'pengajuan_hki_id' => $pengajuan->id,
             'judul' => 'Update Status Validasi HKI',
             'pesan' => 'Pengajuan HKI Anda dengan judul "' . ($pengajuan->judul_karya ?? $pengajuan->judul) . '" telah ' .
-                      ($status === 'divalidasi' ? 'divalidasi' : 'ditolak') . '. ' .
+                      ($status === 'divalidasi_sedang_diproses' ? 'divalidasi & sedang diproses' : 'ditolak') . '. ' .
                       'Catatan: ' . $catatan,
             'status' => 'unread',
             'dibaca' => false
@@ -374,7 +374,7 @@ class ValidasiController extends Controller
      */
     public function finalize(PengajuanHki $pengajuan): RedirectResponse
     {
-        if ($pengajuan->status !== 'divalidasi') {
+        if (!in_array($pengajuan->status, ['divalidasi_sedang_diproses'])) {
             return Redirect::back()->with('error', 'Pengajuan belum divalidasi direktur atau sudah diproses.');
         }
 
