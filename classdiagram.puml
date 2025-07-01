@@ -1,0 +1,86 @@
+@startuml CDM_HKI
+!define ENTITY(x) class x << (E,#FFAAAA) >>
+!define ATTRIBUTE(x) x
+
+ENTITY(USER) {
+    ATTRIBUTE(user_id) <<PK>>
+    ATTRIBUTE(username)
+    ATTRIBUTE(nama_lengkap)
+    ATTRIBUTE(email)
+    ATTRIBUTE(password)
+    ATTRIBUTE(role)
+    ATTRIBUTE(no_hp)
+    ATTRIBUTE(ttd_path)
+}
+
+ENTITY(DOSEN) {
+    ATTRIBUTE(dosen_id) <<PK>>
+    ATTRIBUTE(nip_nidn)
+    ATTRIBUTE(id_sinta)
+}
+
+ENTITY(MAHASISWA) {
+    ATTRIBUTE(mahasiswa_id) <<PK>>
+}
+
+ENTITY(PENGAJUAN_HKI) {
+    ATTRIBUTE(pengajuan_id) <<PK>>
+    ATTRIBUTE(nomor_pengajuan)
+    ATTRIBUTE(judul_karya)
+    ATTRIBUTE(deskripsi)
+    ATTRIBUTE(status)
+    ATTRIBUTE(tanggal_pengajuan)
+    ATTRIBUTE(tahun_usulan)
+    ATTRIBUTE(file_karya)
+    ATTRIBUTE(billing_code)
+    ATTRIBUTE(sertifikat)
+}
+
+ENTITY(PENCIPTA) {
+    ATTRIBUTE(pencipta_id) <<PK>>
+    ATTRIBUTE(nama)
+    ATTRIBUTE(email)
+    ATTRIBUTE(alamat)
+    ATTRIBUTE(no_hp)
+}
+
+ENTITY(DOKUMEN) {
+    ATTRIBUTE(dokumen_id) <<PK>>
+    ATTRIBUTE(nama_file)
+    ATTRIBUTE(path_file)
+    ATTRIBUTE(tipe_file)
+    ATTRIBUTE(ukuran_file)
+}
+
+ENTITY(VALIDASI) {
+    ATTRIBUTE(validasi_id) <<PK>>
+    ATTRIBUTE(status_validasi)
+    ATTRIBUTE(catatan)
+    ATTRIBUTE(tanggal_validasi)
+}
+
+ENTITY(PERSETUJUAN) {
+    ATTRIBUTE(persetujuan_id) <<PK>>
+    ATTRIBUTE(status_persetujuan)
+    ATTRIBUTE(catatan)
+    ATTRIBUTE(tanggal_persetujuan)
+}
+
+ENTITY(PEMBAYARAN) {
+    ATTRIBUTE(pembayaran_id) <<PK>>
+    ATTRIBUTE(nominal)
+    ATTRIBUTE(tanggal_bayar)
+    ATTRIBUTE(bukti_pembayaran)
+    ATTRIBUTE(status_pembayaran)
+}
+
+' Relationships
+USER ||--o{ DOSEN : "is_a"
+USER ||--o{ MAHASISWA : "is_a"
+USER ||--o{ PENGAJUAN_HKI : "mengajukan"
+PENGAJUAN_HKI ||--|{ PENCIPTA : "memiliki"
+PENGAJUAN_HKI ||--|{ DOKUMEN : "dilengkapi"
+PENGAJUAN_HKI ||--|| VALIDASI : "divalidasi"
+PENGAJUAN_HKI ||--|| PERSETUJUAN : "disetujui"
+PENGAJUAN_HKI ||--|| PEMBAYARAN : "dibayar"
+@enduml

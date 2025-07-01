@@ -75,7 +75,7 @@ class PersetujuanController extends Controller
         $stats = [
             'total' => PengajuanHki::whereNotIn('status', ['draft'])->count(),
             'pending' => PengajuanHki::where('status', 'menunggu_validasi')->count(),
-            'approved' => PengajuanHki::where('status', 'divalidasi')->count(),
+            'approved' => PengajuanHki::where('status', 'divalidasi_sedang_diproses')->count(),
             'rejected' => PengajuanHki::where('status', 'ditolak')->count(),
             'today' => PengajuanHki::whereDate('created_at', today())->whereNotIn('status', ['draft'])->count(),
             'this_week' => PengajuanHki::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->whereNotIn('status', ['draft'])->count(),

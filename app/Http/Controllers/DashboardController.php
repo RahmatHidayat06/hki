@@ -51,6 +51,7 @@ class DashboardController extends Controller
             $belumDisetujui = $all->filter(function($item) {
                 return $item->status !== 'disetujui';
             });
-            return view('dashboard.index', compact('totalPengajuan', 'tidakLengkap', 'belumDisetujui'));
+            $diproses = $all->where('status', 'divalidasi_sedang_diproses')->count();
+            return view('dashboard.index', compact('totalPengajuan', 'tidakLengkap', 'belumDisetujui', 'diproses'));
     }
 }

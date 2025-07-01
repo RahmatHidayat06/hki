@@ -1,0 +1,37 @@
+@startuml Pembayaran_Swimlane
+|Pemohon|
+start
+:Menerima notifikasi billing code;
+:Akses halaman pembayaran;
+:Melihat detail pembayaran;
+:Melakukan transfer pembayaran;
+:Upload bukti pembayaran;
+:Submit bukti pembayaran;
+
+|System|
+:Update status "Menunggu Verifikasi Pembayaran";
+:Kirim notifikasi ke Admin;
+
+|Admin|
+:Menerima notifikasi verifikasi pembayaran;
+:Review bukti pembayaran;
+
+if (Pembayaran valid?) then (Ya)
+    :Approve pembayaran;
+    
+    |System|
+    :Update status "Disetujui";
+    
+    |Pemohon|
+    :Menerima notifikasi pembayaran disetujui;
+else (Tidak)
+    :Reject pembayaran;
+    
+    |System|
+    :Update status "Pembayaran Ditolak";
+    
+    |Pemohon|
+    :Menerima notifikasi pembayaran ditolak;
+endif
+stop
+@enduml

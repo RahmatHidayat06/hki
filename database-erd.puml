@@ -1,41 +1,155 @@
-@startuml Proses Validasi Admin
-!theme plain
-title Sequence Diagram - Proses Validasi Admin
+@startuml HKI_ERD
+!define Table(x) class "x" << (T,#FFEEEE) >>
 
-actor Direktur as "Direktur"
-actor Admin as "Admin"
-participant Browser as "Browser"
-participant System as "System"
-participant Database as "Database"
-participant FileStorage as "File Storage\nService"
+' ========== ENTITIES ==========
+Table(users) {
+  +id : bigint <<PK>>
+  --
+  username : varchar(255)
+  nama_lengkap : varchar(255)
+  email : varchar(255)
+  password : varchar(255)
+  role : varchar(20)
+  no_hp : varchar(20)
+  ttd_path : varchar(255)
+  remember_token : varchar(100)
+  created_at : timestamp
+  updated_at : timestamp
+}
 
-== Persetujuan Direktur ==
+Table(dosens) {
+  +id : bigint <<PK>>
+  --
+  user_id : bigint <<FK>>
+  nip_nidn : varchar(20)
+  id_sinta : varchar(50)
+  created_at : timestamp
+  updated_at : timestamp
+}
 
-Direktur -> Browser: 1: login direktur
-Browser -> System: 2: authenticate
-System -> Browser: 3: dashboard direktur
+Table(mahasiswas) {
+  +id : bigint <<PK>>
+  --
+  user_id : bigint <<FK>>
+  created_at : timestamp
+  updated_at : timestamp
+}
 
-Direktur -> Browser: 4: review pengajuan
-Browser -> System: 5: get pengajuan detail
-System -> Database: 6: pengajuan data
-Database -> System: 6: return data
+Table(pengajuan_hkis) {
+  +id : bigint <<PK>>
+  --
+  user_id : bigint <<FK>>
+  nomor_pengajuan : varchar(255)
+  judul_karya : varchar(255)
+  deskripsi : text
+  status : enum
+  tanggal_pengajuan : date
+  tahun_usulan : year
+  file_karya : varchar(255)
+  file_dokumen_pendukung : varchar(255)
+  billing_code : varchar(255)
+  bukti_pembayaran : varchar(255)
+  sertifikat : varchar(255)
+  created_at : timestamp
+  updated_at : timestamp
+}
 
-Direktur -> Browser: 7: approve pengajuan
-Browser -> System: 8: update status = 'divalidasi'
-System -> Database: 9: save status
-System -> Admin: 10: notifikasi untuk finalisasi
+Table(pengaju_hkis) {
+  +id : bigint <<PK>>
+  --
+  pengajuan_hki_id : bigint <<FK>>
+  nama : varchar(255)
+  nip_nidn : varchar(255)
+  no_hp : varchar(20)
+  email : varchar(255)
+  alamat : text
+  kecamatan : varchar(255)
+  kodepos : varchar(10)
+  created_at : timestamp
+  updated_at : timestamp
+}
 
-== Finalisasi Admin ==
+Table(dokumen_hkis) {
+  +id : bigint <<PK>>
+  --
+  pengajuan_hki_id : bigint <<FK>>
+  nama_file : varchar(255)
+  path_file : varchar(255)
+  tipe_file : varchar(100)
+  ukuran_file : int
+  keterangan : varchar(255)
+  created_at : timestamp
+  updated_at : timestamp
+}
 
-Admin -> Browser: 11: akses pengajuan tervalidasi
-Browser -> System: 12: get validated submissions
-System -> Database: 13: query validated data
+Table(validasi_p3ms) {
+  +id : bigint <<PK>>
+  --
+  pengajuan_hki_id : bigint <<FK>>
+  user_id : bigint <<FK>>
+  status : enum
+  catatan : text
+  tanggal_validasi : datetime
+  dokumen_ttd : varchar(255)
+  created_at : timestamp
+  updated_at : timestamp
+}
 
-Admin -> Browser: 14: proses tanda tangan final
-Browser -> System: 15: process final signature
-System -> FileStorage: 16: save final signed documents
-System -> Database: 17: update status = 'menunggu_pembayaran'
+Table(persetujuan_direkturs) {
+  +id : bigint <<PK>>
+  --
+  pengajuan_hki_id : bigint <<FK>>
+  user_id : bigint <<FK>>
+  status : enum
+  catatan : text
+  tanggal_persetujuan : datetime
+  dokumen_ttd : varchar(255)
+  created_at : timestamp
+  updated_at : timestamp
+}
 
-note over Direktur, FileStorage: Proses validasi selesai, siap untuk pembayaran
+Table(pembayarans) {
+  +id : bigint <<PK>>
+  --
+  pengajuan_hki_id : bigint <<FK>>
+  verifikator_id : bigint <<FK>>
+  nominal : decimal(15,2)
+  tanggal_bayar : datetime
+  billing_code : varchar(255)
+  bukti_pembayaran : varchar(255)
+  status_pembayaran : enum
+  created_at : timestamp
+  updated_at : timestamp
+}
 
+Table(riwayat_statuses) {
+  +id : bigint <<PK>>
+  --
+  pengajuan_hki_id : bigint <<FK>>
+  user_id : bigint <<FK>>
+  status_lama : varchar(255)
+  status_baru : varchar(255)
+  keterangan : text
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+' ========== RELATIONSHIPS ==========
+users ||--o{ dosens : "has_profile"
+users ||--o{ mahasiswas : "has_profile"
+users ||--o{ pengajuan_hkis : "submits"
+users ||--o{ validasi_p3ms : "validates"
+users ||--o{ persetujuan_direkturs : "approves"
+users ||--o{ pembayarans : "verifies"
+users ||--o{ riwayat_statuses : "tracks"
+
+pengajuan_hkis ||--|{ pengaju_hkis : "has_creators"
+pengajuan_hkis ||--|{ dokumen_hkis : "has_documents"
+pengajuan_hkis ||--|| validasi_p3ms : "validated_by"
+pengajuan_hkis ||--|| persetujuan_direkturs : "approved_by"
+pengajuan_hkis ||--|| pembayarans : "paid_for"
+pengajuan_hkis ||--o{ riwayat_statuses : "status_history"
+
+' ========== LAYOUT HINTS ==========
+left to right direction
 @enduml

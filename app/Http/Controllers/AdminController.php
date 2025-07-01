@@ -28,8 +28,8 @@ class AdminController extends Controller
         $total = PengajuanHki::where('status', '!=', 'draft')->count();
         $totalSelesai = PengajuanHki::where('status', 'selesai')->count();
         $totalMenunggu = PengajuanHki::where('status', 'menunggu_validasi')->count();
-        $totalDivalidasi = PengajuanHki::whereIn('status', ['divalidasi', 'sedang_di_proses', 'divalidasi_sedang_diproses'])->count();
-        $totalSedangDiProses = 0; // Tidak digunakan lagi karena digabung dengan divalidasi
+        $totalDivalidasi = PengajuanHki::where('status','divalidasi_sedang_diproses')->count();
+        $totalSedangDiProses = 0; // Status ini dihapus, disatukan pada $totalDivalidasi
         $totalMenungguPembayaran = PengajuanHki::where('status', 'menunggu_pembayaran')->count();
         $totalMenungguVerifikasi = PengajuanHki::where('status', 'menunggu_verifikasi_pembayaran')->count();
         $totalDitolak = PengajuanHki::where('status', 'ditolak')->count();
@@ -169,7 +169,7 @@ class AdminController extends Controller
         }
         
         $pencipta = $pengajuan->pengaju;
-        $preferSigned = in_array($pengajuan->status, ['divalidasi','sedang_di_proses','divalidasi_sedang_diproses','menunggu_pembayaran','menunggu_verifikasi_pembayaran','selesai']);
+        $preferSigned = in_array($pengajuan->status, ['divalidasi_sedang_diproses','menunggu_pembayaran','menunggu_verifikasi_pembayaran','selesai']);
 
         // Konfigurasi dokumen dengan prioritas file bertanda tangan
         $documents = [
@@ -926,8 +926,14 @@ class AdminController extends Controller
             abort(403);
         }
 
-        if($pengajuan->status !== 'divalidasi'){
+        // Hanya lanjut jika status pengajuan sudah divalidasi oleh direktur
+        if($pengajuan->status !== 'divalidasi_sedang_diproses'){
             return Redirect::back()->with('error','Pengajuan belum dalam status divalidasi.');
+        }
+
+        // Pastikan kode billing sudah diisi sebelum memindahkan ke menunggu pembayaran
+        if(empty($pengajuan->billing_code)){
+            return Redirect::back()->with('error','Kode billing belum diisi. Silakan input kode billing terlebih dahulu.');
         }
 
         $pengajuan->update([

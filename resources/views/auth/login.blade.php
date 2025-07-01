@@ -44,10 +44,26 @@
                                 </label>
                             </div>
                         </div>
-                        <div class="d-grid mb-2">
+                        <div class="d-grid mb-3">
                             <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold">
                                 Login
                             </button>
+                        </div>
+
+                        <!-- Forgot Password Link -->
+                        <div class="text-center mb-3">
+                            <a href="{{ route('password.request') }}" class="text-muted text-decoration-none">
+                                <i class="fas fa-key me-1"></i>Lupa Password?
+                            </a>
+                        </div>
+
+                        <!-- Register Link -->
+                        <div class="text-center">
+                            <p class="mb-0">Belum punya akun? 
+                                <a href="{{ route('register') }}" class="text-primary fw-semibold text-decoration-none">
+                                    Daftar di sini
+                                </a>
+                            </p>
                         </div>
                     </form>
                 </div>
