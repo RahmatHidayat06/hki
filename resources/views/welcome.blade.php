@@ -3,438 +3,375 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sistem Informasi Administrasi Pengajuan HKI - Politeknik Negeri Banjarmasin</title>
-        <script src="https://cdn.tailwindcss.com"></script>
+    <title>Pengajuan HKI | Politeknik Negeri Banjarmasin</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
         <style>
-            .gradient-bg {
-                /* Fallback gradient jika gambar belum tersedia */
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                /* Background image gedung P3M */
-                background-image: url('{{ asset("images/gedung-p3m.jpg") }}');
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-                position: relative;
+        html {
+            scroll-behavior: smooth;
             }
-            .gradient-bg::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                /* Overlay gelap untuk memastikan teks tetap terbaca */
-                background: linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%);
-                z-index: 1;
+        .mobile-menu-transition {
+            transition: all 0.3s ease-in-out;
             }
-            .gradient-bg > * {
-                position: relative;
-                z-index: 2;
+        @media (max-width: 768px) {
+            .hero-text {
+                font-size: 1.75rem;
+                line-height: 1.2;
             }
-            .card-hover {
-                transition: all 0.3s ease;
-            }
-            .card-hover:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            }
-            .animate-float {
-                animation: float 6s ease-in-out infinite;
-            }
-            @keyframes float {
-                0%, 100% { transform: translateY(0px); }
-                50% { transform: translateY(-20px); }
             }
         </style>
     </head>
-    <body class="bg-white text-gray-800 overflow-x-hidden">
-        <!-- Navigation -->
-        <nav class="bg-white shadow-lg fixed w-full z-50">
-            <div class="container mx-auto px-6 py-3">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center space-x-3">
-                        <img src="{{ asset('img/logo-hki.png') }}" alt="Logo HKI" class="h-10 w-10">
-                        <span class="text-xl font-bold text-gray-800">HKI POLIBAN</span>
+<body class="bg-white text-gray-800">
+
+    <!-- Navbar -->
+    <nav class="fixed top-0 w-full z-50 bg-white shadow-lg">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-2">
+                    <img src="{{ asset('img/Logo-poliban.png') }}" alt="Logo Poliban" class="h-8 w-8">
+                    <span class="font-bold text-lg text-blue-800">HKI POLIBAN</span>
                     </div>
-                    <div class="hidden md:flex space-x-6">
-                        <a href="#beranda" class="text-gray-600 hover:text-blue-600 transition duration-300">Beranda</a>
-                        <a href="#tentang" class="text-gray-600 hover:text-blue-600 transition duration-300">Tentang</a>
-                        <a href="#fitur" class="text-gray-600 hover:text-blue-600 transition duration-300">Fitur</a>
-                        <a href="#hki" class="text-gray-600 hover:text-blue-600 transition duration-300">Info HKI</a>
-                        <a href="#kontak" class="text-gray-600 hover:text-blue-600 transition duration-300">Kontak</a>
-                    </div>
-                    <div class="flex space-x-3">
+                
+                <!-- Menu Desktop -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#beranda" class="text-gray-700 hover:text-blue-600 transition duration-300">Beranda</a>
+                    <a href="#panduan" class="text-gray-700 hover:text-blue-600 transition duration-300">Panduan</a>
                         <a href="{{ route('login') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
-                            <i class="fas fa-sign-in-alt mr-2"></i>Login
-                        </a>
-                        <a href="{{ route('register') }}" class="border border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white transition duration-300">
-                            <i class="fas fa-user-plus mr-2"></i>Daftar
+                        <i class="fas fa-sign-in-alt mr-2"></i>Masuk
                         </a>
                     </div>
+                
+                <!-- Tombol Menu Mobile -->
+                <div class="md:hidden">
+                    <button id="menu-button" class="text-gray-700 hover:text-blue-600 focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Menu Mobile -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t mobile-menu-transition">
+            <div class="px-4 py-3 space-y-3">
+                <a href="#beranda" class="block text-gray-700 hover:text-blue-600 py-2 mobile-menu-link">
+                    <i class="fas fa-home mr-3"></i>Beranda
+                </a>
+                <a href="#panduan" class="block text-gray-700 hover:text-blue-600 py-2 mobile-menu-link">
+                    <i class="fas fa-book mr-3"></i>Panduan
+                </a>
+                <a href="{{ route('login') }}" class="block bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition duration-300 text-center">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Masuk ke Sistem
+                </a>
                 </div>
             </div>
         </nav>
 
-        <!-- Hero Section -->
-        <section id="beranda" class="gradient-bg text-white py-32 relative overflow-hidden">
-            <div class="absolute inset-0 bg-black opacity-10"></div>
-            <div class="container mx-auto px-6 text-center relative z-10">
-                <div class="animate-float">
-                    <i class="fas fa-certificate text-6xl mb-6 text-yellow-300"></i>
-                </div>
-                <h1 class="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-                    Sistem Informasi Administrasi<br>
-                    <span class="text-yellow-300">Pengajuan Hak Kekayaan Intelektual</span>
+    <!-- Bagian Utama -->
+    <section id="beranda" class="pt-16 pb-20 bg-gradient-to-br from-blue-50 via-white to-blue-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center py-12 lg:py-20">
+                <h1 class="hero-text text-2xl sm:text-3xl lg:text-5xl font-bold mb-6 text-gray-800">
+                    Administrasi Pengajuan <br>
+                    <span class="text-yellow-500">Hak Kekayaan Intelektual (HKI)</span>
                 </h1>
-                <p class="text-lg md:text-xl mb-8 max-w-3xl mx-auto opacity-90">
-                    Mempermudah proses pengajuan Hak Kekayaan Intelektual di lingkungan 
-                    Politeknik Negeri Banjarmasin dengan sistem yang terintegrasi dan efisien.
+                <p class="max-w-3xl mx-auto text-gray-600 mb-8 text-sm sm:text-base lg:text-lg leading-relaxed px-4">
+                    Sistem ini diperuntukkan bagi civitas akademik Politeknik Negeri Banjarmasin untuk mengajukan, memantau, dan mengelola administrasi permohonan HKI secara terpusat dan terintegrasi.
                 </p>
-                <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                    <a href="{{ route('login') }}" class="bg-white text-blue-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-100 transition duration-300 transform hover:scale-105">
-                        <i class="fas fa-rocket mr-2"></i>Mulai Pengajuan
+                <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4 px-4">
+                    <a href="{{ route('login') }}" class="w-full sm:w-auto bg-blue-600 text-white px-8 py-4 rounded-full hover:bg-blue-700 transition duration-300 shadow-lg">
+                        <i class="fas fa-rocket mr-2"></i>Masuk ke Sistem
                     </a>
-                    <a href="#tentang" class="border-2 border-white text-white px-8 py-4 rounded-full font-semibold hover:bg-white hover:text-blue-600 transition duration-300">
-                        <i class="fas fa-info-circle mr-2"></i>Pelajari Lebih Lanjut
+                    <a href="#panduan" class="w-full sm:w-auto border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-full hover:bg-blue-50 transition duration-300">
+                        <i class="fas fa-book-open mr-2"></i>Panduan Pengajuan
                     </a>
                 </div>
+                <p class="mt-8 text-xs sm:text-sm text-gray-500 italic">
+                    Aplikasi internal milik P3M Politeknik Negeri Banjarmasin
+                </p>
             </div>
-            
-            <!-- Floating Elements -->
-            <div class="absolute top-20 left-10 opacity-20">
-                <i class="fas fa-lightbulb text-4xl text-yellow-300"></i>
-            </div>
-            <div class="absolute bottom-20 right-10 opacity-20">
-                <i class="fas fa-cogs text-4xl text-white"></i>
             </div>
         </section>
 
-        <!-- About Section -->
-        <section id="tentang" class="py-20 px-6 md:px-20">
-            <div class="container mx-auto">
-                <div class="text-center mb-16">
-                    <h2 class="text-4xl font-bold mb-4 text-gray-800">Tentang Sistem HKI</h2>
-                    <div class="w-24 h-1 bg-blue-600 mx-auto mb-6"></div>
-                    <p class="text-lg max-w-3xl mx-auto text-gray-600">
-                        Sistem ini dirancang khusus untuk memfasilitasi civitas akademika Politeknik Negeri Banjarmasin 
-                        dalam mengelola dan mengajukan permohonan Hak Kekayaan Intelektual dengan efisien dan terdokumentasi dengan baik.
+    <!-- Bagian Tentang -->
+    <section id="tentang" class="py-16 lg:py-20 bg-white hidden">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-4">Tentang Sistem HKI</h2>
+                <div class="w-20 h-1 bg-blue-600 mx-auto"></div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
+                <div class="space-y-6">
+                    <p class="text-gray-600 text-sm sm:text-base leading-relaxed">
+                        Sistem Pengajuan HKI Politeknik Negeri Banjarmasin adalah platform digital yang dirancang khusus untuk memfasilitasi proses pengajuan Hak Kekayaan Intelektual bagi seluruh civitas akademik.
+                    </p>
+                    <p class="text-gray-600 text-sm sm:text-base leading-relaxed">
+                        Melalui sistem ini, dosen, mahasiswa, dan peneliti dapat mengajukan berbagai jenis HKI seperti hak cipta, paten, dan merek dagang dengan proses yang lebih efisien dan terintegrasi.
+                    </p>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="text-blue-600 text-2xl font-bold">50+</div>
+                            <div class="text-gray-600 text-sm">Pengajuan Diproses</div>
+                </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <div class="text-green-600 text-2xl font-bold">95%</div>
+                            <div class="text-gray-600 text-sm">Tingkat Kepuasan</div>
+                        </div>
+                    </div>
+                        </div>
+                <div class="order-first md:order-last">
+                    <img src="{{ asset('images/gedung-p3m.jpg') }}" alt="Gedung P3M" class="w-full rounded-lg shadow-lg">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    <!-- Bagian Fitur -->
+    <section id="fitur" class="py-16 lg:py-20 bg-gray-50 hidden">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-4">Fitur Unggulan</h2>
+                <div class="w-20 h-1 bg-blue-600 mx-auto mb-6"></div>
+                <p class="max-w-2xl mx-auto text-gray-600 text-sm sm:text-base">
+                    Sistem yang dilengkapi dengan berbagai fitur canggih untuk memudahkan proses pengajuan HKI
                     </p>
                 </div>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                    <div>
-                        <h3 class="text-2xl font-bold mb-6 text-gray-800">Mengapa Memilih Sistem Kami?</h3>
-                        <div class="space-y-4">
-                            <div class="flex items-start space-x-4">
-                                <i class="fas fa-check-circle text-2xl text-green-600 mt-1"></i>
-                                <div>
-                                    <h4 class="font-semibold text-gray-800">Proses Digital Terintegrasi</h4>
-                                    <p class="text-gray-600">Semua proses pengajuan dilakukan secara digital dari awal hingga akhir.</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start space-x-4">
-                                <i class="fas fa-shield-alt text-2xl text-blue-600 mt-1"></i>
-                                <div>
-                                    <h4 class="font-semibold text-gray-800">Keamanan Data Terjamin</h4>
-                                    <p class="text-gray-600">Sistem keamanan berlapis untuk melindungi data dan dokumen Anda.</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start space-x-4">
-                                <i class="fas fa-clock text-2xl text-purple-600 mt-1"></i>
-                                <div>
-                                    <h4 class="font-semibold text-gray-800">Tracking Real-time</h4>
-                                    <p class="text-gray-600">Pantau status pengajuan Anda kapan saja dan dimana saja.</p>
-                                </div>
-                            </div>
-                        </div>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+                    <div class="text-blue-600 text-3xl mb-4">
+                        <i class="fas fa-file-alt"></i>
                     </div>
-                    <div class="text-center">
-                        <div class="bg-gradient-to-br from-blue-100 to-purple-100 p-8 rounded-2xl">
-                            <i class="fas fa-laptop-code text-6xl text-blue-600 mb-4"></i>
-                            <h4 class="text-xl font-bold text-gray-800 mb-2">Interface Modern</h4>
-                            <p class="text-gray-600">Desain yang user-friendly dan mudah digunakan</p>
+                    <h3 class="text-lg font-semibold mb-3">Pengajuan Daring</h3>
+                    <p class="text-gray-600 text-sm">Ajukan permohonan HKI secara daring dengan formulir yang mudah digunakan</p>
                         </div>
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+                    <div class="text-green-600 text-3xl mb-4">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-3">Pelacakan Status</h3>
+                    <p class="text-gray-600 text-sm">Pantau perkembangan pengajuan HKI secara waktu nyata dari dasbor</p>
+                        </div>
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+                    <div class="text-purple-600 text-3xl mb-4">
+                        <i class="fas fa-signature"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-3">Tanda Tangan Digital</h3>
+                    <p class="text-gray-600 text-sm">Sistem tanda tangan digital terintegrasi untuk validasi dokumen</p>
+                        </div>
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+                    <div class="text-yellow-600 text-3xl mb-4">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-3">Pemberitahuan</h3>
+                    <p class="text-gray-600 text-sm">Dapatkan pemberitahuan otomatis untuk setiap pembaruan status pengajuan</p>
+                        </div>
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+                    <div class="text-red-600 text-3xl mb-4">
+                        <i class="fas fa-download"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-3">Unduh Dokumen</h3>
+                    <p class="text-gray-600 text-sm">Unduh sertifikat dan dokumen HKI yang telah disetujui</p>
+                        </div>
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+                    <div class="text-indigo-600 text-3xl mb-4">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-3">Multi Pengguna</h3>
+                    <p class="text-gray-600 text-sm">Mendukung pengajuan dengan beberapa pencipta dan kolaborasi tim</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Features Section -->
-        <section id="fitur" class="bg-gray-50 py-20 px-6 md:px-20">
-            <div class="container mx-auto">
-                <div class="text-center mb-16">
-                    <h2 class="text-4xl font-bold mb-4 text-gray-800">Fitur Unggulan</h2>
-                    <div class="w-24 h-1 bg-blue-600 mx-auto mb-6"></div>
-                    <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Berbagai fitur canggih yang memudahkan proses pengajuan HKI Anda
+    <!-- Bagian Panduan -->
+    <section id="panduan" class="py-16 lg:py-20 bg-white">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-4">Panduan Pengajuan</h2>
+                <div class="w-20 h-1 bg-blue-600 mx-auto mb-6"></div>
+                <p class="max-w-2xl mx-auto text-gray-600 text-sm sm:text-base">
+                    Ikuti langkah-langkah berikut untuk mengajukan HKI dengan mudah
+                </p>
+                </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                    <div class="text-center">
+                    <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-blue-600 font-bold text-xl">1</span>
+                    </div>
+                    <h3 class="font-semibold mb-2">Daftar/Masuk</h3>
+                    <p class="text-gray-600 text-sm">Masuk ke sistem menggunakan akun yang telah terdaftar</p>
+                    </div>
+                    <div class="text-center">
+                    <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-green-600 font-bold text-xl">2</span>
+                    </div>
+                    <h3 class="font-semibold mb-2">Isi Formulir</h3>
+                    <p class="text-gray-600 text-sm">Lengkapi formulir pengajuan dengan data yang akurat</p>
+                    </div>
+                    <div class="text-center">
+                    <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-yellow-600 font-bold text-xl">3</span>
+                    </div>
+                    <h3 class="font-semibold mb-2">Unggah Dokumen</h3>
+                    <p class="text-gray-600 text-sm">Unggah semua dokumen pendukung yang diperlukan</p>
+                    </div>
+                    <div class="text-center">
+                    <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-purple-600 font-bold text-xl">4</span>
+                    </div>
+                    <h3 class="font-semibold mb-2">Kirim & Pantau</h3>
+                    <p class="text-gray-600 text-sm">Kirim pengajuan dan pantau statusnya secara berkala</p>
+                </div>
+            </div>
+            <div class="mt-12 bg-blue-50 p-6 lg:p-8 rounded-lg">
+                <h3 class="text-lg font-semibold mb-4 text-center">Dokumen yang Diperlukan</h3>
+                <div class="grid sm:grid-cols-2 gap-4 text-sm">
+                    <div class="space-y-2">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <span>KTP Pencipta</span>
+                </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <span>Surat Pernyataan Keaslian</span>
+            </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <span>Berkas Karya/Ciptaan</span>
+                </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <span>Surat Pengalihan Hak</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <span>Dokumen Pendukung Lainnya</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <span>Bukti Pembayaran</span>
+                    </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <img src="{{ asset('img/Logo-poliban.png') }}" alt="Logo Poliban" class="h-8 w-8">
+                        <span class="font-bold text-lg">HKI POLIBAN</span>
+                    </div>
+                    <p class="text-gray-300 text-sm">
+                        Sistem Pengajuan HKI Politeknik Negeri Banjarmasin untuk mendukung inovasi dan kreativitas civitas akademik.
                     </p>
                 </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover text-center">
-                        <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="fas fa-file-upload text-2xl text-blue-600"></i>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Pengajuan Online</h3>
-                        <p class="text-gray-600">Ajukan HKI secara online dengan form yang mudah diisi dan upload dokumen yang aman.</p>
-                    </div>
-                    
-                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover text-center">
-                        <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="fas fa-tasks text-2xl text-green-600"></i>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Validasi Otomatis</h3>
-                        <p class="text-gray-600">Sistem validasi otomatis oleh P3M dan persetujuan direktur melalui dashboard khusus.</p>
-                    </div>
-                    
-                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover text-center">
-                        <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="fas fa-bell text-2xl text-yellow-600"></i>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Notifikasi Real-time</h3>
-                        <p class="text-gray-600">Dapatkan notifikasi instant setiap ada perubahan status pengajuan Anda.</p>
-                    </div>
-                    
-                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover text-center">
-                        <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="fas fa-chart-line text-2xl text-purple-600"></i>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Dashboard Analytics</h3>
-                        <p class="text-gray-600">Monitor statistik dan progress pengajuan melalui dashboard yang informatif.</p>
-                    </div>
-                    
-                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover text-center">
-                        <div class="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="fas fa-file-pdf text-2xl text-red-600"></i>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Dokumen Digital</h3>
-                        <p class="text-gray-600">Kelola semua dokumen dalam format digital dengan sistem backup otomatis.</p>
-                    </div>
-                    
-                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover text-center">
-                        <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="fas fa-mobile-alt text-2xl text-indigo-600"></i>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Mobile Responsive</h3>
-                        <p class="text-gray-600">Akses sistem dari perangkat apapun dengan tampilan yang optimal.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Process Section -->
-        <section class="py-20 px-6 md:px-20">
-            <div class="container mx-auto">
-                <div class="text-center mb-16">
-                    <h2 class="text-4xl font-bold mb-4 text-gray-800">Alur Proses Pengajuan</h2>
-                    <div class="w-24 h-1 bg-blue-600 mx-auto mb-6"></div>
-                    <p class="text-lg text-gray-600">Proses pengajuan HKI yang mudah dan terstruktur</p>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    <div class="text-center">
-                        <div class="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">1</div>
-                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Daftar & Login</h3>
-                        <p class="text-gray-600">Buat akun dan login ke sistem</p>
-                    </div>
-                    <div class="text-center">
-                        <div class="bg-green-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">2</div>
-                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Isi Form</h3>
-                        <p class="text-gray-600">Lengkapi form pengajuan dan upload dokumen</p>
-                    </div>
-                    <div class="text-center">
-                        <div class="bg-yellow-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">3</div>
-                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Validasi</h3>
-                        <p class="text-gray-600">Proses validasi oleh P3M dan persetujuan direktur</p>
-                    </div>
-                    <div class="text-center">
-                        <div class="bg-purple-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">4</div>
-                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Selesai</h3>
-                        <p class="text-gray-600">Pengajuan selesai dan sertifikat diterbitkan</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- CTA Section -->
-        <section class="gradient-bg text-white py-20">
-            <div class="container mx-auto px-6 text-center">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">Siap Mengajukan HKI Anda?</h2>
-                <p class="text-lg mb-8 opacity-90">Bergabunglah dengan ratusan dosen dan mahasiswa yang telah mempercayai sistem kami</p>
-                <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                    <a href="{{ route('register') }}" class="bg-white text-blue-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-100 transition duration-300 transform hover:scale-105">
-                        <i class="fas fa-user-plus mr-2"></i>Daftar Sekarang
-                    </a>
-                    <a href="{{ route('login') }}" class="border-2 border-white text-white px-8 py-4 rounded-full font-semibold hover:bg-white hover:text-blue-600 transition duration-300">
-                        <i class="fas fa-sign-in-alt mr-2"></i>Login
-                    </a>
-                </div>
-            </div>
-        </section>
-
-        <!-- Contact Section -->
-        <section id="kontak" class="py-20 px-6 md:px-20 bg-gray-50">
-            <div class="container mx-auto">
-                <div class="text-center mb-16">
-                    <h2 class="text-4xl font-bold mb-4 text-gray-800">Hubungi Kami</h2>
-                    <div class="w-24 h-1 bg-blue-600 mx-auto mb-6"></div>
-                    <p class="text-lg text-gray-600">Butuh bantuan? Tim kami siap membantu Anda</p>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="bg-white p-8 rounded-xl shadow-lg text-center card-hover">
-                        <i class="fas fa-map-marker-alt text-3xl text-blue-600 mb-4"></i>
-                        <h3 class="text-xl font-semibold mb-2 text-gray-800">Alamat</h3>
-                        <p class="text-gray-600">Jl. Brigjen H. Hasan Basry<br>Banjarmasin, Kalimantan Selatan</p>
-                    </div>
-                    <div class="bg-white p-8 rounded-xl shadow-lg text-center card-hover">
-                        <i class="fas fa-phone text-3xl text-green-600 mb-4"></i>
-                        <h3 class="text-xl font-semibold mb-2 text-gray-800">Telepon</h3>
-                        <p class="text-gray-600">(0511) 3305052<br>Senin - Jumat: 08:00 - 16:00</p>
-                    </div>
-                    <div class="bg-white p-8 rounded-xl shadow-lg text-center card-hover">
-                        <i class="fas fa-envelope text-3xl text-purple-600 mb-4"></i>
-                        <h3 class="text-xl font-semibold mb-2 text-gray-800">Email</h3>
-                        <p class="text-gray-600">hki@poliban.ac.id<br>info@poliban.ac.id</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Informasi HKI & Hak Cipta Section -->
-        <section id="hki" class="py-20 px-6 md:px-20 bg-white">
-            <div class="container mx-auto">
-                <div class="text-center mb-16">
-                    <h2 class="text-4xl font-bold mb-4 text-gray-800">Apa itu Hak Kekayaan Intelektual?</h2>
-                    <div class="w-24 h-1 bg-blue-600 mx-auto mb-6"></div>
-                    <p class="text-lg max-w-3xl mx-auto text-gray-600">
-                        Hak Kekayaan Intelektual (HKI) adalah hak yang timbul dari hasil olah pikir yang menghasilkan suatu produk atau proses yang berguna bagi manusia. Menurut Direktorat Jenderal Kekayaan Intelektual (DJKI), HKI meliputi hak cipta, paten, merek, desain industri, rahasia dagang, dan sebagainya.
-                    </p>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
                     <div>
-                        <h3 class="text-2xl font-bold mb-6 text-gray-800">Fokus: Hak Cipta</h3>
-                        <ul class="space-y-4 list-disc list-inside text-gray-600">
-                            <li><span class="font-semibold text-gray-800">Definisi:</span> Hak Cipta merupakan hak eksklusif bagi Pencipta atas karya ciptaannya di bidang ilmu pengetahuan, seni, dan sastra.</li>
-                            <li><span class="font-semibold text-gray-800">Lingkup Perlindungan:</span> Meliputi karya tulis, musik, gambar, program komputer, fotografi, film, dan karya lainnya yang tercantum dalam Undang-Undang Nomor 28 Tahun 2014 tentang Hak Cipta.</li>
-                            <li><span class="font-semibold text-gray-800">Masa Berlaku:</span> Selama hidup Pencipta dan 70 tahun setelah Pencipta meninggal dunia (untuk ciptaan perseorangan). Untuk ciptaan yang dimiliki badan hukum, 50 tahun sejak pertama kali diumumkan.</li>
-                            <li><span class="font-semibold text-gray-800">Manfaat Pendaftaran:</span> Menjadi bukti kepemilikan resmi, memudahkan penegakan hukum atas pelanggaran, serta meningkatkan nilai ekonomi karya.</li>
-                        </ul>
+                    <h4 class="font-semibold mb-4">Kontak</h4>
+                    <div class="space-y-2 text-sm text-gray-300">
+                        <div class="flex items-center">
+                            <i class="fas fa-map-marker-alt mr-3"></i>
+                            <span>Jl. Brigjen H. Hasan Basri, Banjarmasin</span>
                     </div>
-
-                    <div class="text-center">
-                        <img src="{{ asset('img/logo-hki.png') }}" alt="Ilustrasi HKI" class="w-64 mx-auto animate-float" />
-                        <p class="text-sm text-gray-500 mt-4">Sumber informasi: <a href="https://www.dgip.go.id/" target="_blank" class="underline">DJKI Kemenkumham RI</a></p>
+                        <div class="flex items-center">
+                            <i class="fas fa-phone mr-3"></i>
+                            <span>(0511) 3305052</span>
                     </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Footer -->
-        <footer class="bg-gray-800 text-white py-12">
-            <div class="container mx-auto px-6">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    <div>
-                        <div class="flex items-center space-x-3 mb-4">
-                            <img src="{{ asset('img/logo-hki.png') }}" alt="Logo HKI" class="h-10 w-10">
-                            <span class="text-xl font-bold">HKI POLIBAN</span>
+                        <div class="flex items-center">
+                            <i class="fas fa-envelope mr-3"></i>
+                            <span>p3m@poliban.ac.id</span>
                         </div>
-                        <p class="text-gray-400">Sistem Informasi Administrasi Pengajuan HKI Politeknik Negeri Banjarmasin</p>
+                    </div>
                     </div>
                     <div>
-                        <h4 class="text-lg font-semibold mb-4">Menu</h4>
-                        <ul class="space-y-2">
-                            <li><a href="#beranda" class="text-gray-400 hover:text-white transition duration-300">Beranda</a></li>
-                            <li><a href="#tentang" class="text-gray-400 hover:text-white transition duration-300">Tentang</a></li>
-                            <li><a href="#fitur" class="text-gray-400 hover:text-white transition duration-300">Fitur</a></li>
-                            <li><a href="#hki" class="text-gray-400 hover:text-white transition duration-300">Info HKI</a></li>
-                            <li><a href="#kontak" class="text-gray-400 hover:text-white transition duration-300">Kontak</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="text-lg font-semibold mb-4">Layanan</h4>
-                        <ul class="space-y-2">
-                            <li><a href="{{ route('login') }}" class="text-gray-400 hover:text-white transition duration-300">Login</a></li>
-                            <li><a href="{{ route('register') }}" class="text-gray-400 hover:text-white transition duration-300">Registrasi</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">Bantuan</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">FAQ</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="text-lg font-semibold mb-4">Ikuti Kami</h4>
-                        <div class="flex space-x-4">
-                            <a href="#" class="text-gray-400 hover:text-white transition duration-300">
-                                <i class="fab fa-facebook-f text-xl"></i>
+                    <h4 class="font-semibold mb-4">Tautan Penting</h4>
+                    <div class="space-y-2 text-sm">
+                        <a href="https://poliban.ac.id" class="text-gray-300 hover:text-white block transition duration-300">
+                            <i class="fas fa-external-link-alt mr-2"></i>Situs Web Poliban
+                        </a>
+                        <a href="#" class="text-gray-300 hover:text-white block transition duration-300">
+                            <i class="fas fa-book mr-2"></i>Panduan HKI
                             </a>
-                            <a href="#" class="text-gray-400 hover:text-white transition duration-300">
-                                <i class="fab fa-twitter text-xl"></i>
+                        <a href="{{ route('login') }}" class="text-gray-300 hover:text-white block transition duration-300">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Portal Masuk
                             </a>
-                            <a href="#" class="text-gray-400 hover:text-white transition duration-300">
-                                <i class="fab fa-instagram text-xl"></i>
-                            </a>
-                            <a href="#" class="text-gray-400 hover:text-white transition duration-300">
-                                <i class="fab fa-youtube text-xl"></i>
-                            </a>
-                        </div>
                     </div>
                 </div>
-                <div class="border-t border-gray-700 mt-8 pt-8 text-center">
-                    <p class="text-gray-400">&copy; 2025 Politeknik Negeri Banjarmasin. Semua hak dilindungi undang-undang.</p>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-sm text-gray-400">
+                <p>&copy; 2025 P3M Politeknik Negeri Banjarmasin. Hak cipta dilindungi undang-undang.</p>
                 </div>
             </div>
         </footer>
 
-        <!-- Scroll to top button -->
-        <button id="scrollToTop" class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition duration-300 opacity-0 invisible">
-            <i class="fas fa-chevron-up"></i>
-        </button>
-
+    <!-- Skrip -->
         <script>
-            // Smooth scrolling for navigation links
+        // Toggle menu mobile
+        const menuButton = document.getElementById('menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuLinks = document.querySelectorAll('.mobile-menu-link');
+
+        menuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Tutup menu mobile saat mengklik tautan
+        mobileMenuLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+        });
+
+        // Smooth scrolling untuk tautan anchor
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function (e) {
                     e.preventDefault();
                     const target = document.querySelector(this.getAttribute('href'));
                     if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
+                    const navHeight = document.querySelector('nav').offsetHeight;
+                    const targetPosition = target.offsetTop - navHeight;
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
                         });
                     }
                 });
             });
 
-            // Scroll to top button
-            const scrollToTopBtn = document.getElementById('scrollToTop');
-            
-            window.addEventListener('scroll', () => {
-                if (window.pageYOffset > 300) {
-                    scrollToTopBtn.classList.remove('opacity-0', 'invisible');
-                    scrollToTopBtn.classList.add('opacity-100', 'visible');
-                } else {
-                    scrollToTopBtn.classList.add('opacity-0', 'invisible');
-                    scrollToTopBtn.classList.remove('opacity-100', 'visible');
+        // Tutup menu mobile saat mengklik di luar
+        document.addEventListener('click', (e) => {
+            if (!mobileMenu.contains(e.target) && !menuButton.contains(e.target)) {
+                mobileMenu.classList.add('hidden');
                 }
             });
 
-            scrollToTopBtn.addEventListener('click', () => {
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
-            });
-
-            // Mobile menu toggle (if needed)
-            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-            const mobileMenu = document.getElementById('mobileMenu');
+        // Highlight bagian aktif
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('nav a[href^="#"]');
             
-            if (mobileMenuBtn && mobileMenu) {
-                mobileMenuBtn.addEventListener('click', () => {
-                    mobileMenu.classList.toggle('hidden');
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                const navHeight = document.querySelector('nav').offsetHeight;
+            
+                if (rect.top <= navHeight + 50 && rect.bottom >= navHeight + 50) {
+                    const activeId = section.getAttribute('id');
+                    
+                    navLinks.forEach(link => {
+                        link.classList.remove('text-blue-600', 'font-semibold');
+                        if (link.getAttribute('href') === `#${activeId}`) {
+                            link.classList.add('text-blue-600', 'font-semibold');
+                        }
                 });
             }
+            });
+        });
         </script>
     </body>
 </html>

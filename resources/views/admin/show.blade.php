@@ -104,8 +104,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label text-muted small fw-medium">No. HP</label>
-                                <p class="mb-0">{{ $pengajuan->no_hp ?? '-' }}</p>
+                                <label class="form-label text-muted small fw-medium">No. Telp</label>
+                                <p class="mb-0">{{ $pengajuan->no_telp ?? '-' }}</p>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -149,16 +149,16 @@
                                         <p class="mb-0 fw-semibold">{{ $creator->nama ?? '-' }}</p>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label text-muted small fw-medium">No. HP</label>
-                                        <p class="mb-0">{{ $creator->no_hp ?? '-' }}</p>
+                                        <label class="form-label text-muted small fw-medium">No. Telp</label>
+                                        <p class="mb-0">{{ $creator->no_telp ?? '-' }}</p>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small fw-medium">Email</label>
                                         <p class="mb-0">{{ $creator->email ?? '-' }}</p>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label text-muted small fw-medium">Kecamatan</label>
-                                        <p class="mb-0">{{ $creator->kecamatan ?? '-' }}</p>
+                                        <label class="form-label text-muted small fw-medium">Kewarganegaraan</label>
+                                        <p class="mb-0">{{ $creator->kewarganegaraan ?? '-' }}</p>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small fw-medium">Kode Pos</label>
@@ -336,6 +336,15 @@
                         <div class="card-body p-4">
                     <div class="row g-3">
                         @foreach($documents as $field => $docInfo)
+                            @if($field === 'ktp' || $field === 'ktp_pencipta')
+                                @continue
+                            @endif
+                            @if($field === 'ktp_gabungan')
+                                @php
+                                    $docInfo['label'] = 'KTP Gabungan';
+                                    $docInfo['description'] = 'Kartu Tanda Penduduk Gabungan';
+                                @endphp
+                            @endif
                             <div class="col-md-6">
                                 @php
                                     // Extract file info helper
@@ -356,12 +365,17 @@
                                                 <i class="fas fa-check me-1"></i>Tersedia
                                             </span>
                                             <div class="btn-group btn-group-sm">
-                                                <a href="{{ $fileInfo['url'] }}?v={{ $pengajuan->updated_at->timestamp }}" target="_blank" class="btn btn-outline-primary">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="{{ $fileInfo['url'] }}" download class="btn btn-outline-success">
-                                                    <i class="fas fa-download"></i>
-                                                </a>
+                                                @php
+                                                    $isUrl = filter_var($fileInfo['url'], FILTER_VALIDATE_URL);
+                                                    $cleanPath = $isUrl ? $fileInfo['url'] : ltrim(preg_replace('#^storage/#', '', $fileInfo['url']), '/');
+                                                @endphp
+                                                @if(isset($docInfo['file_info']['url']) && str_starts_with($docInfo['file_info']['url'], '/storage/'))
+                                                    <a href="{{ $docInfo['file_info']['url'] }}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fas fa-eye"></i> Lihat</a>
+                                                    <a href="{{ $docInfo['file_info']['url'] }}" download class="btn btn-outline-success btn-sm"><i class="fas fa-download"></i></a>
+                                                @else
+                                                    <a href="{{ Storage::url($cleanPath) }}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fas fa-eye"></i> Lihat</a>
+                                                    <a href="{{ Storage::url($cleanPath) }}" download class="btn btn-outline-success btn-sm"><i class="fas fa-download"></i></a>
+                                                @endif
                                             </div>
                                         </div>
 
@@ -376,8 +390,8 @@
 
                                         @if(($fileInfo['is_signed'] ?? false))
                                             <div class="mt-2">
-                                                <span class="badge bg-info">
-                                                    <i class="fas fa-key me-1"></i>Sudah Ditandatangani
+                                                <span class="badge bg-info text-white">
+                                                    <i class="fas fa-check-double me-1"></i>Sudah Ditandatangani
                                                 </span>
                                             </div>
                                         @endif

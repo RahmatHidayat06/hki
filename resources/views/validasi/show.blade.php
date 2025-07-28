@@ -33,8 +33,8 @@
                         <dd class="col-sm-8">{{ $pengajuan->nama_pengusul ?? '-' }}</dd>
                         <dt class="col-sm-4">NIP/NIDN</dt>
                         <dd class="col-sm-8">{{ $pengajuan->nip_nidn ?? '-' }}</dd>
-                        <dt class="col-sm-4">No HP</dt>
-                        <dd class="col-sm-8">{{ $pengajuan->no_hp ?? '-' }}</dd>
+                        <dt class="col-sm-4">No. Telp</dt>
+                        <dd class="col-sm-8">{{ $pengajuan->no_telp ?? '-' }}</dd>
                         <dt class="col-sm-4">ID Sinta</dt>
                         <dd class="col-sm-8">{{ $pengajuan->id_sinta ?? '-' }}</dd>
                         <dt class="col-sm-4">Tanggal Pertama Kali Diumumkan</dt>
@@ -48,9 +48,9 @@
                         <div class="mb-3 border rounded p-3">
                             <strong>Nama:</strong> {{ $pencipta->nama }}<br>
                             <strong>Email:</strong> {{ $pencipta->email }}<br>
-                            <strong>No HP:</strong> {{ $pencipta->no_hp }}<br>
+                            <strong>No. Telp:</strong> {{ $pencipta->no_telp }}<br>
                             <strong>Alamat:</strong> {{ $pencipta->alamat }}<br>
-                            <strong>Kecamatan:</strong> {{ $pencipta->kecamatan }}<br>
+                            <strong>Kewarganegaraan:</strong> {{ $pencipta->kewarganegaraan }}<br>
                             <strong>Kode Pos:</strong> {{ $pencipta->kodepos }}<br>
                         </div>
                     @endforeach
@@ -58,10 +58,14 @@
                     <h5>Berkas/Dokumen</h5>
                     <div class="mb-3">
                         <strong>File Karya:</strong>
+                        @php
+                            $isUrl = filter_var($pengajuan->file_karya, FILTER_VALIDATE_URL);
+                            $cleanPath = $isUrl ? $pengajuan->file_karya : ltrim(preg_replace('#^storage/#', '', $pengajuan->file_karya), '/');
+                        @endphp
                         @if($pengajuan->file_karya)
                             @php
                                 $ext = pathinfo($pengajuan->file_karya, PATHINFO_EXTENSION);
-                                $url = Storage::url($pengajuan->file_karya);
+                                $url = Storage::url($cleanPath);
                             @endphp
                             @if(in_array(strtolower($ext), ['jpg','jpeg','png','gif','svg','webp']))
                                 <div class="my-2"><img src="{{ $url }}" alt="File Karya" class="img-fluid rounded border"></div>
@@ -299,8 +303,13 @@
                     </div>
                     <div class="mb-3">
                         <strong>KTP Seluruh Pencipta:</strong>
-                        @if(isset($dokumen['ktp']) && $dokumen['ktp'])
-                            @php $url = Storage::url($dokumen['ktp']); $ext = pathinfo($dokumen['ktp'], PATHINFO_EXTENSION); @endphp
+                        @php
+                            $ktpPath = $dokumen['ktp'] ?? null;
+                            $ktpCleanPath = $ktpPath ? ltrim(preg_replace('#^storage/#', '', $ktpPath), '/') : null;
+                            $ktpExists = $ktpCleanPath && Storage::disk('public')->exists($ktpCleanPath);
+                        @endphp
+                        @if($ktpPath)
+                            @php $url = Storage::url($ktpCleanPath); $ext = pathinfo($ktpPath, PATHINFO_EXTENSION); @endphp
                             @if(strtolower($ext) === 'pdf')
                                 <div class="my-2">
                                     <div class="pdf-viewer-container border rounded" style="background: #f8f9fa;">

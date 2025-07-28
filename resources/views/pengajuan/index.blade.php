@@ -59,8 +59,8 @@
                     <label class="form-label text-muted fw-medium">Status</label>
                     <select name="status" class="form-select">
                         <option value="">Semua Status</option>
-                        <option value="menunggu_validasi" {{ request('status') == 'menunggu_validasi' ? 'selected' : '' }}>
-                            Menunggu Validasi
+                        <option value="menunggu_validasi_direktur" {{ request('status') == 'menunggu_validasi_direktur' ? 'selected' : '' }}>
+                            <i class="fas fa-clock me-1"></i>Menunggu Validasi Direktur
                         </option>
                         <option value="divalidasi_sedang_diproses" {{ request('status') == 'divalidasi_sedang_diproses' ? 'selected' : '' }}>
                             Divalidasi & Sedang Diproses
@@ -123,6 +123,7 @@
                                     <th class="border-0 py-3 fw-semibold text-muted">Tahun Usulan</th>
                                     <th class="border-0 py-3 fw-semibold text-muted">Jumlah Pencipta</th>
                                     <th class="border-0 py-3 fw-semibold text-muted">Status</th>
+                                    <th class="border-0 py-3 fw-semibold text-muted">Tanda Tangan</th>
                                     <th class="border-0 py-3 fw-semibold text-muted">Tanggal Pengajuan</th>
                                     <th class="border-0 py-3 fw-semibold text-muted">Aksi</th>
                                 </tr>
@@ -137,9 +138,9 @@
                                     <td class="py-3">{{ $item->tahun_usulan ?? '-' }}</td>
                                     <td class="py-3">{{ $item->jumlah_pencipta }}</td>
                                     <td class="py-3">
-                                        @if($item->status === 'menunggu_validasi')
+                                        @if($item->status === 'menunggu_validasi_direktur')
                                             <span class="badge bg-warning text-dark px-3 py-2">
-                                                <i class="fas fa-clock me-1"></i>Menunggu Validasi
+                                                <i class="fas fa-clock me-1"></i>Menunggu Validasi Direktur
                                             </span>
                                         @elseif($item->status === 'divalidasi_sedang_diproses')
                                             <span class="badge bg-success">
@@ -165,10 +166,37 @@
                                             <span class="badge bg-danger px-3 py-2">
                                                 <i class="fas fa-times-circle me-1"></i>Ditolak
                                             </span>
+                                        @elseif($item->status === 'menunggu_tanda_tangan')
+                                            <span class="badge bg-warning text-dark px-3 py-2">
+                                                <i class="fas fa-pen-nib me-1"></i>Menunggu Tanda Tangan
+                                            </span>
                                         @else
                                             <span class="badge bg-secondary px-3 py-2">
                                                 <i class="fas fa-question-circle me-1"></i>{{ ucfirst(str_replace('_', ' ', $item->status)) }}
                                         </span>
+                                        @endif
+                                    </td>
+                                    <td class="py-3 text-center">
+                                        @if($item->signatures && $item->signatures->count() > 0)
+                                            @php
+                                                $progress = $item->getSignatureProgress();
+                                                $total = $item->signatures->count();
+                                                $signed = $item->signatures->where('status', 'signed')->count();
+                                            @endphp
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress me-2" style="width: 50px; height: 20px;">
+                                                    <div class="progress-bar bg-{{ $progress == 100 ? 'success' : 'warning' }}" 
+                                                         role="progressbar" 
+                                                         style="width: {{ $progress }}%"
+                                                         aria-valuenow="{{ $progress }}" 
+                                                         aria-valuemin="0" 
+                                                         aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted">{{ $signed }}/{{ $total }}</small>
+                                            </div>
+                                        @else
+                                            <span class="text-muted">-</span>
                                         @endif
                                     </td>
                                     <td class="py-3">{{ $item->created_at ? $item->created_at->format('d/m/Y H:i') . ' WITA' : '-' }}</td>
@@ -177,9 +205,12 @@
                                             <a href="{{ route('pengajuan.show', $item->id) }}" class="btn btn-info btn-sm" title="Lihat Detail">
                                                 <i class="fas fa-eye me-1"></i>Detail
                                             </a>
+                                            <a href="{{ route('tracking.show', $item->id) }}" class="btn btn-primary btn-sm" title="Tracking Status">
+                                                <i class="fas fa-route me-1"></i>Tracking
+                                            </a>
                                             
                                             @if(in_array(auth()->user()->role, ['admin', 'direktur']))
-                                                @if($item->status === 'menunggu_validasi')
+                                                @if($item->status === 'menunggu_validasi_direktur')
                                                     <a href="{{ route('validasi.show', $item->id) }}" class="btn btn-success btn-sm" title="Validasi Pengajuan">
                                                         <i class="fas fa-check-circle me-1"></i>Validasi
                                                     </a>
@@ -187,7 +218,7 @@
                                             @endif
                                             
                                             @if(auth()->user()->role === 'admin')
-                                                @if($item->status === 'menunggu_validasi')
+                                                @if($item->status === 'menunggu_validasi_direktur')
                                                     <div class="btn-group btn-group-sm" role="group">
                                                     <a href="{{ route('pengajuan.edit', $item->id) }}" class="btn btn-warning btn-sm" title="Edit Pengajuan">
                                                         <i class="fas fa-edit me-1"></i>Edit

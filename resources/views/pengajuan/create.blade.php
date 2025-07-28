@@ -25,14 +25,15 @@
                     <!-- Navigasi Section -->
                     <div class="mb-4">
                         <div class="nav nav-pills nav-fill" id="form-tabs" role="tablist">
-                            <button class="nav-link active" id="data-pengusul-tab" data-bs-toggle="pill" data-bs-target="#data-pengusul" type="button" role="tab">
-                                <i class="fas fa-user me-2"></i>Data Pengusul
-                            </button>
-                            <button class="nav-link" id="data-ciptaan-tab" data-bs-toggle="pill" data-bs-target="#data-ciptaan" type="button" role="tab">
+                            {{-- Data Pengusul tab removed --}}
+                            <button class="nav-link active" id="data-ciptaan-tab" data-bs-toggle="pill" data-bs-target="#data-ciptaan" type="button" role="tab">
                                 <i class="fas fa-book me-2"></i>Data Ciptaan
                             </button>
                             <button class="nav-link" id="data-pencipta-tab" data-bs-toggle="pill" data-bs-target="#data-pencipta" type="button" role="tab">
                                 <i class="fas fa-users me-2"></i>Data Pencipta
+                            </button>
+                            <button class="nav-link" id="detail-surat-tab" data-bs-toggle="pill" data-bs-target="#detail-surat" type="button" role="tab">
+                                <i class="fas fa-file-signature me-2"></i>Detail Surat
                             </button>
                             <button class="nav-link" id="dokumen-tab" data-bs-toggle="pill" data-bs-target="#dokumen" type="button" role="tab">
                                 <i class="fas fa-file me-2"></i>Dokumen
@@ -53,92 +54,8 @@
                         @csrf
                         
                         <div class="tab-content" id="form-tabs-content">
-                            <!-- Section 1: Data Pengusul -->
-                            <div class="tab-pane fade show active" id="data-pengusul" role="tabpanel">
-                                <div class="card">
-                                    <div class="card-header bg-primary text-white">
-                                        <h5 class="mb-0"><i class="fas fa-user me-2"></i>Data Pengusul</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <!-- Pilihan Role -->
-                                        <div class="mb-4">
-                                            <label class="form-label">{{ __('Anda mengajukan sebagai?') }}</label>
-                                            <div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="radio" name="role" id="role-dosen" value="dosen" {{ (old('role') ?? ($draft->role ?? '')) == 'dosen' ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="role-dosen">{{ __('Dosen') }}</label>
-                                                </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="radio" name="role" id="role-mahasiswa" value="mahasiswa" {{ (old('role') ?? ($draft->role ?? '')) == 'mahasiswa' ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="role-mahasiswa">{{ __('Mahasiswa') }}</label>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label for="nama_pengusul" class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control @error('nama_pengusul') is-invalid @enderror" 
-                                                       id="nama_pengusul" name="nama_pengusul" value="{{ old('nama_pengusul') }}" required>
-                                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
-                                                @error('nama_pengusul')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                            <div class="col-md-6 mb-3" id="nip-nidn-field">
-                                                <label for="nip_nidn" class="form-label">NIP/NIDN <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control @error('nip_nidn') is-invalid @enderror" 
-                                                       id="nip_nidn" name="nip_nidn" value="{{ old('nip_nidn') }}" required pattern="^[0-9]{8,20}$" maxlength="20">
-                                                <div class="invalid-feedback">NIP/NIDN wajib diisi, hanya angka 8-20 digit.</div>
-                                                @error('nip_nidn')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label for="no_hp" class="form-label">Nomor HP <span class="text-danger">*</span></label>
-                                                <input type="tel" class="form-control @error('no_hp') is-invalid @enderror" id="no_hp" name="no_hp" value="{{ old('no_hp') }}" required pattern="^08[0-9]{8,11}$" maxlength="15">
-                                                <div class="invalid-feedback">Nomor HP wajib diisi dan harus dimulai 08, 10-13 digit angka.</div>
-                                                @error('no_hp')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label for="tahun_usulan" class="form-label">Tahun Usulan <span class="text-danger">*</span></label>
-                                                <select class="form-select @error('tahun_usulan') is-invalid @enderror" id="tahun_usulan" name="tahun_usulan" required>
-                                                    <option value="">Pilih</option>
-                                                    <!-- Opsi tahun akan diisi oleh JavaScript -->
-                                                </select>
-                                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
-                                                @error('tahun_usulan')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3" id="id-sinta-field">
-                                                <label for="id_sinta" class="form-label">{{ __('ID Sinta') }} <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control @error('id_sinta') is-invalid @enderror" 
-                                                       id="id_sinta" name="id_sinta" value="{{ old('id_sinta') }}">
-                                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
-                                                @error('id_sinta')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-                                         <div class="d-flex justify-content-end mt-3">
-                                             <button type="button" class="btn btn-primary next-section" data-next="data-ciptaan">
-                                                 Selanjutnya <i class="fas fa-arrow-right ms-2"></i>
-                                             </button>
-                                             <button type="submit" name="save_as_draft" value="1" class="btn btn-secondary ms-2" formnovalidate>Simpan sebagai Draft</button>
-                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-
                             <!-- Section 2: Data Ciptaan -->
-                            <div class="tab-pane fade" id="data-ciptaan" role="tabpanel">
+                            <div class="tab-pane fade show active" id="data-ciptaan" role="tabpanel">
                                 <div class="card">
                                     <div class="card-header bg-primary text-white">
                                         <h5 class="mb-0"><i class="fas fa-book me-2"></i>Data Ciptaan</h5>
@@ -203,8 +120,20 @@
                                             @enderror
                                         </div>
 
+                                        <div class="mb-3">
+                                            <label for="kota_pertama_kali_diumumkan" class="form-label">Kota Pertama Kali Diumumkan <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control @error('kota_pertama_kali_diumumkan') is-invalid @enderror" 
+                                                   id="kota_pertama_kali_diumumkan" name="kota_pertama_kali_diumumkan" 
+                                                   value="{{ old('kota_pertama_kali_diumumkan') }}" placeholder="" required>
+                                            <div class="form-text">Nama kota tempat ciptaan pertama kali diumumkan atau dipublikasikan</div>
+                                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
+                                            @error('kota_pertama_kali_diumumkan')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+
                                         <div class="d-flex justify-content-between mt-3">
-                                            <button type="button" class="btn btn-secondary prev-section" data-prev="data-pengusul">
+                                            <button type="button" class="btn btn-secondary prev-section d-none" data-prev="data-pengusul">
                                                 <i class="fas fa-arrow-left me-2"></i> Sebelumnya
                                             </button>
                                             <button type="button" class="btn btn-primary next-section" data-next="data-pencipta">
@@ -239,6 +168,76 @@
                                             <button type="button" class="btn btn-secondary prev-section" data-prev="data-ciptaan">
                                                 <i class="fas fa-arrow-left me-2"></i> Sebelumnya
                                             </button>
+                                            <button type="button" class="btn btn-primary next-section" data-next="detail-surat">
+                                                Selanjutnya <i class="fas fa-arrow-right ms-2"></i>
+                                            </button>
+                                            <button type="submit" name="save_as_draft" value="1" class="btn btn-secondary ms-2" formnovalidate>Simpan sebagai Draft</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 4: Detail Surat Pengalihan -->
+                            <div class="tab-pane fade" id="detail-surat" role="tabpanel">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0"><i class="fas fa-file-contract me-2"></i>Detail Surat Pengalihan Hak Cipta</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="alert alert-info border-0 shadow-sm mb-4">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-info-circle text-primary me-3 fs-4"></i>
+                                                <div>
+                                                    <h6 class="mb-1 fw-bold">📋 Lengkapi Detail untuk Auto-Generate Surat</h6>
+                                                    <p class="mb-0 small">
+                                                        Data ini akan digunakan untuk mengisi template surat pengalihan hak cipta secara otomatis sesuai format resmi.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="tanggal_surat" class="form-label">Tanggal Surat <span class="text-danger">*</span></label>
+                                            <input type="date" class="form-control @error('tanggal_surat') is-invalid @enderror" 
+                                                   id="tanggal_surat" name="tanggal_surat" 
+                                                   value="{{ old('tanggal_surat', date('Y-m-d')) }}" required>
+                                            <div class="form-text">Tanggal yang akan muncul di surat pengalihan</div>
+                                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
+                                            @error('tanggal_surat')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+
+                                        <div id="alamat-pencipta-container">
+                                            <h6 class="mb-3 text-primary"><i class="fas fa-map-marker-alt me-2"></i>Alamat Lengkap Para Pencipta</h6>
+                                            <div class="alert alert-warning border-0">
+                                                <small><i class="fas fa-exclamation-triangle me-1"></i> 
+                                                Alamat lengkap diperlukan untuk surat pengalihan. Isi sesuai KTP masing-masing pencipta.</small>
+                                            </div>
+                                            <!-- Alamat akan diisi dinamis oleh JavaScript -->
+                                        </div>
+
+                                        <div id="signature-details-container" class="mt-4">
+                                            <h6 class="mb-3 text-primary"><i class="fas fa-signature me-2"></i>Detail Tanda Tangan</h6>
+                                            <!-- Detail tanda tangan akan diisi dinamis oleh JavaScript -->
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Penggunaan Materai <span class="text-muted">(Opsional)</span></label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="gunakan_materai" id="gunakan_materai" value="1" 
+                                                       {{ old('gunakan_materai') ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="gunakan_materai">
+                                                    Sertakan materai Rp 10.000 pada surat pengalihan
+                                                </label>
+                                            </div>
+                                            <div class="form-text">Materai akan ditampilkan pada template surat jika dipilih</div>
+                                        </div>
+
+                                        <div class="d-flex justify-content-between mt-3">
+                                            <button type="button" class="btn btn-secondary prev-section" data-prev="data-pencipta">
+                                                <i class="fas fa-arrow-left me-2"></i> Sebelumnya
+                                            </button>
                                             <button type="button" class="btn btn-primary next-section" data-next="dokumen">
                                                 Selanjutnya <i class="fas fa-arrow-right ms-2"></i>
                                             </button>
@@ -248,7 +247,7 @@
                                 </div>
                             </div>
 
-                            <!-- Section 4: Dokumen -->
+                            <!-- Section 5: Dokumen -->
                             <div class="tab-pane fade" id="dokumen" role="tabpanel">
                                 <div class="card">
                                     <div class="card-header bg-primary text-white">
@@ -285,66 +284,61 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label class="form-label">Surat Pengalihan Hak Cipta (Format Pdf) <span class="text-danger">*</span></label>
-                                            <label for="jumlah_pencipta_template" class="form-label">Pilih Jumlah Pemegang Hak Cipta (Pencipta)</label>
-                                            <select id="jumlah_pencipta_template" class="form-select mb-2">
-                                                <option value="">Pilih Jumlah Pencipta</option>
-                                                <option value="1">1 Pencipta</option>
-                                                <option value="2">2 Pencipta</option>
-                                                <option value="3">3 Pencipta</option>
-                                                <option value="4">4 Pencipta</option>
-                                                <option value="5">5 Pencipta</option>
-                                            </select>
-                                            <div id="template-download-buttons">
-                                                <a href="https://docs.google.com/document/d/1JHJuY8oK3UOMQQ3Q5Ib6lP2y4cb_6TYPzZxbYhXAWyk/edit?tab=t.0" target="_blank" class="btn btn-sm btn-secondary d-none" id="template-link-1"><i class="fas fa-download me-2"></i> Download Template (1 Pencipta)</a>
-                                                <a href="https://docs.google.com/document/d/1G9cnmujI2JVc9h6Dirt0JPIWjxmmksF-Dt4-OJtOi64/edit?pli=1&tab=t.0" target="_blank" class="btn btn-sm btn-secondary d-none" id="template-link-2"><i class="fas fa-download me-2"></i> Download Template (2 Pencipta)</a>
-                                                <a href="https://docs.google.com/document/d/1uXTmaxGsJJ1Aj23eFVysJM9-EwwH-U7hQDmTq49YU34/edit?tab=t.0" target="_blank" class="btn btn-sm btn-secondary d-none" id="template-link-3"><i class="fas fa-download me-2"></i> Download Template (3 Pencipta)</a>
-                                                <a href="https://docs.google.com/document/d/1XPza3uNeThyAovGovW0PfO9acg_Or_FMHOGwFAvTotk/edit?tab=t.0" target="_blank" class="btn btn-sm btn-secondary d-none" id="template-link-4"><i class="fas fa-download me-2"></i> Download Template (4 Pencipta)</a>
-                                                <a href="https://docs.google.com/document/d/1kTomZpze6Oz4nxeyZ3wmp0hxfIRj4451wVRI5OSCqcM/edit?tab=t.0" target="_blank" class="btn btn-sm btn-secondary d-none" id="template-link-5"><i class="fas fa-download me-2"></i> Download Template (5 Pencipta)</a>
+                                            <div class="alert alert-success border-0 shadow-sm">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-check-circle text-success me-3 fs-4"></i>
+                                                    <div>
+                                                        <h6 class="mb-1 fw-bold">✅ Surat Otomatis Dibuat!</h6>
+                                                        <p class="mb-0 small">
+                                                            Sistem akan otomatis membuat <strong>Surat Pengalihan</strong> dan <strong>Surat Pernyataan</strong> Hak Cipta berdasarkan data yang Anda inputkan. 
+                                                            <strong>Tidak perlu upload manual!</strong>
+                                                        </p>
+                                                        <div class="mt-2">
+                                                            <span class="badge bg-success text-white me-2">
+                                                                <i class="fas fa-magic me-1"></i>Surat Pengalihan: Auto-Generated
+                                                            </span>
+                                                            <span class="badge bg-success text-white">
+                                                                <i class="fas fa-magic me-1"></i>Surat Pernyataan: Auto-Generated
+                                                            </span>
                                             </div>
-                                            <input type="file" class="form-control mt-2 @error('surat_pengalihan_hak_cipta') is-invalid @enderror" id="surat_pengalihan_hak_cipta" name="surat_pengalihan_hak_cipta" accept="application/pdf" required>
-                                            <div class="form-text">Upload 1 supported file: PDF. Max 10 MB.</div>
-                                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
-                                            @error('surat_pengalihan_hak_cipta')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
+                                                        <div class="mt-2">
+                                                            <small class="text-muted">
+                                                                <i class="fas fa-info-circle me-1"></i>
+                                                                Pastikan data di section "Detail Surat" sudah lengkap untuk hasil yang optimal.
+                                                            </small>
+                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="surat_pernyataan_hak_cipta" class="form-label">Surat Pernyataan Hak Cipta (Format Pdf) <span class="text-danger">*</span></label>
-                                             <p class="form-text"><a href="https://bit.ly/TemplatePernyataanHakCipta" target="_blank" class="btn btn-sm btn-secondary"><i class="fas fa-download me-2"></i> Download Template</a></p>
-                                            <input type="file" class="form-control @error('surat_pernyataan_hak_cipta') is-invalid @enderror" 
-                                                   id="surat_pernyataan_hak_cipta" name="surat_pernyataan_hak_cipta" required>
-                                            <div class="form-text">Upload 1 supported file: PDF. Max 10 MB.</div>
-                                            @error('surat_pernyataan_hak_cipta')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="ktp_seluruh_pencipta" class="form-label">KTP (SELURUH PENCIPTA) <span class="text-danger">*</span></label>
-                                             <p class="form-text"><a href="https://bit.ly/TemplateKTP_HakCipta" target="_blank" class="btn btn-sm btn-secondary"><i class="fas fa-download me-2"></i> Download Template KTP</a> (Lampirkan KTP seluruh pencipta format Pdf)</p>
-                                            <input type="file" class="form-control @error('ktp_seluruh_pencipta') is-invalid @enderror" 
-                                                   id="ktp_seluruh_pencipta" name="ktp_seluruh_pencipta" required>
-                                            <div class="form-text">Upload 1 supported file: PDF. Max 10 MB.</div>
-                                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
-                                            @error('ktp_seluruh_pencipta')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
+                                            <div class="alert alert-info border-0">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-info-circle me-3 fs-4"></i>
+                                                    <div>
+                                                        <h6 class="mb-1">Upload KTP melalui Proses Tanda Tangan</h6>
+                                                        <p class="mb-0 small">
+                                                            KTP setiap pencipta akan diupload langsung saat proses tanda tangan digital. 
+                                                            Sistem akan secara otomatis menggabungkan semua KTP menjadi satu dokumen PDF.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div class="d-flex justify-content-between mt-3">
-                                            <button type="button" class="btn btn-secondary prev-section" data-prev="data-pencipta">
+                                            <button type="button" class="btn btn-secondary prev-section" data-prev="detail-surat">
                                                 <i class="fas fa-arrow-left me-2"></i> Sebelumnya
                                             </button>
                                             <div>
-                                                <button type="submit" name="save_as_draft" value="1" class="btn btn-secondary" id="btn-save-draft" formnovalidate>
+                                                <button type="submit" name="action" value="update" class="btn btn-secondary" id="btn-save-draft" formnovalidate>
                                                     <span class="spinner-border spinner-border-sm d-none" id="spinner-draft" role="status" aria-hidden="true"></span>
                                                     Simpan sebagai Draft
                                                 </button>
-                                                <button type="submit" name="submit_final" value="1" class="btn btn-primary ms-2" id="btn-submit">
+                                                <button type="submit" name="action" value="submit" class="btn btn-primary ms-2" id="btn-submit">
                                                     <span class="spinner-border spinner-border-sm d-none" id="spinner-submit" role="status" aria-hidden="true"></span>
-                                                    Kirim
+                                                    <i class="fas fa-magic me-1"></i>Kirim (dengan Auto-Generate Surat)
                                                 </button>
                                             </div>
                                         </div>
@@ -373,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabButtons = document.querySelectorAll('#form-tabs button[data-bs-toggle="pill"]');
     // Disable semua tab navigasi kecuali section pertama
     tabButtons.forEach((btn, idx) => {
-        if (idx !== 0) btn.setAttribute('disabled', 'disabled');
+        if (idx !== 0) btn.setAttribute('disabled', 'disabled'); // Data Ciptaan adalah index 0
     });
 
     // Function to check if a section is completed
@@ -407,15 +401,23 @@ document.addEventListener('DOMContentLoaded', function() {
             isCompleted = false;
         }
         
+        // Special handling for detail-surat section
+        if (sectionId === 'detail-surat') {
+            const jumlahPencipta = parseInt(document.getElementById('jumlah_pencipta')?.value) || 0;
+            if (jumlahPencipta === 0) {
+                isCompleted = false;
+            }
+        }
+        
         return isCompleted;
     }
 
     // Function to unlock completed sections
     function unlockCompletedSections() {
-        const sections = ['data-pengusul', 'data-ciptaan', 'data-pencipta', 'dokumen'];
+        const sections = ['data-ciptaan', 'data-pencipta', 'detail-surat', 'dokumen'];
         
         sections.forEach((sectionId, index) => {
-            if (index === 0) return; // First section always unlocked
+            if (index === 0) return; // First section (data-ciptaan) always unlocked
             
             // Check if all previous sections are completed
             let allPreviousCompleted = true;
@@ -451,23 +453,67 @@ document.addEventListener('DOMContentLoaded', function() {
             const requiredFields = currentTabPane.querySelectorAll('input[required], select[required], textarea[required]');
             let isSectionValid = true;
             let missingFields = [];
+            
             requiredFields.forEach(field => {
                 if (!field.checkValidity()) {
                     isSectionValid = false;
                     field.classList.add('is-invalid');
                     let label = field.closest('.mb-3,.col-md-6,.col-md-12')?.querySelector('label')?.textContent || field.name || 'Field';
-                    if (label && !missingFields.includes(label)) missingFields.push(label.trim());
+                    if (label && !missingFields.includes(label.trim())) missingFields.push(label.trim());
                 } else {
                     field.classList.remove('is-invalid');
                 }
             });
+            
+            // Special validation for detail-surat section
+            if (currentTabPane.id === 'detail-surat') {
+                const jumlahPencipta = parseInt(document.getElementById('jumlah_pencipta').value) || 0;
+                if (jumlahPencipta === 0) {
+                    isSectionValid = false;
+                    missingFields.push('Jumlah Pencipta belum dipilih');
+                }
+                
+                // Check if alamat_pencipta fields are filled
+                for (let i = 1; i <= jumlahPencipta; i++) {
+                    const namaField = document.querySelector(`input[name="alamat_pencipta[${i}][nama]"]`);
+                    const alamatField = document.querySelector(`textarea[name="alamat_pencipta[${i}][alamat]"]`);
+                    const ttdField = document.querySelector(`input[name="signature_pencipta[${i}][nama_ttd]"]`);
+                    
+                    if (!namaField || !namaField.value.trim()) {
+                        isSectionValid = false;
+                        missingFields.push(`Nama Pencipta ${i}`);
+                    }
+                    if (!alamatField || !alamatField.value.trim()) {
+                        isSectionValid = false;
+                        missingFields.push(`Alamat Pencipta ${i}`);
+                    }
+                    if (!ttdField || !ttdField.value.trim()) {
+                        isSectionValid = false;
+                        missingFields.push(`Nama Tanda Tangan Pencipta ${i}`);
+                    }
+                }
+            }
+            
             if (!isSectionValid) {
                 event.preventDefault();
+                
+                // Use SweetAlert2 for better UX
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Data Belum Lengkap',
+                        html: '<div class="text-start">Lengkapi data berikut sebelum melanjutkan:<br>• ' + missingFields.join('<br>• ') + '</div>',
+                        icon: 'warning',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
                 alert('Lengkapi data berikut sebelum melanjutkan:\n- ' + missingFields.join('\n- '));
+                }
+                
                 const firstInvalid = currentTabPane.querySelector('.is-invalid');
                 if (firstInvalid) setTimeout(()=>{firstInvalid.focus();}, 300);
                 return false;
             }
+            
             // Jika valid, enable tab berikutnya dan pindah
                 const nextSectionId = this.dataset.next;
                 const nextTabButton = document.querySelector(`#${nextSectionId}-tab`);
@@ -524,8 +570,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class=\"row\">
                             <div class=\"col-md-6 mb-3\">
-                                <label class=\"form-label\">No. HP <span class=\"text-danger\">*</span></label>
-                                <input type=\"tel\" class=\"form-control\" name=\"pencipta[${i}][no_hp]\" required pattern=\"^08[0-9]{8,11}$\" maxlength=\"15\">
+                                <label class=\"form-label\">No. Telp <span class=\"text-danger\">*</span></label>
+                                <input type=\"tel\" class=\"form-control\" name=\"pencipta[${i}][no_telp]\" required maxlength=\"15\">
                             </div>
                             <div class=\"col-md-6 mb-3\">
                                 <label class=\"form-label\">Alamat <span class=\"text-danger\">*</span></label>
@@ -534,8 +580,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class=\"row\">
                             <div class=\"col-md-6 mb-3\">
-                                <label class=\"form-label\">Kecamatan <span class=\"text-danger\">*</span></label>
-                                <input type=\"text\" class=\"form-control\" name=\"pencipta[${i}][kecamatan]\" required>
+                                <label class=\"form-label\">Kewarganegaraan <span class=\"text-danger\">*</span></label>
+                                <input type=\"text\" class=\"form-control\" name=\"pencipta[${i}][kewarganegaraan]\" required>
                             </div>
                             <div class=\"col-md-6 mb-3\">
                                 <label class="form-label">Kode Pos <span class="text-danger">*</span></label>
@@ -550,83 +596,136 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Fungsi untuk menampilkan/menyembunyikan field berdasarkan role
-    const roleRadios = document.querySelectorAll('input[name="role"]');
-    const nipNidnField = document.getElementById('nip-nidn-field');
-    const idSintaField = document.getElementById('id-sinta-field');
-    function toggleRoleSpecificFields() {
-        const selectedRole = document.querySelector('input[name="role"]:checked')?.value || '';
-        const nipInput   = nipNidnField.querySelector('input');
-        const sintaInput = idSintaField.querySelector('input');
+    // Role-specific fields are now handled server-side with Blade template conditionals
 
-        if (selectedRole === 'mahasiswa') {
-            // Sembunyikan & non-aktifkan
-            nipNidnField.style.display = 'none';
-            idSintaField.style.display = 'none';
-
-            nipInput.removeAttribute('required');
-            sintaInput.removeAttribute('required');
-            nipInput.setAttribute('disabled', true);
-            sintaInput.setAttribute('disabled', true);
-        } else {
-            // Tampilkan & aktifkan (wajib)
-            nipNidnField.style.display = '';
-            idSintaField.style.display = '';
-
-            nipInput.removeAttribute('disabled');
-            sintaInput.removeAttribute('disabled');
-            nipInput.setAttribute('required', true);
-            sintaInput.setAttribute('required', true);
-        }
-    }
-    // Panggil fungsi toggle saat pertama kali dimuat untuk mengatur tampilan awal
-    toggleRoleSpecificFields();
-    // Tambahkan event listener pada perubahan pilihan role
-    roleRadios.forEach(radio => {
-        radio.addEventListener('change', toggleRoleSpecificFields);
-    });
-
-    // Populate tahun usulan dropdown - 5 tahun ke belakang dari sekarang
-    function populateYearDropdown() {
-        const yearSelect = document.getElementById('tahun_usulan');
-        if (!yearSelect) return;
+    // Dynamic Alamat dan Signature Details untuk Surat Pengalihan
+    function updateDetailSurat() {
+        const jumlahPencipta = parseInt(document.getElementById('jumlah_pencipta').value) || 0;
+        const alamatContainer = document.getElementById('alamat-pencipta-container');
+        const signatureContainer = document.getElementById('signature-details-container');
         
-        const currentYear = new Date().getFullYear();
-        const savedValue = "{{ old('tahun_usulan') }}";
-        
-        // Clear existing options
-        yearSelect.innerHTML = '<option value="">Pilih Tahun</option>';
-        
-        // Generate 5 tahun: tahun sekarang sampai 4 tahun ke belakang
-        let yearList = [];
-        for (let i = 0; i < 5; i++) {
-            yearList.push(currentYear - i);
-        }
-        
-        // Jika ada nilai tersimpan yang tidak ada di list, tambahkan
-        if (savedValue && !yearList.includes(parseInt(savedValue))) {
-            yearList.push(parseInt(savedValue));
-        }
-        
-        // Urutkan descending dan buat unique
-        yearList = [...new Set(yearList)].sort((a, b) => b - a);
-        
-        // Add year options
-        yearList.forEach(function(year) {
-            const option = document.createElement('option');
-            option.value = year;
-            option.textContent = year;
-            
-            if (year.toString() === savedValue) {
-                option.selected = true;
+        if (!alamatContainer || !signatureContainer || jumlahPencipta === 0) {
+            // Reset containers if no pencipta selected
+            if (alamatContainer) {
+                alamatContainer.innerHTML = `
+                    <h6 class="mb-3 text-primary"><i class="fas fa-map-marker-alt me-2"></i>Alamat Lengkap Para Pencipta</h6>
+                    <div class="alert alert-warning border-0">
+                        <small><i class="fas fa-exclamation-triangle me-1"></i> 
+                        Pilih jumlah pencipta terlebih dahulu untuk menampilkan field alamat.</small>
+                    </div>`;
             }
+            if (signatureContainer) {
+                signatureContainer.innerHTML = `
+                    <h6 class="mb-3 text-primary"><i class="fas fa-signature me-2"></i>Detail Tanda Tangan</h6>
+                    <div class="alert alert-warning border-0">
+                        <small><i class="fas fa-exclamation-triangle me-1"></i> 
+                        Pilih jumlah pencipta terlebih dahulu untuk menampilkan field tanda tangan.</small>
+                    </div>`;
+            }
+            return;
+        }
+        
+        // Update alamat pencipta
+        let alamatHTML = `
+            <h6 class="mb-3 text-primary"><i class="fas fa-map-marker-alt me-2"></i>Alamat Lengkap Para Pencipta</h6>
+            <div class="alert alert-warning border-0">
+                <small><i class="fas fa-exclamation-triangle me-1"></i> 
+                Alamat lengkap diperlukan untuk surat pengalihan. Isi sesuai KTP masing-masing pencipta.</small>
+            </div>`;
             
-            yearSelect.appendChild(option);
-        });
+        for (let i = 1; i <= jumlahPencipta; i++) {
+            alamatHTML += `
+                <div class="mb-3 border p-3 rounded">
+                    <h6 class="text-secondary mb-2">
+                        <i class="fas fa-user me-2"></i>${i == 1 ? 'Nama Pencipta' : 'Nama Pencipta ' + i}
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-12 mb-2">
+                            <label class="form-label small">Nama Lengkap <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" 
+                                   name="alamat_pencipta[${i}][nama]" 
+                                   placeholder="Nama lengkap pencipta ${i}" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small">Alamat Lengkap <span class="text-danger">*</span></label>
+                            <textarea class="form-control form-control-sm" 
+                                      name="alamat_pencipta[${i}][alamat]" 
+                                      placeholder="Alamat lengkap sesuai KTP pencipta ${i}" 
+                                      rows="2" required></textarea>
+                        </div>
+                    </div>
+                </div>`;
+        }
+        
+        alamatContainer.innerHTML = alamatHTML;
+        
+        // Update signature details
+        let signatureHTML = `
+            <h6 class="mb-3 text-primary"><i class="fas fa-signature me-2"></i>Detail Tanda Tangan</h6>`;
+            
+        for (let i = 1; i <= jumlahPencipta; i++) {
+            signatureHTML += `
+                <div class="mb-3 border p-3 rounded">
+                    <h6 class="text-secondary mb-2">
+                        <i class="fas fa-signature me-2"></i>Tanda Tangan ${i == 1 ? 'Nama Pencipta' : 'Nama Pencipta ' + i}
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-8 mb-2">
+                            <label class="form-label small">Nama yang akan muncul di bawah tanda tangan <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" 
+                                   name="signature_pencipta[${i}][nama_ttd]" 
+                                   placeholder="" required>
+                            <div class="form-text small">Format: (Nama Lengkap dengan gelar)</div>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label small">Posisi di Surat</label>
+                            <select class="form-select form-select-sm" name="signature_pencipta[${i}][posisi]">
+                                <option value="kanan">Sebelah Kanan</option>
+                                <option value="kiri">Sebelah Kiri</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>`;
+        }
+        
+        signatureContainer.innerHTML = signatureHTML;
+        
+        // Re-check section completion after dynamic fields are added
+        setTimeout(() => {
+            unlockCompletedSections();
+        }, 100);
     }
+
+    // Event listener untuk jumlah pencipta
+    document.getElementById('jumlah_pencipta').addEventListener('change', updateDetailSurat);
     
-    // Initialize year dropdown
-    populateYearDropdown();
+    // Initialize detail surat when page loads
+    setTimeout(() => {
+        updateDetailSurat();
+        // Force initial check for completion
+        unlockCompletedSections();
+    }, 500);
+
+    // Auto-sync nama pencipta dari section sebelumnya
+    function autoSyncPenciptaData() {
+        const jumlahPencipta = parseInt(document.getElementById('jumlah_pencipta').value) || 0;
+        
+        for (let i = 1; i <= jumlahPencipta; i++) {
+            const penciptaNamaInput = document.querySelector(`input[name="pencipta[${i-1}][nama]"]`);
+            const alamatNamaInput = document.querySelector(`input[name="alamat_pencipta[${i}][nama]"]`);
+            
+            if (penciptaNamaInput && alamatNamaInput && penciptaNamaInput.value && !alamatNamaInput.value) {
+                alamatNamaInput.value = penciptaNamaInput.value;
+            }
+        }
+    }
+
+    // Event listener untuk auto-sync data
+    document.addEventListener('input', function(e) {
+        if (e.target.name && e.target.name.includes('pencipta[') && e.target.name.includes('[nama]')) {
+            setTimeout(autoSyncPenciptaData, 100);
+        }
+    });
 
     // Sub Jenis Ciptaan dinamis sesuai Jenis Ciptaan
     const identitasCiptaanSelect = document.getElementById('identitas_ciptaan');
@@ -686,6 +785,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     const jumlahPenciptaTemplate = document.getElementById('jumlah_pencipta_template');
+    if (jumlahPenciptaTemplate) {
     const templateLinks = [
         null,
         document.getElementById('template-link-1'),
@@ -694,11 +794,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('template-link-4'),
         document.getElementById('template-link-5')
     ];
+
     jumlahPenciptaTemplate.addEventListener('change', function() {
-        templateLinks.forEach((btn, idx) => { if (btn) btn.classList.add('d-none'); });
+            templateLinks.forEach(btn => { if (btn) btn.classList.add('d-none'); });
         const val = parseInt(this.value);
         if (val && templateLinks[val]) templateLinks[val].classList.remove('d-none');
     });
+    }
 
     document.getElementById('btn-save-draft')?.addEventListener('click', function(e) {
         e.preventDefault();
@@ -721,6 +823,15 @@ document.addEventListener('DOMContentLoaded', function() {
         this.disabled = true;
         document.getElementById('spinner-draft').classList.remove('d-none');
         
+        // Pastikan field action=update ikut terkirim
+        let actionField = form.querySelector('input[name="action"]');
+        if (!actionField) {
+            actionField = document.createElement('input');
+            actionField.type = 'hidden';
+            actionField.name = 'action';
+            form.appendChild(actionField);
+        }
+        actionField.value = 'update';
         // Submit form
         form.submit();
     });
@@ -753,6 +864,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (result.isConfirmed) {
                     submitBtn.disabled = true;
         document.getElementById('spinner-submit').classList.remove('d-none');
+                    // Pastikan field action=submit ikut terkirim
+                    let actionField = form.querySelector('input[name="action"]');
+                    if (!actionField) {
+                        actionField = document.createElement('input');
+                        actionField.type = 'hidden';
+                        actionField.name = 'action';
+                        form.appendChild(actionField);
+                    }
+                    actionField.value = 'submit';
                     form.submit();
                 }
             });

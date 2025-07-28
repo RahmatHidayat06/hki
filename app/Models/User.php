@@ -19,7 +19,13 @@ class User extends Authenticatable
         'username',
         'nama_lengkap',
         'email',
-        'no_hp',
+        'no_ktp',
+        'tanggal_lahir',
+        'gender',
+        'nationality',
+        'nip_nidn',
+        'id_sinta',
+        'no_telp',
         'password',
         'role',
         'ttd_path',
@@ -32,6 +38,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'tanggal_lahir' => 'date',
         'password' => 'hashed',
     ];
 
@@ -67,5 +74,37 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPasswordNotification($token));
+    }
+
+    /**
+     * Check if user is admin
+     */
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Check if user is direktur
+     */
+    public function isDirektur()
+    {
+        return $this->role === 'direktur';
+    }
+
+    /**
+     * Check if user is dosen
+     */
+    public function isDosen()
+    {
+        return $this->role === 'dosen';
+    }
+
+    /**
+     * Check if user is mahasiswa
+     */
+    public function isMahasiswa()
+    {
+        return $this->role === 'mahasiswa';
     }
 }

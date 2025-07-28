@@ -49,9 +49,9 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="no_hp" class="form-label">{{ __('Nomor HP') }}</label>
-                            <input id="no_hp" type="text" class="form-control @error('no_hp') is-invalid @enderror" name="no_hp" value="{{ old('no_hp', $user->no_hp) }}" autocomplete="tel">
-                            @error('no_hp')
+                            <label for="no_telp" class="form-label">{{ __('Nomor Telp') }}</label>
+                            <input id="no_telp" type="text" class="form-control @error('no_telp') is-invalid @enderror" name="no_telp" value="{{ old('no_telp', $user->no_telp) }}" autocomplete="tel">
+                            @error('no_telp')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
                                 </span>

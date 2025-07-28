@@ -69,16 +69,9 @@
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="no_hp" class="form-label">Nomor HP</label>
-                                <input type="tel" class="form-control" id="no_hp" name="no_hp" value="{{ $pengajuan->no_hp }}" required pattern="^08[0-9]{8,11}$" maxlength="15">
-                                <div class="invalid-feedback">Nomor HP wajib diisi dan harus dimulai 08, 10-13 digit angka.</div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="tahun_usulan" class="form-label">Tahun Usulan</label>
-                                <select class="form-select" id="tahun_usulan" name="tahun_usulan" required>
-                                    <option value="">Pilih</option>
-                                </select>
-                                <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
+                                <label for="no_telp" class="form-label">Nomor Telp</label>
+                                <input type="tel" class="form-control" id="no_telp" name="no_telp" value="{{ $pengajuan->no_telp }}" required pattern="^08[0-9]{8,11}$" maxlength="15">
+                                <div class="invalid-feedback">Nomor Telp wajib diisi dan harus dimulai 08, 10-13 digit angka.</div>
                             </div>
                         </div>
                         <div class="row">
@@ -203,8 +196,8 @@
                                         </div>
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">No. HP <span class="text-danger">*</span></label>
-                                                <input type="tel" class="form-control" name="pencipta[{{ $i }}][no_hp]" value="{{ old('pencipta.'.$i.'.no_hp', $p->no_hp ?? '') }}" required pattern="^08[0-9]{8,11}$" maxlength="15">
+                                                <label for="no_telp" class="form-label">No. Telp</label>
+                                                <input type="tel" class="form-control" id="no_telp" name="pencipta[{{ $i }}][no_telp]" value="{{ old('pencipta.'.$i.'.no_telp', $p->no_telp ?? '') }}" required maxlength="15">
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Alamat <span class="text-danger">*</span></label>
@@ -213,8 +206,8 @@
                                         </div>
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Kecamatan <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" name="pencipta[{{ $i }}][kecamatan]" value="{{ old('pencipta.'.$i.'.kecamatan', $p->kecamatan ?? '') }}" required>
+                                                <label class="form-label">Kewarganegaraan <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" name="pencipta[{{ $i }}][kewarganegaraan]" value="{{ old('pencipta.'.$i.'.kewarganegaraan', $p->kewarganegaraan ?? '') }}" required>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Kode Pos <span class="text-danger">*</span></label>
@@ -265,7 +258,7 @@
                             <div id="contoh-ciptaan-upload-field">
                             @if($pengajuan->file_karya && !str_starts_with($pengajuan->file_karya, 'http'))
                                 <div class="mb-2 file-lama-exists d-flex align-items-center gap-2">
-                                    <a href="{{ asset('storage/'.$pengajuan->file_karya) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
+                                    <a href="{{ Storage::url(ltrim(preg_replace('#^storage/#', '', $pengajuan->file_karya), '/')) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
                                     <button type="button" class="btn btn-sm btn-warning" onclick="toggleFileInput('contoh_ciptaan')"><i class="fas fa-sync-alt"></i> Ganti File</button>
                                 </div>
                                 <input type="file" class="form-control d-none" id="contoh_ciptaan" name="contoh_ciptaan">
@@ -300,7 +293,7 @@
                             @php $dokumen = $pengajuan->file_dokumen_pendukung; if (is_string($dokumen)) $dokumen = json_decode($dokumen, true); @endphp
                             @if(isset($dokumen['surat_pengalihan']) && $dokumen['surat_pengalihan'])
                                 <div class="mb-2 file-lama-exists d-flex align-items-center gap-2">
-                                    <a href="{{ asset('storage/'.$dokumen['surat_pengalihan']) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
+                                    <a href="{{ Storage::url(ltrim(preg_replace('#^storage/#', '', $dokumen['surat_pengalihan']), '/')) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
                                     <button type="button" class="btn btn-sm btn-warning" onclick="toggleFileInput('surat_pengalihan_hak_cipta')"><i class="fas fa-sync-alt"></i> Ganti File</button>
                                 </div>
                                 <input type="file" class="form-control d-none" id="surat_pengalihan_hak_cipta_hidden" accept="application/pdf">
@@ -314,7 +307,7 @@
                             <p class="form-text"><a href="https://bit.ly/TemplatePernyataanHakCipta" target="_blank" class="btn btn-sm btn-secondary"><i class="fas fa-download me-2"></i> Download Template</a></p>
                             @if(isset($dokumen['surat_pernyataan']) && $dokumen['surat_pernyataan'])
                                 <div class="mb-2 file-lama-exists d-flex align-items-center gap-2">
-                                    <a href="{{ asset('storage/'.$dokumen['surat_pernyataan']) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
+                                    <a href="{{ Storage::url(ltrim(preg_replace('#^storage/#', '', $dokumen['surat_pernyataan']), '/')) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
                                     <button type="button" class="btn btn-sm btn-warning" onclick="toggleFileInput('surat_pernyataan_hak_cipta')"><i class="fas fa-sync-alt"></i> Ganti File</button>
                                 </div>
                                 <input type="file" class="form-control d-none" id="surat_pernyataan_hak_cipta_hidden">
@@ -328,7 +321,7 @@
                             <p class="form-text"><a href="https://bit.ly/TemplateKTP_HakCipta" target="_blank" class="btn btn-sm btn-secondary"><i class="fas fa-download me-2"></i> Download Template KTP</a> (Lampirkan KTP seluruh pencipta format Pdf)</p>
                             @if(isset($dokumen['ktp']) && $dokumen['ktp'])
                                 <div class="mb-2 file-lama-exists d-flex align-items-center gap-2">
-                                    <a href="{{ asset('storage/'.$dokumen['ktp']) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
+                                    <a href="{{ Storage::url(ltrim(preg_replace('#^storage/#', '', $dokumen['ktp']), '/')) }}" target="_blank" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> Lihat File</a>
                                     <button type="button" class="btn btn-sm btn-warning" onclick="toggleFileInput('ktp_seluruh_pencipta')"><i class="fas fa-sync-alt"></i> Ganti File</button>
                                 </div>
                                 <input type="file" class="form-control d-none" id="ktp_seluruh_pencipta_hidden">
@@ -456,7 +449,7 @@ function initializeForm() {
                     isSectionValid = false;
                     field.classList.add('is-invalid');
                     let label = field.closest('.mb-3,.col-md-6,.col-md-12')?.querySelector('label')?.textContent || field.name || 'Field';
-                    if (label && !missingFields.includes(label)) missingFields.push(label.trim());
+                    if (label && !missingFields.includes(label.trim())) missingFields.push(label.trim());
                 } else {
                     field.classList.remove('is-invalid');
                 }
@@ -499,48 +492,6 @@ function initializeForm() {
     document.addEventListener('change', function() {
         setTimeout(unlockCompletedSections, 100);
     });
-
-    // Populate tahun usulan dropdown - 5 tahun ke belakang dari sekarang
-    function populateYearDropdown() {
-        const yearSelect = document.getElementById('tahun_usulan');
-        if (!yearSelect) return;
-        
-        const currentYear = new Date().getFullYear();
-        const savedValue = "{{ old('tahun_usulan', $pengajuan->tahun_usulan) }}";
-        
-        // Clear existing options
-        yearSelect.innerHTML = '<option value="">Pilih Tahun</option>';
-        
-        // Generate 5 tahun: tahun sekarang sampai 4 tahun ke belakang
-        let yearList = [];
-        for (let i = 0; i < 5; i++) {
-            yearList.push(currentYear - i);
-        }
-        
-        // Jika ada nilai tersimpan yang tidak ada di list, tambahkan
-        if (savedValue && !yearList.includes(parseInt(savedValue))) {
-            yearList.push(parseInt(savedValue));
-        }
-        
-        // Urutkan descending dan buat unique
-        yearList = [...new Set(yearList)].sort((a, b) => b - a);
-        
-        // Add year options
-        yearList.forEach(function(year) {
-            const option = document.createElement('option');
-            option.value = year;
-            option.textContent = year;
-            
-            if (year.toString() === savedValue) {
-                option.selected = true;
-            }
-            
-            yearSelect.appendChild(option);
-        });
-    }
-    
-    // Initialize year dropdown
-    populateYearDropdown();
 
     // Data sub jenis ciptaan - sama seperti di create
     const identitasCiptaanSelect = document.getElementById('identitas_ciptaan');
@@ -665,21 +616,21 @@ function initializeForm() {
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">No. HP</label>
-                                <input type="tel" class="form-control" name="pencipta[${i}][no_hp]" value="${currentData.no_hp || ''}" pattern="^08[0-9]{8,11}$" maxlength="15">
+                                <label for="no_telp" class="form-label">No. Telp</label>
+                                <input type="tel" class="form-control" id="no_telp" name="pencipta[${i}][no_telp]" value="${currentData.no_telp || ''}" required maxlength="15">
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Alamat</label>
-                                <textarea class="form-control" name="pencipta[${i}][alamat]" rows="2">${currentData.alamat || ''}</textarea>
+                                <label class="form-label">Alamat <span class="text-danger">*</span></label>
+                                <textarea class="form-control" name="pencipta[${i}][alamat]" rows="2" required>${currentData.alamat || ''}</textarea>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Kecamatan</label>
-                                <input type="text" class="form-control" name="pencipta[${i}][kecamatan]" value="${currentData.kecamatan || ''}">
+                                <label class="form-label">Kewarganegaraan <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="pencipta[${i}][kewarganegaraan]" value="${currentData.kewarganegaraan || ''}" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Kode Pos</label>
+                                <label class="form-label">Kode Pos <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="pencipta[${i}][kodepos]" value="${currentData.kodepos || ''}" pattern="^[0-9]{5}$" maxlength="5">
                             </div>
                         </div>
@@ -696,9 +647,9 @@ function initializeForm() {
             data[i] = {
                 nama: card.querySelector('input[name$="[nama]"]')?.value || '',
                 email: card.querySelector('input[name$="[email]"]')?.value || '',
-                no_hp: card.querySelector('input[name$="[no_hp]"]')?.value || '',
+                no_telp: card.querySelector('input[name$="[no_telp]"]')?.value || '',
                 alamat: card.querySelector('textarea[name$="[alamat]"]')?.value || '',
-                kecamatan: card.querySelector('input[name$="[kecamatan]"]')?.value || '',
+                kewarganegaraan: card.querySelector('input[name$="[kewarganegaraan]"]')?.value || '',
                 kodepos: card.querySelector('input[name$="[kodepos]"]')?.value || ''
             };
         });
@@ -734,7 +685,7 @@ function initializeForm() {
                 { field: 'judul', name: 'Judul Karya' },
                 { field: 'deskripsi', name: 'Deskripsi' },
                 { field: 'nama_pengusul', name: 'Nama Pengusul' },
-                { field: 'no_hp', name: 'Nomor HP' },
+                { field: 'no_telp', name: 'Nomor Telp' },
                 { field: 'jumlah_pencipta', name: 'Jumlah Pencipta' },
                 { field: 'identitas_ciptaan', name: 'Jenis Ciptaan' },
                 { field: 'sub_jenis_ciptaan', name: 'Sub Jenis Ciptaan' },

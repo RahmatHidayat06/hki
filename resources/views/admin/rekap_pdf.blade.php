@@ -35,16 +35,16 @@
 
     <h3>Daftar Pencipta</h3>
     <table>
-        <thead><tr><th>No</th><th>Nama</th><th>Email</th><th>No HP</th><th>Alamat</th><th>Kecamatan</th><th>Kode Pos</th></tr></thead>
+        <thead><tr><th>No</th><th>Nama</th><th>Email</th><th>No. Telp</th><th>Alamat</th><th>Kewarganegaraan</th><th>Kode Pos</th></tr></thead>
         <tbody>
             @foreach($pengajuan->pengaju as $idx=>$creator)
             <tr>
                 <td>{{ $idx+1 }}</td>
                 <td>{{ $creator->nama }}</td>
                 <td>{{ $creator->email }}</td>
-                <td>{{ $creator->no_hp }}</td>
+                <td>{{ $creator->no_telp }}</td>
                 <td>{{ $creator->alamat }}</td>
-                <td>{{ $creator->kecamatan }}</td>
+                <td>{{ $creator->kewarganegaraan }}</td>
                 <td>{{ $creator->kodepos }}</td>
             </tr>
             @endforeach

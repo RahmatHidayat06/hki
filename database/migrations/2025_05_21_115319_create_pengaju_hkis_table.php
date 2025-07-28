@@ -16,10 +16,10 @@ return new class extends Migration
             $table->foreignId('pengajuan_hki_id')->constrained('pengajuan_hkis')->onDelete('cascade');
             $table->string('nama');
             $table->string('nip_nidn')->nullable();
-            $table->string('no_hp')->nullable();
+            $table->string('kewarganegaraan')->nullable();
+            $table->string('no_telp')->nullable();
             $table->string('email');
             $table->text('alamat')->nullable();
-            $table->string('kecamatan')->nullable();
             $table->string('kodepos')->nullable();
             $table->timestamps();
         });

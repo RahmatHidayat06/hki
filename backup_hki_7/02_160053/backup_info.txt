@@ -1,0 +1,24 @@
+BACKUP SISTEM HKI POLIBAN
+=========================
+
+Tanggal Backup: 04/07/2025 22.05.42,78
+Direktori Source: C:\xampp\htdocs\PengajuanHKI
+Versi Laravel: 
+Laravel Framework 10.48.29
+
+STRUKTUR BACKUP:
+- source_code/     : Seluruh source code aplikasi
+- database_backup.sql : Backup database (jika berhasil)
+- .env.backup      : File konfigurasi environment
+- backup_info.txt  : File informasi ini
+- restore_guide.txt: Panduan restore
+
+CARA RESTORE:
+1. Copy folder source_code ke lokasi yang diinginkan
+2. Restore database dari file database_backup.sql
+3. Copy .env.backup menjadi .env dan sesuaikan konfigurasi
+4. Jalankan: composer install
+5. Jalankan: npm install
+6. Jalankan: php artisan key:generate
+7. Jalankan: php artisan migrate (jika diperlukan)
+8. Jalankan: php artisan storage:link

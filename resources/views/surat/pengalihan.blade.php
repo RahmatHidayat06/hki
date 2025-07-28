@@ -4,128 +4,243 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Surat Pengalihan Hak Cipta</title>
     <style>
-        @page { margin: 2cm; }
+        @page { 
+            margin: 2cm; 
+            size: A4;
+        }
+        body, table, td, th, div, span, p {
+            font-family: 'Times New Roman', Times, serif !important;
+            font-size: 12pt !important;
+        }
         body { 
-            font-family: 'DejaVu Sans', sans-serif; 
-            font-size: 12px; 
             line-height: 1.5;
+            margin: 0;
+            padding: 0;
         }
         .container {
             width: 100%;
             margin: 0 auto;
         }
-        .text-center { text-align: center; }
-        .text-justify { text-align: justify; }
-        .mt-4 { margin-top: 1.5rem; }
-        .mt-5 { margin-top: 3rem; }
-        .mb-3 { margin-bottom: 1rem; }
-        h2 { text-decoration: underline; }
-
-        table {
+        .text-center { 
+            text-align: center; 
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 1.5rem;
+        }
+        .content-text { 
+            text-align: justify; 
+            line-height: 1.5;
+            margin: 1.2rem 0 1.2rem 0;
+        }
+        .pencipta-table {
+            width: 100%;
             border-collapse: collapse;
-            width: 100%;
+            margin-bottom: 1.2rem;
         }
-        
-        .details-table td {
-            padding: 2px 0;
+        .pencipta-table td {
+            padding: 0.1rem 0.2rem 0.1rem 0.2rem;
+            vertical-align: top;
+            line-height: 1.3;
         }
-
+        .dots {
+            letter-spacing: 2px;
+        }
+        .institution-info {
+            margin: 1.2rem 0 1.2rem 0;
+            line-height: 1.5;
+        }
         .signature-section {
-            width: 100%;
-            margin-top: 50px;
-        }
-
-        .signature-block {
-            width: 45%;
-            float: right;
-            text-align: center;
-        }
-        
-        .signature-area {
+            margin-top: 6.5rem;
             position: relative;
-            height: 120px; /* Adjust height as needed */
-            margin-top: 10px;
         }
-
-        .materai-img, .ttd-img {
-            position: absolute;
-            bottom: 20px; /* Position above name */
-            max-width: 120px;
-            max-height: 100px;
+        .signature-date {
+            text-align: right;
+            margin-bottom: 3.5rem;
         }
-        
-        .materai-img {
-            left: 20px; /* Position materai on the left part of the signature area */
+        .signature-grid {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
         }
-        
-        .ttd-img {
-            left: 50px; /* Overlap with materai */
-            opacity: 0.85; /* Make signature slightly transparent */
+        .signature-cell {
+            display: table-cell;
+            width: 50%;
+            text-align: center;
+            vertical-align: top;
+            padding: 0 1rem;
+            box-sizing: border-box;
         }
-
         .signature-name {
-            margin-top: 80px; /* Space for signature and stamp */
+            margin-top: 4rem;
             text-decoration: underline;
             font-weight: bold;
         }
-        .clear { clear: both; }
+        .materai-text {
+            font-size: 10px;
+            font-style: italic;
+            margin-bottom: 1.5rem;
+        }
+        .signature-spacing {
+            margin-top: 3.5rem;
+            margin-bottom: 1rem;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+        .ttd-parent {
+            margin-top: 4.5rem;
+        }
+        .ttd-label {
+            margin-bottom: 1.2rem;
+        }
+        .ttd-container {
+            display: flex;
+            justify-content: flex-start; /* left align inside cell */
+            align-items: flex-start;
+            gap: 1rem;
+            margin: 1rem 0 2rem 0;
+        }
+        .ttd-materai {
+            font-size: 9pt !important;
+            font-style: italic;
+            flex: 0 0 auto;
+            text-align: left;
+            min-width: 90px;
+            visibility: hidden; /* sembunyikan teks, tetap sisakan ruang untuk materai opsional */
+        }
+        .ttd-signbox {
+            flex: 1 1 auto;
+            height: 60px; /* ruang tanda tangan ~3 baris */
+        }
+        .ttd-nama { margin-top: 0; }
+        /* Hapus garis horizontal jika ada */
+        hr { display: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2 class="text-center">SURAT PENGALIHAN HAK CIPTA</h2>
+        <h1 class="text-center">SURAT PENGALIHAN HAK CIPTA</h1>
 
-        <p class="mt-4 text-justify">Yang bertanda tangan di bawah ini:</p>
-        
-        <table class="details-table" style="width: 80%; margin-left: 20px;">
-            <tr>
-                <td style="width: 30%;">Nama</td>
-                <td>: {{ $pengajuan->user->nama_lengkap ?? $pengajuan->nama_pengusul }}</td>
+        <div class="content-text">
+            Yang bertanda tangan di bawah ini :
+        </div>
+        @php
+            $penciptaData = $pengajuan->alamat_pencipta ?? [];
+            $jumlahPencipta = intval($pengajuan->jumlah_pencipta ?? 1);
+            $maxPencipta = max($jumlahPencipta, 1);
+        @endphp
+        <table class="pencipta-table"> <!-- Hapus min-height agar tidak ada spasi kosong -->
+            @for($i = 1; $i <= $maxPencipta; $i++)
+                @php
+                    $pencipta = $penciptaData[$i] ?? [];
+                    $nama = trim($pencipta['nama'] ?? '');                                                  
+                    $alamat = trim($pencipta['alamat'] ?? '');
+                @endphp
+                <tr>
+                    <td style="width:2%; vertical-align:top;">{{ $i }}.</td>
+                    <td style="width:12%;">Nama</td>
+                    <td style="width:2%;">:</td>
+                    <td style="width:84%;">
+                        @if($nama)
+                            {{ $nama }}
+                        @else
+                            <span class="dots">…………………………………………………………………………………………………………………………</span>
+                        @endif
+                    </td>
             </tr>
             <tr>
-                <td>NIP/NIDN/NIM</td>
-                <td>: {{ $pengajuan->nip_nidn ?? '-' }}</td>
+                    <td></td>
+                    <td>Alamat</td>
+                    <td>:</td>
+                    <td>
+                        @if($alamat)
+                            {{ $alamat }}
+                        @else
+                            <span class="dots">…………………………………………………………………………………………………………………………</span>
+                        @endif
+                    </td>
             </tr>
-            <tr>
-                <td style="vertical-align: top;">Alamat</td>
-                <td style="vertical-align: top;">: {{ $pengajuan->user->alamat ?? 'Alamat tidak tersedia' }}</td>
-            </tr>
+            @endfor
         </table>
 
-        <p class="mt-4 text-justify">
-            Selaku pencipta dari ciptaan dengan judul: <strong>"{{ $pengajuan->judul_karya }}"</strong>.
-        </p>
-        
-        <p class="text-justify">
-            Dengan ini mengalihkan hak ekonomi atas ciptaan tersebut kepada Politeknik Negeri Media Kreatif. Pengalihan hak ini bersifat eksklusif dan tanpa batas waktu.
-        </p>
-
-        <p class="text-justify">
-            Demikian Surat Pengalihan Hak Cipta ini dibuat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.
-        </p>
-
-        <div class="signature-section">
-            <div class="signature-block">
-                <div>
-                    Makassar, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
-                    Yang Mengalihkan,
+        <div class="content-text">
+            Adalah <b>Pihak I</b> selaku pencipta, dengan ini menyerahkan karya ciptaan saya kepada :
+        </div>
+        <div class="institution-info">
+            <div>Nama&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;Politeknik Negeri Banjarmasin</div>
+            <div>Alamat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;Jl. Brigjen H. Hasan Basri, Kayutangi, Banjarmasin, Kalimantan Selatan</div>
+        </div>
+        <div class="content-text">
+            Adalah <b>Pihak II</b> selaku Pemegang Hak Cipta berupa {{ $pengajuan->sub_jenis_ciptaan ?? '…………………………………….' }} untuk didaftarkan di Direktorat Hak Cipta dan Desain Industri, Direktorat Jenderal Kekayaan Intelektual, Kementerian Hukum dan Hak Asasi Manusia Republik Indonesia.
+        </div>
+        <div class="content-text">
+            Demikianlah surat pengalihan hak ini kami buat, agar dapat dipergunakan sebagaimana mestinya.
+        </div>
+        <div class="signature-section" style="position: fixed; left: 0; right: 0; bottom: 0px; width: 100%; background: white; padding-bottom: 0px;">
+            <div class="signature-date">
+                Banjarmasin, {{ $tanggalSurat ? \Carbon\Carbon::parse($tanggalSurat)->translatedFormat('d F Y') : '…………………' }}
+            </div>
+            <div class="signature-grid">
+                <div class="signature-cell">
+                    <div class="ttd-label">Pemegang Hak Cipta,</div>
+                    <div class="ttd-label">Politeknik Negeri Banjarmasin</div>
+                    <div class="ttd-container">
+                        <div class="ttd-signbox"></div>
+                    </div>
+                    <div class="ttd-parent ttd-nama ttd-pemegang" style="margin-top: 1.5rem;">( Joni Riadi, SST, MT )</div>
                 </div>
-                <div class="signature-area">
-                    @if(isset($materaiPath) && file_exists($materaiPath))
-                        <img src="{{ $materaiPath }}" class="materai-img" alt="Materai">
-                    @endif
-                    @if(isset($ttdPath) && file_exists($ttdPath))
-                        <img src="{{ $ttdPath }}" class="ttd-img" alt="Tanda Tangan">
-                    @endif
-                </div>
-                <div>
-                    <div class="signature-name">
-                        {{ $pengajuan->user->nama_lengkap ?? $pengajuan->nama_pengusul }}
+                <div class="signature-cell">
+                    <div class="ttd-label">Pencipta I,</div>
+                    <div class="ttd-container">
+                    <div class="ttd-materai">Materai 10.000</div>
+                        <div class="ttd-signbox"></div>
+                    </div>
+                    <div class="ttd-parent ttd-nama" style="margin-top: 1.5rem;">
+                        @php $nama1 = $penciptaData[1]['nama'] ?? '';
+                        @endphp
+                        {{ $nama1 ? '( ' . $nama1 . ' )' : '(……………………………………………)'}}
                     </div>
                 </div>
             </div>
-            <div class="clear"></div>
         </div>
+        @if($maxPencipta > 1)
+            <div class="page-break"></div>
+            <div class="container">
+                <br><br>
+                <table style="width:100%; border-collapse:collapse;">
+                    @php
+                        $rowCount = ceil(($maxPencipta-1)/2);
+                        $romawiArr = ['II', 'III', 'IV', 'V','VI','VII','VIII','IX','X'];
+                        $idx = 0;
+                    @endphp
+                    @for($row = 0; $row < $rowCount; $row++)
+                        <tr>
+                            @for($col = 0; $col < 2; $col++)
+                                @php
+                                    $i = 2 + $row*2 + $col;
+                                    if ($i > $maxPencipta) break;
+                                    $namaI = $penciptaData[$i]['nama'] ?? '';
+                                    $romawi = $romawiArr[$i-2] ?? $i;
+                                @endphp
+                                <td style="width:50%; text-align:center; vertical-align:top; padding-bottom: 6.5rem;">
+                                    <div class="ttd-label">Pencipta {{ $romawi }},</div>
+                                    <div class="ttd-container">
+                                    <div class="ttd-materai">Materai 10.000</div>
+                                        <div class="ttd-signbox"></div>
+                                    </div>
+                                    <div class="ttd-parent ttd-nama">
+                                        {{ $namaI ? '( ' . $namaI . ' )' : '(……………………………………………)' }}
+                                    </div>
+                                </td>
+                            @endfor
+                            @if(($row*2+2) > $maxPencipta)
+                                <td style="width:50%;"></td>
+                            @endif
+                        </tr>
+                    @endfor
+                </table>
+            </div>
+        @endif
     </div>
 </body>
 </html> 

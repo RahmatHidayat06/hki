@@ -74,7 +74,7 @@ class PersetujuanController extends Controller
         // Enhanced statistics
         $stats = [
             'total' => PengajuanHki::whereNotIn('status', ['draft'])->count(),
-            'pending' => PengajuanHki::where('status', 'menunggu_validasi')->count(),
+            'pending' => PengajuanHki::where('status', 'menunggu_validasi_direktur')->count(),
             'approved' => PengajuanHki::where('status', 'divalidasi_sedang_diproses')->count(),
             'rejected' => PengajuanHki::where('status', 'ditolak')->count(),
             'today' => PengajuanHki::whereDate('created_at', today())->whereNotIn('status', ['draft'])->count(),
@@ -100,7 +100,7 @@ class PersetujuanController extends Controller
             $pencipta = $pengajuan->pengaju;
             
             // Gunakan file bertanda tangan untuk semua status yang sudah melewati tahap validasi
-            $preferSigned = $pengajuan->status !== 'menunggu_validasi';
+            $preferSigned = $pengajuan->status !== 'menunggu_validasi_direktur';
             
             $documents = [
                 'contoh_ciptaan' => [
@@ -124,13 +124,13 @@ class PersetujuanController extends Controller
                     'color' => 'warning',
                     'file_info' => $this->getFileInfoFromDokumen($dokumen, 'surat_pernyataan', $preferSigned)
                 ],
-                'ktp' => [
-                    'label' => 'KTP Pencipta',
-                    'description' => 'Kartu Tanda Penduduk pencipta',
-                    'icon' => 'fas fa-id-card',
-                    'color' => 'success',
-                    'file_info' => $this->getFileInfoFromDokumen($dokumen, 'ktp', $preferSigned)
-                ]
+                'ktp_gabungan'=>[
+                    'label'=>'KTP Gabungan',
+                    'description'=>'Kartu Tanda Penduduk Gabungan',
+                    'icon'=>'fas fa-id-card',
+                    'color'=>'success',
+                    'file_info'=>$this->getFileInfoFromDokumen($dokumen, 'ktp_gabungan', $preferSigned)
+                ],
             ];
 
         $data = [
@@ -269,7 +269,63 @@ class PersetujuanController extends Controller
                 $dokumenJson['overlays'] = [];
             }
 
-            $dokumenJson['overlays'][$documentType] = $normalizedOverlays;
+            // Merge dengan existing overlays (pencipta signatures) jika ada
+            $existingOverlays = $dokumenJson['overlays'][$documentType] ?? [];
+            
+            // Check if this is direktur adding signature - add it to the correct position
+            $direkturOverlays = [];
+            foreach ($normalizedOverlays as $overlay) {
+                if ($overlay['type'] === 'signature') {
+                    // Check if this is direktur signature by checking if current user is direktur
+                    if (auth()->user()->role === 'direktur') {
+                        // Position direktur signature based on document type
+                        if ($documentType === 'surat_pengalihan') {
+                            // Position in "Pemegang Hak Cipta" area on left side
+                        $direkturOverlays[] = [
+                            'type' => 'signature',
+                            'url' => $overlay['url'],
+                            'page' => 1,
+                            'x_percent' => 25.0, // Left side for "Pemegang Hak Cipta"
+                            'y_percent' => 68.0, // Above the director name
+                                'width_percent' => 15.0,
+                                'height_percent' => 3.5,
+                                'is_direktur' => true // Mark as direktur signature
+                            ];
+                        } elseif ($documentType === 'surat_pernyataan') {
+                            // Position in signature area at bottom right
+                            $direkturOverlays[] = [
+                                'type' => 'signature',
+                                'url' => $overlay['url'],
+                                'page' => 1,
+                                'x_percent' => 70.0, // Right side for signature block
+                                'y_percent' => 82.0, // Above the director name in signature section
+                                'width_percent' => 15.0,
+                                'height_percent' => 3.5,
+                            'is_direktur' => true // Mark as direktur signature
+                        ];
+                        } else {
+                            $direkturOverlays[] = $overlay;
+                        }
+                    } else {
+                        $direkturOverlays[] = $overlay;
+                    }
+                } else {
+                    $direkturOverlays[] = $overlay;
+                }
+            }
+
+            // Merge existing pencipta overlays with direktur overlay
+            $allOverlays = array_merge($existingOverlays, $direkturOverlays);
+            
+            // Remove duplicates but keep both pencipta and direktur signatures
+            $uniqueOverlays = [];
+            foreach ($allOverlays as $overlay) {
+                $isDirektur = $overlay['is_direktur'] ?? false;
+                $key = ($isDirektur ? 'direktur_' : 'pencipta_') . $overlay['type'] . '_' . $overlay['page'];
+                $uniqueOverlays[$key] = $overlay;
+            }
+            
+            $dokumenJson['overlays'][$documentType] = array_values($uniqueOverlays);
 
             // Persist updated overlays immediately so PdfSigner can read the latest data
             $pengajuan->file_dokumen_pendukung = json_encode($dokumenJson);
@@ -278,6 +334,11 @@ class PersetujuanController extends Controller
             // Generate signed PDF immediately so preview/detail show latest version
             $pdfSigner = new PdfSigningController();
             $signedPath = $pdfSigner->signPdf($pengajuan, $documentType);
+
+            // Check if director signed all required documents
+            if (auth()->user()->role === 'direktur') {
+                $this->checkDirectorSignatureCompletion($pengajuan);
+            }
 
             // Clear caches so fresh data appears
             cache()->forget("persetujuan_show_{$pengajuan->id}");
@@ -353,6 +414,48 @@ class PersetujuanController extends Controller
         }
 
         return $stamps;
+    }
+
+    /**
+     * Check if director has signed all required documents and update status
+     */
+    private function checkDirectorSignatureCompletion($pengajuan)
+    {
+        $dokumenJson = json_decode($pengajuan->file_dokumen_pendukung, true) ?? [];
+        
+        // Check if director signatures exist in both documents
+        $pengalihanSigned = false;
+        $pernyataanSigned = false;
+        
+        if (isset($dokumenJson['overlays']['surat_pengalihan'])) {
+            foreach ($dokumenJson['overlays']['surat_pengalihan'] as $overlay) {
+                if (isset($overlay['is_direktur']) && $overlay['is_direktur']) {
+                    $pengalihanSigned = true;
+                    break;
+                }
+            }
+        }
+        
+        if (isset($dokumenJson['overlays']['surat_pernyataan'])) {
+            foreach ($dokumenJson['overlays']['surat_pernyataan'] as $overlay) {
+                if (isset($overlay['is_direktur']) && $overlay['is_direktur']) {
+                    $pernyataanSigned = true;
+                    break;
+                }
+            }
+        }
+        
+        // If both documents are signed by director, update status
+        if ($pengalihanSigned && $pernyataanSigned) {
+            $pengajuan->update(['status' => 'siap_serah_djki']);
+            $pengajuan->addTracking(
+                'director_signed_complete',
+                'Direktur Telah Menandatangani Semua Dokumen',
+                'Surat pengalihan dan pernyataan telah ditandatangani direktur. Siap diserahkan ke DJKI.',
+                'fas fa-check-circle',
+                'success'
+            );
+        }
     }
 
     private function getFileInfo($filePath)
@@ -476,7 +579,7 @@ class PersetujuanController extends Controller
         try {
             $pengajuan = PengajuanHki::findOrFail($id);
             
-            if ($pengajuan->status !== 'menunggu_validasi') {
+            if ($pengajuan->status !== 'menunggu_validasi_direktur') {
                 return redirect()->back()->with('error', 'Pengajuan tidak dapat divalidasi karena statusnya bukan "menunggu validasi".');
             }
 
@@ -698,7 +801,7 @@ class PersetujuanController extends Controller
         
         foreach ($pengajuanIds as $id) {
             $pengajuan = PengajuanHki::find($id);
-            if ($pengajuan && $pengajuan->status === 'menunggu_validasi') {
+            if ($pengajuan && $pengajuan->status === 'menunggu_validasi_direktur') {
                 $pengajuan->update([
                     'status' => 'divalidasi_sedang_diproses',
                     'catatan_admin' => $comment,
@@ -749,7 +852,7 @@ class PersetujuanController extends Controller
         
         foreach ($pengajuanIds as $id) {
             $pengajuan = PengajuanHki::find($id);
-            if ($pengajuan && $pengajuan->status === 'menunggu_validasi') {
+            if ($pengajuan && $pengajuan->status === 'menunggu_validasi_direktur') {
                 $pengajuan->update([
                     'status' => 'ditolak',
                     'catatan_admin' => $reason,
@@ -785,8 +888,10 @@ class PersetujuanController extends Controller
 
             $pencipta = $pengajuan->pengaju;
 
-            $preferSigned = $pengajuan->status !== 'menunggu_validasi';
+            $preferSigned = $pengajuan->status !== 'menunggu_validasi_direktur';
 
+            $ktpGabunganPath = $dokumen['ktp_gabungan'] ?? $dokumen['ktp'] ?? null;
+            $ktpFileInfo = $ktpGabunganPath ? $this->getFileInfoFromDokumen($dokumen, 'ktp_gabungan', $preferSigned) : null;
             $documents = [
                 'contoh_ciptaan' => [
                     'label' => 'Contoh Ciptaan',
@@ -809,13 +914,13 @@ class PersetujuanController extends Controller
                     'color' => 'warning',
                     'file_info' => $this->getFileInfoFromDokumen($dokumen, 'surat_pernyataan', $preferSigned)
                 ],
-                'ktp' => [
-                    'label' => 'KTP Pencipta',
-                    'description' => 'Kartu Tanda Penduduk pencipta.',
-                    'icon' => 'fas fa-id-card',
-                    'color' => 'success',
-                    'file_info' => $this->getFileInfoFromDokumen($dokumen, 'ktp', $preferSigned)
-                ]
+                'ktp_gabungan'=>[
+                    'label'=>'KTP Gabungan',
+                    'description'=>'Kartu Tanda Penduduk Gabungan',
+                    'icon'=>'fas fa-id-card',
+                    'color'=>'success',
+                    'file_info'=>$ktpFileInfo
+                ],
             ];
             
             return [
@@ -844,7 +949,7 @@ class PersetujuanController extends Controller
         $signedPath   = $dokumen['signed'][$documentType] ?? null;
         
         // Tentukan preferensi file berdasarkan status pengajuan
-        $preferSigned = $pengajuan->status !== 'menunggu_validasi';
+        $preferSigned = $pengajuan->status !== 'menunggu_validasi_direktur';
 
         // Inisialisasi
         $filePath    = null;
@@ -873,7 +978,7 @@ class PersetujuanController extends Controller
             $signedPath = ltrim($signedPath, '/');
             if (Storage::disk('public')->exists($signedPath)) {
                 $filePath    = $signedPath;
-                $useOriginal = !$preferSigned; // Jika fallback berarti status menunggu_validasi tapi original hilang
+                $useOriginal = !$preferSigned; // Jika fallback berarti status menunggu_validasi_direktur tapi original hilang
             }
         }
         

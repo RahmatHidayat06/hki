@@ -102,8 +102,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label text-muted small fw-medium">No. HP</label>
-                                <p class="mb-0">{{ $pengajuan->no_hp ?? '-' }}</p>
+                                <label class="form-label text-muted small fw-medium">No. Telp</label>
+                                <p class="mb-0">{{ $pengajuan->no_telp ?? '-' }}</p>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -147,16 +147,16 @@
                                         <p class="mb-0 fw-semibold">{{ $creator->nama ?? '-' }}</p>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label text-muted small fw-medium">No. HP</label>
-                                        <p class="mb-0">{{ $creator->no_hp ?? '-' }}</p>
+                                        <label class="form-label text-muted small fw-medium">No. Telp</label>
+                                        <p class="mb-0">{{ $creator->no_telp ?? '-' }}</p>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small fw-medium">Email</label>
                                         <p class="mb-0">{{ $creator->email ?? '-' }}</p>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label text-muted small fw-medium">Kecamatan</label>
-                                        <p class="mb-0">{{ $creator->kecamatan ?? '-' }}</p>
+                                        <label class="form-label text-muted small fw-medium">Kewarganegaraan</label>
+                                        <p class="mb-0">{{ $creator->kewarganegaraan ?? '-' }}</p>
                                         </div>
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small fw-medium">Kode Pos</label>
@@ -286,85 +286,74 @@
                                         </div>
             @endif
 
-            <!-- Dokumen Pendukung -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-light border-0 py-3">
-                    <h5 class="mb-0 fw-semibold text-dark">
-                        <i class="fas fa-folder-open text-secondary me-2"></i>Dokumen Pendukung
-                    </h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="row g-3">
-                        @foreach($documents as $field => $docInfo)
-                            <div class="col-md-6">
-                                <div class="border rounded-3 p-3 h-100 {{ $docInfo['file_info'] ? 'border-success bg-success bg-opacity-10' : 'border-danger bg-danger bg-opacity-10' }}">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="{{ $docInfo['icon'] }} text-{{ $docInfo['color'] }} fs-5 me-2"></i>
-                                        <h6 class="mb-0 fw-medium">{{ $docInfo['label'] }}</h6>
-                                    </div>
-                                    <p class="text-muted small mb-2">{{ $docInfo['description'] }}</p>
-
-                                    @if($docInfo['file_info'])
-                                        <div class="d-flex align-items-center justify-content-between">
-                                            <span class="badge bg-success">
-                                                <i class="fas fa-check me-1"></i>Tersedia
-                                            </span>
-                                            <div class="btn-group btn-group-sm">
-                                                @php
-                                                    $path = '';
-                                                    if ($field === 'contoh_ciptaan') {
-                                                        if (filter_var($pengajuan->file_karya, FILTER_VALIDATE_URL)) {
-                                                            $path = $pengajuan->file_karya;
-                                                        } else {
-                                                            $path = Storage::url($pengajuan->file_karya);
-                                                        }
-                                                    } else {
-                                                        // Logika untuk menampilkan file yang sudah ditandatangani jika status sudah divalidasi
-                                                        if (in_array($pengajuan->status, ['divalidasi_sedang_diproses', 'menunggu_pembayaran', 'menunggu_verifikasi_pembayaran', 'selesai']) && isset($dokumen['signed'][$field])) {
-                                                            $path = $dokumen['signed'][$field];
-                                                        } else {
-                                                            $path = $dokumen[$field] ?? '';
-                                                        }
-                                                    }
-                                                    $path = ltrim($path, '/');
-                                                    $fileUrl = $path ? Storage::url($path) : '';
-                                                @endphp
-                                                <a href="{{ $fileUrl }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="{{ $fileUrl }}" download class="btn btn-outline-success btn-sm">
-                                                    <i class="fas fa-download"></i>
-                                                </a>
-                                            </div>
-                                        </div>
-
-                                        <div class="mt-2">
-                                            <small class="text-muted">
-                                                <i class="fas fa-file me-1"></i>{{ $docInfo['file_info']['filename'] ?? 'File' }}
-                                                <span class="ms-2">
-                                                    <i class="fas fa-weight me-1"></i>{{ $docInfo['file_info']['size_formatted'] ?? '-' }}
-                                                </span>
-                                            </small>
-                                            
-                                            @if(in_array($pengajuan->status, ['divalidasi_sedang_diproses', 'menunggu_pembayaran', 'menunggu_verifikasi_pembayaran', 'selesai']) && isset($dokumen['signed'][$field]))
-                                                <div class="mt-1">
-                                                    <span class="badge bg-info text-white">
-                                                        <i class="fas fa-signature me-1"></i>Sudah Ditandatangani
-                                                    </span>
-                                         </div>
-                                            @endif
-                                    </div>
-                                    @else
-                                        <span class="badge bg-danger">
-                                            <i class="fas fa-times me-1"></i>Tidak Ada
-                                        </span>
-                                    @endif
+<!-- Dokumen Pendukung -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light border-0 py-3">
+        <h5 class="mb-0 fw-semibold text-dark">
+            <i class="fas fa-folder-open text-secondary me-2"></i>Dokumen Pendukung
+        </h5>
+    </div>
+    <div class="card-body p-4">
+        <div class="row g-3">
+            @foreach($documents as $field => $docInfo)
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-3 h-100 
+                        @if($docInfo['file_info'] && $docInfo['file_info']['exists'])
+                            border-success bg-success bg-opacity-10
+                        @else
+                            border-danger bg-danger bg-opacity-10
+                        @endif">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="{{ $docInfo['icon'] ?? 'fas fa-file' }} text-{{ $docInfo['color'] ?? 'secondary' }} fs-5 me-2"></i>
+                            <h6 class="mb-0 fw-medium">{{ $docInfo['label'] ?? ucfirst(str_replace('_',' ',$field)) }}</h6>
+                        </div>
+                        <p class="text-muted small mb-2">{{ $docInfo['description'] ?? '' }}</p>
+                        @if($docInfo['file_info'] && $docInfo['file_info']['exists'])
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check me-1"></i>Tersedia
+                                </span>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ $docInfo['file_info']['url'] }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ $docInfo['file_info']['url'] }}" download class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-download"></i>
+                                    </a>
                                 </div>
                             </div>
-                        @endforeach
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-file me-1"></i>{{ $docInfo['file_info']['filename'] ?? 'File' }}
+                                    <span class="ms-2">
+                                        <i class="fas fa-weight me-1"></i>{{ $docInfo['file_info']['size_formatted'] ?? '-' }}
+                                    </span>
+                                </small>
+                                @if(isset($docInfo['file_info']['is_signed']) && $docInfo['file_info']['is_signed'])
+                                    <div class="mt-1">
+                                        <span class="badge bg-info text-white">
+                                            <i class="fas fa-signature me-1"></i>Sudah Ditandatangani
+                                        </span>
+                                    </div>
+                                @elseif(isset($docInfo['file_info']['is_signed']) && !$docInfo['file_info']['is_signed'] && $field === 'form_permohonan_pendaftaran')
+                                    <div class="mt-1">
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>Belum Ditandatangani
+                                        </span>
+                                    </div>
+                                @endif
+                            </div>
+                        @else
+                            <span class="badge bg-danger">
+                                <i class="fas fa-times me-1"></i>Tidak Ada
+                            </span>
+                        @endif
                     </div>
-                    </div>
-                        </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</div>            </div>
                         </div>
         
         <!-- Right Column -->
@@ -381,7 +370,7 @@
                         <!-- Status Badge -->
                         <div class="text-center mb-4">
                             @switch($pengajuan->status)
-                                @case('menunggu_validasi')
+                                @case('menunggu_validasi_direktur')
                                     <span class="badge bg-warning text-dark fs-6 px-4 py-3">
                                         <i class="fas fa-clock me-2"></i>Menunggu Validasi
                                     </span>
@@ -409,6 +398,11 @@
                                 @case('selesai')
                                     <span class="badge bg-success fs-6 px-4 py-3">
                                         <i class="fas fa-medal me-2"></i>Selesai
+                                    </span>
+                                    @break
+                                @case('menunggu_tanda_tangan')
+                                    <span class="badge bg-warning text-dark fs-6 px-4 py-3">
+                                        <i class="fas fa-pen-nib me-2"></i>Menunggu Tanda Tangan
                                     </span>
                                     @break
                                 @default
@@ -457,41 +451,38 @@
             </div>
 
             <!-- Panel Aksi -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-light border-0 py-3">
-                    <h5 class="mb-0 fw-semibold text-dark">
-                        <i class="fas fa-cogs text-warning me-2"></i>Panel Aksi
-                    </h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="d-grid gap-2">
-                        @if($pengajuan->status === 'menunggu_pembayaran')
-                            <a href="{{ route('pembayaran.form', $pengajuan->id) }}" class="btn btn-primary">
-                                <i class="fas fa-credit-card me-2"></i>Upload Bukti Pembayaran
-                            </a>
-                            <div class="alert alert-info py-2 mb-2">
-                                <small><i class="fas fa-info-circle me-1"></i>Silakan upload bukti pembayaran sesuai kode billing</small>
-                            </div>
-                        @endif
-
-                        @if($pengajuan->status === 'selesai' && $pengajuan->sertifikat)
-                            <a href="{{ route('sertifikat.serve', $pengajuan->id) }}" target="_blank" class="btn btn-success">
-                                <i class="fas fa-download me-2"></i>Download Sertifikat
-                            </a>
-                        @endif
-
-                        @if($pengajuan->status === 'ditolak')
-                            <div class="alert alert-danger py-2 mb-2">
-                                <small><i class="fas fa-exclamation-triangle me-1"></i>Pengajuan ditolak. Silakan buat pengajuan baru.</small>
-                    </div>
+            @php
+                $dokumen = is_string($pengajuan->file_dokumen_pendukung) ? json_decode($pengajuan->file_dokumen_pendukung, true) : ($pengajuan->file_dokumen_pendukung ?? []);
+                $semuaDokumenSudahTtd = $pengajuan->allSignaturesSigned();
+            @endphp
+            <div class="card mb-4">
+                <div class="card-header bg-light fw-bold d-flex align-items-center justify-content-between">
+                    <span>Panel Aksi</span>
+                    @if($semuaDokumenSudahTtd)
+                        <span class="badge bg-success ms-2">Lengkap</span>
                     @endif
-                    
-                        <hr class="my-3">
-
-                        <a href="{{ route('pengajuan.index') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Kembali ke Daftar
-                        </a>
-                    </div>
+                </div>
+                <div class="card-body d-flex flex-column gap-2">
+                    <a href="{{ route('tracking.show', $pengajuan->id) }}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-route me-1"></i> Tracking Status
+                    </a>
+                    <a href="{{ route('signatures.index', $pengajuan->id) }}" class="btn btn-outline-warning w-100">
+                        <i class="fas fa-file-signature me-1"></i> Tanda Tangan Surat Pengalihan & Upload KTP
+                    </a>
+                    <a href="{{ route('pengajuan.signature.form', $pengajuan->id) }}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-file-signature me-1"></i> Tanda Tangan Form Permohonan Pendaftaran
+                    </a>
+                    @if($semuaDokumenSudahTtd)
+                        <form action="{{ route('pengajuan.konfirmasiSelesai', $pengajuan->id) }}" method="POST" class="mt-2">
+                            @csrf
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-paper-plane me-1"></i>Konfirmasi & Kirim ke Direktur
+                            </button>
+                        </form>
+                    @endif
+                    <a href="{{ route('pengajuan.index') }}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-arrow-left me-1"></i> Kembali ke Daftar
+                    </a>
                 </div>
             </div>
 
@@ -510,10 +501,6 @@
                     <div class="info-item mb-3">
                         <label class="form-label text-muted small fw-medium">Tanggal Pengajuan</label>
                         <p class="mb-0">{{ $pengajuan->tanggal_pengajuan ? $pengajuan->tanggal_pengajuan->format('d M Y, H:i') : '-' }}</p>
-                            </div>
-                    <div class="info-item mb-3">
-                        <label class="form-label text-muted small fw-medium">Tahun Usulan</label>
-                        <p class="mb-0">{{ $pengajuan->tahun_usulan ?? '-' }}</p>
                             </div>
                     @if($pengajuan->catatan_admin)
                     <div class="info-item">

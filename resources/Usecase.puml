@@ -1,0 +1,47 @@
+@startuml Direktur_UseCase
+!theme plain
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    BorderThickness 2
+    ArrowColor Black
+    ArrowThickness 2
+}
+skinparam actor {
+    BackgroundColor White
+    BorderColor Black
+    BorderThickness 2
+}
+skinparam ArrowThickness 2
+
+left to right direction
+
+actor "Direktur" as direktur
+
+usecase "Login" as UC1
+usecase "Kelola Profile" as UC2
+usecase "Ganti Password" as UC3
+usecase "Lihat Dashboard Direktur" as UC4
+usecase "Review Pengajuan" as UC5
+usecase "Approve/Reject Final" as UC6
+usecase "Tanda Tangan Digital" as UC7
+usecase "Lihat Laporan Eksekutif" as UC8
+usecase "Monitor Progress Pengajuan" as UC9
+usecase "Export Data Pengajuan" as UC10
+usecase "Lihat Statistik HKI" as UC11
+usecase "Logout" as UC12
+
+direktur --> UC1
+direktur --> UC2
+direktur --> UC3
+direktur --> UC4
+direktur --> UC5
+direktur --> UC6
+direktur --> UC7
+direktur --> UC8
+direktur --> UC9
+direktur --> UC10
+direktur --> UC11
+direktur --> UC12
+
+@enduml

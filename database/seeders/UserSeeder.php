@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
             'role' => 'admin',
             'nama_lengkap' => 'Admin P3M',
             'email' => 'admin@example.com',
-            'no_hp' => '08123456789'
+            'no_telp' => '08123456789'
         ]);
 
         // Direktur
@@ -29,7 +29,7 @@ class UserSeeder extends Seeder
             'role' => 'direktur',
             'nama_lengkap' => 'Direktur',
             'email' => 'direktur@example.com',
-            'no_hp' => '08123456790'
+            'no_telp' => '08123456790'
         ]);
 
         // Dosen
@@ -40,7 +40,7 @@ class UserSeeder extends Seeder
             'role' => 'dosen',
             'nama_lengkap' => 'Dosen',
             'email' => 'dosen@example.com',
-            'no_hp' => '08123456791'
+            'no_telp' => '08123456791'
         ]);
 
         // Mahasiswa
@@ -51,7 +51,7 @@ class UserSeeder extends Seeder
             'role' => 'mahasiswa',
             'nama_lengkap' => 'Mahasiswa',
             'email' => 'mahasiswa@example.com',
-            'no_hp' => '08123456792'
+            'no_telp' => '08123456792'
         ]);
     }
 }

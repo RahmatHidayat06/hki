@@ -33,7 +33,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="progress-step {{ $pengajuan->status == 'menunggu_validasi' ? 'active' : 'pending' }}">
+                    <div class="progress-step {{ $pengajuan->status == 'menunggu_validasi_direktur' ? 'active' : 'pending' }}">
                         <div class="step-icon">
                             <i class="fas fa-stamp"></i>
                         </div>
@@ -130,20 +130,6 @@
                                 <p class="text-dark">{{ $pengajuan->created_at->format('d M Y, H:i') }}</p>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="info-item">
-                                <label class="text-muted fw-medium mb-1">Tahun Usulan</label>
-                                <p class="text-dark">{{ $pengajuan->tahun_usulan ?? date('Y') }}</p>
-                            </div>
-                        </div>
-                        @if($pengajuan->jumlah_pencipta)
-                        <div class="col-md-6">
-                            <div class="info-item">
-                                <label class="text-muted fw-medium mb-1">Jumlah Pencipta</label>
-                                <p class="text-dark">{{ $pengajuan->jumlah_pencipta }} orang</p>
-                            </div>
-                        </div>
-                        @endif
                     </div>
                 </div>
             </div>
@@ -228,16 +214,16 @@
                                 <p class="mb-0 fw-semibold">{{ $creator->nama ?? '-' }}</p>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label text-muted small fw-medium">No. HP</label>
-                                <p class="mb-0">{{ $creator->no_hp ?? '-' }}</p>
+                                <label class="form-label text-muted small fw-medium">No. Telp</label>
+                                <p class="mb-0">{{ $creator->no_telp ?? '-' }}</p>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted small fw-medium">Email</label>
                                 <p class="mb-0">{{ $creator->email ?? '-' }}</p>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label text-muted small fw-medium">Kecamatan</label>
-                                <p class="mb-0">{{ $creator->kecamatan ?? '-' }}</p>
+                                <label class="form-label text-muted small fw-medium">Kewarganegaraan</label>
+                                <p class="mb-0">{{ $creator->kewarganegaraan ?? '-' }}</p>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted small fw-medium">Kode Pos</label>
@@ -347,7 +333,7 @@
 
         <!-- Validation Panel -->
         <div class="col-lg-4">
-            @if(auth()->user()->role === 'direktur' && $pengajuan->status == 'menunggu_validasi')
+            @if(auth()->user()->role === 'direktur' && $pengajuan->status == 'menunggu_validasi_direktur')
             <!-- Status Validasi -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-gradient-warning text-white border-0">

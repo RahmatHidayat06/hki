@@ -12,10 +12,10 @@ class PengajuHki extends Model
     protected $fillable = [
         'nama',
         'email',
-        'no_hp',
+        'no_telp',
         'alamat',
         'pengajuan_hki_id',
-        'kecamatan',
+        'kewarganegaraan',
         'kodepos',
     ];
 }

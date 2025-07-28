@@ -1,0 +1,25 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        DB::table('pengaju_hkis')
+            ->where(function($q){
+                $q->whereNull('no_telp')->orWhere('no_telp', '');
+            })
+            ->whereNotNull('no_hp')
+            ->where('no_hp', '!=', '')
+            ->update([
+                'no_telp' => DB::raw('no_hp')
+            ]);
+    }
+
+    public function down(): void
+    {
+        // Tidak perlu rollback
+    }
+}; 

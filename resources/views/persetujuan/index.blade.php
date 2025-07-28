@@ -106,8 +106,8 @@
                     <label class="form-label text-muted fw-medium">Status</label>
                     <select name="status" class="form-select">
                         <option value="">Semua Status</option>
-                        <option value="menunggu_validasi" {{ request('status') == 'menunggu_validasi' ? 'selected' : '' }}>
-                            Menunggu Validasi
+                        <option value="menunggu_validasi_direktur" {{ request('status') == 'menunggu_validasi_direktur' ? 'selected' : '' }}>
+                            Menunggu Validasi Direktur
                         </option>
                                                                              <option value="divalidasi_sedang_diproses" {{ request('status') == 'divalidasi_sedang_diproses' ? 'selected' : '' }}>
                                 Divalidasi & Sedang Diproses
@@ -233,7 +233,7 @@
                                     </div>
                                 </td>
                                 <td class="py-3">
-                                    @if($pengajuan->status == 'menunggu_validasi')
+                                    @if($pengajuan->status == 'menunggu_validasi_direktur')
                                         <span class="badge bg-warning text-dark px-3 py-2">
                                             <i class="fas fa-clock me-1"></i>Menunggu Validasi
                                         </span>
@@ -265,7 +265,7 @@
                                            class="btn btn-outline-primary btn-sm">
                                             <i class="fas fa-eye me-1"></i>Detail
                                         </a>
-                                                                 @if($pengajuan->status == 'menunggu_validasi')
+                                                                 @if($pengajuan->status == 'menunggu_validasi_direktur')
                         <div class="btn-group">
                                                                                       <a href="{{ route('persetujuan.validation.wizard', $pengajuan->id) }}" class="btn btn-success btn-sm">
                                  <i class="fas fa-clipboard-check me-1"></i>Validasi

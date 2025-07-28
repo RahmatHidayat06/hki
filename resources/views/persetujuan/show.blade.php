@@ -4,6 +4,8 @@
 @php
     // Daftar status yang dianggap sudah melewati proses validasi
     $validatedStatuses = ['divalidasi', 'sedang_di_proses', 'menunggu_pembayaran', 'menunggu_verifikasi_pembayaran', 'selesai', 'disetujui'];
+    $isUrl = filter_var($pengajuan->file_karya, FILTER_VALIDATE_URL);
+    $cleanPath = $isUrl ? $pengajuan->file_karya : ltrim(preg_replace('#^storage/#', '', $pengajuan->file_karya), '/');
 @endphp
 
 <x-page-header 
@@ -108,8 +110,8 @@
                                     </div>
                                     <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label text-muted small fw-medium">No. HP</label>
-                                <p class="mb-0">{{ $pengajuan->no_hp ?? '-' }}</p>
+                                <label class="form-label text-muted small fw-medium">No. Telp</label>
+                                <p class="mb-0">{{ $pengajuan->no_telp ?? '-' }}</p>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -153,16 +155,16 @@
                                         <p class="mb-0 fw-semibold">{{ $creator->nama ?? '-' }}</p>
                         </div>
                                     <div class="col-md-6">
-                                        <label class="form-label text-muted small fw-medium">No. HP</label>
-                                        <p class="mb-0">{{ $creator->no_hp ?? '-' }}</p>
+                                        <label class="form-label text-muted small fw-medium">No. Telp</label>
+                                        <p class="mb-0">{{ $creator->no_telp ?? '-' }}</p>
                                         </div>
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small fw-medium">Email</label>
                                         <p class="mb-0">{{ $creator->email ?? '-' }}</p>
                                         </div>
                                     <div class="col-md-6">
-                                        <label class="form-label text-muted small fw-medium">Kecamatan</label>
-                                        <p class="mb-0">{{ $creator->kecamatan ?? '-' }}</p>
+                                        <label class="form-label text-muted small fw-medium">Kewarganegaraan</label>
+                                        <p class="mb-0">{{ $creator->kewarganegaraan ?? '-' }}</p>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small fw-medium">Kode Pos</label>
@@ -213,10 +215,10 @@
                             @php
                                 $path = '';
                                 if ($field === 'contoh_ciptaan') {
-                                    if (filter_var($pengajuan->file_karya, FILTER_VALIDATE_URL)) {
-                                                            $path = $pengajuan->file_karya;
+                                    if ($isUrl) {
+                                        $path = $pengajuan->file_karya;
                                     } else {
-                                                            $path = Storage::url($pengajuan->file_karya);
+                                        $path = $cleanPath;
                                     }
                                 } else {
                                     if($pengajuan->status == 'divalidasi' && isset($dokumen['signed'][$field])){
@@ -462,7 +464,7 @@
                             Direktur belum menerapkan tanda tangan atau materai pada dokumen ini.
                             <br>Status pengajuan: <strong>{{ ucfirst(str_replace('_', ' ', $pengajuan->status)) }}</strong>
                         </p>
-                        @if($pengajuan->status === 'menunggu_validasi' && auth()->user()->role === 'direktur')
+                        @if($pengajuan->status === 'menunggu_validasi_direktur' && auth()->user()->role === 'direktur')
                             <div class="mt-3">
                                 <a href="{{ route('persetujuan.validation.wizard', $pengajuan->id) }}" 
                                    class="btn btn-primary">
@@ -593,7 +595,7 @@
                                 </div>
                 <div class="card-body p-4">
                     <div class="d-grid gap-2">
-                        @if($pengajuan->status === 'menunggu_validasi')
+                        @if($pengajuan->status === 'menunggu_validasi_direktur')
                             <a href="{{ route('persetujuan.validation.wizard', $pengajuan->id) }}" 
                                class="btn btn-success">
                                 <i class="fas fa-signature me-2"></i>Validasi Pengajuan

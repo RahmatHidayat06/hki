@@ -9,14 +9,14 @@ return new class extends Migration
     public function up()
     {
         Schema::table('pengajuan_hkis', function (Blueprint $table) {
-            $table->string('tahun_usulan')->nullable()->after('tanggal_pengajuan');
+            $table->dropColumn('tahun_usulan');
         });
     }
 
     public function down()
     {
         Schema::table('pengajuan_hkis', function (Blueprint $table) {
-            $table->dropColumn('tahun_usulan');
+            $table->string('tahun_usulan')->nullable()->after('tanggal_pengajuan');
         });
     }
 };

@@ -9,6 +9,7 @@ use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\Rule;
+use App\Models\User;
 
 class ProfileController extends Controller
 {
@@ -38,7 +39,7 @@ class ProfileController extends Controller
             'username' => ['required', 'string', 'max:50', Rule::unique('users')->ignore($user->id)],
             'nama_lengkap' => ['required', 'string', 'max:100'],
             'email' => ['required', 'string', 'email', 'max:100', Rule::unique('users')->ignore($user->id)],
-            'no_hp' => ['nullable', 'string', 'max:15'],
+            'no_telp' => ['nullable', 'string', 'max:15'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
 
@@ -46,7 +47,7 @@ class ProfileController extends Controller
             'username' => $validated['username'],
             'nama_lengkap' => $validated['nama_lengkap'],
             'email' => $validated['email'],
-            'no_hp' => $validated['no_hp'],
+            'no_telp' => $validated['no_telp'],
         ];
         
         if ($request->filled('password')) {

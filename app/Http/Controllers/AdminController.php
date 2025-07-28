@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\View;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Str;
+use Mpdf\Mpdf;
 use App\Exports\PengajuanHkiExport;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -27,7 +29,7 @@ class AdminController extends Controller
         $pengajuan = PengajuanHki::where('status', '!=', 'draft')->orderBy('created_at', 'desc')->paginate(15);
         $total = PengajuanHki::where('status', '!=', 'draft')->count();
         $totalSelesai = PengajuanHki::where('status', 'selesai')->count();
-        $totalMenunggu = PengajuanHki::where('status', 'menunggu_validasi')->count();
+        $totalMenunggu = PengajuanHki::where('status', 'menunggu_validasi_direktur')->count();
         $totalDivalidasi = PengajuanHki::where('status','divalidasi_sedang_diproses')->count();
         $totalSedangDiProses = 0; // Status ini dihapus, disatukan pada $totalDivalidasi
         $totalMenungguPembayaran = PengajuanHki::where('status', 'menunggu_pembayaran')->count();
@@ -81,21 +83,286 @@ class AdminController extends Controller
         ));
     }
 
-    // Rekap data: export ke Excel jika semua data lengkap
+    /**
+     * Halaman rekapitulasi dokumen untuk penyerahan ke DJKI
+     */
     public function rekap()
     {
-        // Exclude draft from export
-        $total = PengajuanHki::where('status', '!=', 'draft')->count();
-        $totalLengkap = PengajuanHki::where('status', '!=', 'draft')
-            ->whereNotNull('judul_karya')
-            ->whereNotNull('deskripsi')
-            ->whereNotNull('file_karya')
-            ->whereNotNull('file_dokumen_pendukung')
-            ->count();
-        if ($total === 0 || $total !== $totalLengkap) {
-            return Redirect::back()->with('error', 'Tidak semua data lengkap. Rekap hanya bisa dilakukan jika semua data sudah lengkap.');
+        $pengajuanSiap = PengajuanHki::where('status', 'siap_serah_djki')
+            ->with(['user', 'signatures' => function($query) {
+                $query->where('status', 'signed');
+            }])
+            ->orderBy('updated_at', 'desc')
+            ->get();
+            
+        $pengajuanProgress = PengajuanHki::whereIn('status', [
+            'menunggu_tanda_tangan', 
+            'menunggu_persetujuan_direktur',
+            'disetujui_direktur'
+        ])
+            ->with(['user', 'signatures'])
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        return view('admin.rekap', compact('pengajuanSiap', 'pengajuanProgress'));
+    }
+
+    /**
+     * Generate dokumen gabungan untuk satu pengajuan
+     */
+    public function generateCombinedDocument($id)
+    {
+        $pengajuan = PengajuanHki::with(['user', 'signatures' => function($query) {
+            $query->where('status', 'signed');
+        }])->findOrFail($id);
+
+        if ($pengajuan->status !== 'siap_serah_djki') {
+            return redirect()->back()->with('error', 'Pengajuan belum siap untuk diserahkan ke DJKI');
         }
-        return Excel::download(new PengajuanHkiExport, 'rekap_pengajuan_hki.xlsx');
+
+        try {
+            $combinedPath = $this->createCombinedDjkiDocument($pengajuan);
+            
+            // Update tracking
+            $pengajuan->addTracking(
+                'combined_document_generated',
+                'Dokumen Gabungan DJKI Dibuat',
+                'Semua dokumen telah digabung menjadi satu file untuk penyerahan ke DJKI',
+                'fas fa-file-archive',
+                'info'
+            );
+
+            return response()->download(storage_path('app/public/' . $combinedPath));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error generating combined document', [
+                'pengajuan_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return redirect()->back()->with('error', 'Gagal membuat dokumen gabungan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Generate dokumen gabungan untuk multiple pengajuan
+     */
+    public function generateBulkCombinedDocuments(Request $request)
+    {
+        $pengajuanIds = $request->input('pengajuan_ids', []);
+        
+        if (empty($pengajuanIds)) {
+            return redirect()->back()->with('error', 'Pilih minimal satu pengajuan');
+        }
+
+        $pengajuanList = PengajuanHki::whereIn('id', $pengajuanIds)
+            ->where('status', 'siap_serah_djki')
+            ->with(['user', 'signatures' => function($query) {
+                $query->where('status', 'signed');
+            }])
+            ->get();
+
+        if ($pengajuanList->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada pengajuan yang siap untuk diserahkan');
+        }
+
+        try {
+            $zipPath = $this->createBulkCombinedDocuments($pengajuanList);
+            
+            // Update tracking untuk semua pengajuan
+            foreach ($pengajuanList as $pengajuan) {
+                $pengajuan->addTracking(
+                    'bulk_document_generated',
+                    'Dokumen Masuk Paket DJKI',
+                    'Dokumen telah dimasukkan ke dalam paket gabungan untuk penyerahan ke DJKI',
+                    'fas fa-archive',
+                    'info'
+                );
+            }
+
+            return response()->download($zipPath)->deleteFileAfterSend(true);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error generating bulk combined documents', [
+                'pengajuan_ids' => $pengajuanIds,
+                'error' => $e->getMessage()
+            ]);
+            
+            return redirect()->back()->with('error', 'Gagal membuat paket dokumen: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Tandai pengajuan sebagai sudah diserahkan ke DJKI
+     */
+    public function markAsSubmittedToDjki(Request $request)
+    {
+        $pengajuanIds = $request->input('pengajuan_ids', []);
+        $nomorSubmisi = $request->input('nomor_submisi');
+        $tanggalSubmisi = $request->input('tanggal_submisi', now());
+        
+        if (empty($pengajuanIds)) {
+            return redirect()->back()->with('error', 'Pilih minimal satu pengajuan');
+        }
+
+        $pengajuanList = PengajuanHki::whereIn('id', $pengajuanIds)
+            ->where('status', 'siap_serah_djki')
+            ->get();
+
+        foreach ($pengajuanList as $pengajuan) {
+            $pengajuan->update([
+                'status' => 'diserahkan_djki',
+                'nomor_submisi_djki' => $nomorSubmisi,
+                'tanggal_submisi_djki' => $tanggalSubmisi
+            ]);
+            
+            $pengajuan->addTracking(
+                'submitted_to_djki',
+                'Diserahkan ke DJKI',
+                "Dokumen telah diserahkan ke DJKI dengan nomor submisi: {$nomorSubmisi}",
+                'fas fa-paper-plane',
+                'primary'
+            );
+        }
+
+        return redirect()->back()->with('success', 'Berhasil menandai ' . count($pengajuanList) . ' pengajuan sebagai sudah diserahkan ke DJKI');
+    }
+
+    /**
+     * Buat dokumen gabungan untuk satu pengajuan DJKI
+     */
+    private function createCombinedDjkiDocument($pengajuan)
+    {
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'orientation' => 'P',
+            'margin_left' => 20,
+            'margin_right' => 20,
+            'margin_top' => 20,
+            'margin_bottom' => 20,
+        ]);
+
+        $dokumenJson = json_decode($pengajuan->file_dokumen_pendukung, true) ?? [];
+        
+        // 1. Form Permohonan Pendaftaran
+        if (isset($dokumenJson['signed']['form_permohonan_pendaftaran'])) {
+            $formPath = storage_path('app/public/' . ltrim($dokumenJson['signed']['form_permohonan_pendaftaran'], '/'));
+            if (file_exists($formPath)) {
+                $mpdf->WriteHTML('<h3>1. FORM PERMOHONAN PENDAFTARAN CIPTAAN</h3>');
+                $mpdf->WriteHTML('<pagebreak />');
+                // Attach PDF pages or convert to HTML if needed
+            }
+        }
+
+        // 2. Surat Pengalihan (Signed)
+        if (isset($dokumenJson['signed']['surat_pengalihan'])) {
+            $pengalihanPath = storage_path('app/public/' . ltrim($dokumenJson['signed']['surat_pengalihan'], '/'));
+            if (file_exists($pengalihanPath)) {
+                $mpdf->WriteHTML('<h3>2. SURAT PENGALIHAN HAK CIPTA</h3>');
+                $mpdf->WriteHTML('<pagebreak />');
+            }
+        }
+
+        // 3. Surat Pernyataan (Signed)
+        if (isset($dokumenJson['signed']['surat_pernyataan'])) {
+            $pernyataanPath = storage_path('app/public/' . ltrim($dokumenJson['signed']['surat_pernyataan'], '/'));
+            if (file_exists($pernyataanPath)) {
+                $mpdf->WriteHTML('<h3>3. SURAT PERNYATAAN</h3>');
+                $mpdf->WriteHTML('<pagebreak />');
+            }
+        }
+
+        // 4. KTP Gabungan
+        if (isset($dokumenJson['combined_ktp'])) {
+            $ktpPath = storage_path('app/public/' . ltrim($dokumenJson['combined_ktp'], '/'));
+            if (file_exists($ktpPath)) {
+                $mpdf->WriteHTML('<h3>4. KARTU TANDA PENDUDUK PENCIPTA</h3>');
+                $mpdf->WriteHTML('<pagebreak />');
+            }
+        }
+
+        // 5. File Karya
+        if ($pengajuan->file_karya) {
+            $mpdf->WriteHTML('<h3>5. FILE KARYA CIPTAAN</h3>');
+            $mpdf->WriteHTML('<p>File: ' . basename($pengajuan->file_karya) . '</p>');
+            $mpdf->WriteHTML('<p>Keterangan: File karya disertakan dalam folder terpisah</p>');
+        }
+
+        // Save combined document
+        $filename = 'combined_djki/pengajuan_' . $pengajuan->id . '_' . Str::slug($pengajuan->judul_karya) . '_' . date('YmdHis') . '.pdf';
+        $outputPath = storage_path('app/public/' . $filename);
+        
+        // Ensure directory exists
+        \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($outputPath));
+        
+        $mpdf->Output($outputPath, 'F');
+        
+        return $filename;
+    }
+
+    /**
+     * Buat paket dokumen gabungan untuk multiple pengajuan
+     */
+    private function createBulkCombinedDocuments($pengajuanList)
+    {
+        $zipFilename = 'paket_djki_' . date('YmdHis') . '.zip';
+        $zipPath = storage_path('app/temp/' . $zipFilename);
+        
+        // Ensure temp directory exists
+        \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($zipPath));
+        
+        $zip = new \ZipArchive();
+        $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        
+        foreach ($pengajuanList as $pengajuan) {
+            try {
+                // Create individual combined document
+                $documentPath = $this->createCombinedDjkiDocument($pengajuan);
+                $fullPath = storage_path('app/public/' . $documentPath);
+                
+                if (file_exists($fullPath)) {
+                    $folderName = 'Pengajuan_' . $pengajuan->id . '_' . Str::slug($pengajuan->judul_karya);
+                    $zip->addFile($fullPath, $folderName . '/Dokumen_Lengkap.pdf');
+                    
+                    // Add individual files
+                    $dokumenJson = json_decode($pengajuan->file_dokumen_pendukung, true) ?? [];
+                    
+                    // Add signed documents
+                    foreach (['surat_pengalihan', 'surat_pernyataan', 'form_permohonan_pendaftaran'] as $docType) {
+                        if (isset($dokumenJson['signed'][$docType])) {
+                            $filePath = storage_path('app/public/' . ltrim($dokumenJson['signed'][$docType], '/'));
+                            if (file_exists($filePath)) {
+                                $zip->addFile($filePath, $folderName . '/' . ucfirst(str_replace('_', ' ', $docType)) . '.pdf');
+                            }
+                        }
+                    }
+                    
+                    // Add KTP combined
+                    if (isset($dokumenJson['combined_ktp'])) {
+                        $ktpPath = storage_path('app/public/' . ltrim($dokumenJson['combined_ktp'], '/'));
+                        if (file_exists($ktpPath)) {
+                            $zip->addFile($ktpPath, $folderName . '/KTP_Gabungan.pdf');
+                        }
+                    }
+                    
+                    // Add karya file
+                    if ($pengajuan->file_karya) {
+                        $karyaPath = storage_path('app/public/' . ltrim($pengajuan->file_karya, '/'));
+                        if (file_exists($karyaPath)) {
+                            $zip->addFile($karyaPath, $folderName . '/File_Karya_' . basename($pengajuan->file_karya));
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning('Failed to add pengajuan to zip', [
+                    'pengajuan_id' => $pengajuan->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        $zip->close();
+        
+        return $zipPath;
     }
 
     // Daftar Pengajuan untuk admin
@@ -194,12 +461,12 @@ class AdminController extends Controller
                 'color'=>'warning',
                 'file_info'=>$this->getFileInfoFromDokumen($dokumen,'surat_pernyataan',$preferSigned)
             ],
-            'ktp'=>[
-                'label'=>'KTP Pencipta',
-                'description'=>'Kartu Tanda Penduduk',
+            'ktp_gabungan'=>[
+                'label'=>'KTP Gabungan',
+                'description'=>'Kartu Tanda Penduduk Gabungan',
                 'icon'=>'fas fa-id-card',
                 'color'=>'success',
-                'file_info'=>$this->getFileInfoFromDokumen($dokumen,'ktp',$preferSigned)
+                'file_info'=>$this->getFileInfoFromDokumen($dokumen, 'ktp_gabungan', $preferSigned)
             ]
         ];
 
@@ -230,7 +497,7 @@ class AdminController extends Controller
         }
 
         $request->validate([
-            'status' => 'required|in:menunggu_validasi,divalidasi_sedang_diproses,menunggu_pembayaran,menunggu_verifikasi_pembayaran,disetujui,selesai,ditolak'
+            'status' => 'required|in:menunggu_validasi_direktur,divalidasi_sedang_diproses,menunggu_pembayaran,menunggu_verifikasi_pembayaran,disetujui,selesai,ditolak'
         ]);
 
         $oldStatus = $pengajuan->status;
@@ -292,7 +559,7 @@ class AdminController extends Controller
         ]);
 
         // WhatsApp notification
-        $this->sendWhatsappNotification($pengajuan->no_hp, "Kode billing pembayaran HKI Anda: {$request->billing_code}. Silakan membayar sebelum jatuh tempo.");
+        $this->sendWhatsappNotification($pengajuan->no_telp, "Kode billing pembayaran HKI Anda: {$request->billing_code}. Silakan membayar sebelum jatuh tempo.");
 
         return Redirect::back()->with('success', 'Kode billing berhasil disimpan dan pemberitahuan telah dikirim.');
     }
@@ -654,6 +921,59 @@ class AdminController extends Controller
         return response()->file(storage_path('app/public/' . $normalizedPath));
     }
 
+    public function viewSignedFormPermohonan(PengajuanHki $pengajuan)
+    {
+        if(auth()->user()->role !== 'admin'){
+            abort(403);
+        }
+
+        $dokumen = $this->getDokumenJson($pengajuan);
+        $signedFile = null;
+
+        // 1. Prioritas utama: cari di signed path yang disimpan langsung
+        if (!empty($dokumen['signed']['form_permohonan_pendaftaran'])) {
+            $signedFile = $dokumen['signed']['form_permohonan_pendaftaran'];
+            Log::info("Found signed form in JSON", ['path' => $signedFile]);
+        }
+
+        // 2. Fallback: cari dengan pattern nama file di folder signed_documents
+        if (!$signedFile || !$this->fileExists($signedFile)) {
+            $signedFile = $this->searchSignedFile($pengajuan->id, 'form_permohonan_pendaftaran');
+            Log::info("Searched for signed form file", ['found' => $signedFile]);
+        }
+
+        // 3. Fallback tambahan: cari file yang mengandung pattern ID dan document type
+        if (!$signedFile || !$this->fileExists($signedFile)) {
+            $signedFile = $this->findSignedDocumentByPattern($pengajuan->id, 'form_permohonan_pendaftaran');
+            Log::info("Pattern search for signed form", ['found' => $signedFile]);
+        }
+
+        if (!$signedFile || !$this->fileExists($signedFile)) {
+            Log::error("Signed form permohonan not found", [
+                'pengajuan_id' => $pengajuan->id,
+                'dokumen_json' => $dokumen,
+                'searched_patterns' => [
+                    $pengajuan->id . '_form_permohonan_pendaftaran_*',
+                    '*_form_permohonan_pendaftaran_*_' . $pengajuan->id . '_*'
+                ]
+            ]);
+            return redirect()->back()->with('error', 'Form permohonan pendaftaran yang ditandatangani tidak ditemukan. Pastikan pemohon sudah menandatangani dokumen.');
+        }
+
+        // Normalize path untuk response
+        $normalizedPath = $this->normalizePath($signedFile);
+        
+        // Log untuk debugging
+        Log::info("Serving signed form permohonan", [
+            'pengajuan_id' => $pengajuan->id,
+            'signed_file' => $signedFile,
+            'normalized_path' => $normalizedPath,
+            'file_exists' => file_exists(storage_path('app/public/' . $normalizedPath))
+        ]);
+
+        return response()->file(storage_path('app/public/' . $normalizedPath));
+    }
+
     /**
      * Mencari file signed dengan pattern yang lebih canggih
      */
@@ -825,26 +1145,50 @@ class AdminController extends Controller
     {
         $dokumen = $this->getDokumenJson($pengajuan);
         $preferSigned = true;
+        
+        // Generate combined KTP if not exists
+        $ktpGabunganPath = $dokumen['ktp_gabungan'] ?? $dokumen['ktp'] ?? null;
+        $ktpFileInfo = $ktpGabunganPath ? $this->getFileInfoFromDokumen($dokumen, 'ktp_gabungan', $preferSigned) : null;
         return [
-            'file_karya' => [
-                'label' => 'File Karya Ciptaan',
+            'contoh_ciptaan' => [
+                'label' => 'Contoh Ciptaan',
+                'description' => 'File contoh karya yang diajukan',
+                'icon' => 'fas fa-file-image',
+                'color' => 'info',
                 'file_info' => $this->getFileInfoFromFileKarya($pengajuan->file_karya),
                 'scan_url' => $pengajuan->file_karya ? $this->ensureQrLink($pengajuan->file_karya) : null,
             ],
+            'form_permohonan_pendaftaran' => [
+                'label' => 'Form Permohonan Pendaftaran',
+                'description' => 'Form permohonan pendaftaran ciptaan',
+                'icon' => 'fas fa-file-contract',
+                'color' => 'primary',
+                'file_info' => ($dokumen['signed']['form_permohonan_pendaftaran'] ?? ($this->searchSignedFile($pengajuan->id,'form_permohonan_pendaftaran'))) ? $this->getFileInfo($dokumen['signed']['form_permohonan_pendaftaran'] ?? $this->searchSignedFile($pengajuan->id,'form_permohonan_pendaftaran')) : null,
+                'scan_url' => ($dokumen['signed']['form_permohonan_pendaftaran'] ?? ($this->searchSignedFile($pengajuan->id,'form_permohonan_pendaftaran'))) ? $this->ensureQrLink($dokumen['signed']['form_permohonan_pendaftaran'] ?? $this->searchSignedFile($pengajuan->id,'form_permohonan_pendaftaran')) : null,
+            ],
             'surat_pengalihan' => [
-                'label' => 'Surat Pengalihan (Signed)',
+                'label' => 'Surat Pengalihan Hak',
+                'description' => 'Dokumen pengalihan hak cipta',
+                'icon' => 'fas fa-exchange-alt',
+                'color' => 'success',
                 'file_info' => ($dokumen['signed']['surat_pengalihan'] ?? ($this->searchSignedFile($pengajuan->id,'surat_pengalihan'))) ? $this->getFileInfo($dokumen['signed']['surat_pengalihan'] ?? $this->searchSignedFile($pengajuan->id,'surat_pengalihan')) : null,
                 'scan_url' => ($dokumen['signed']['surat_pengalihan'] ?? ($this->searchSignedFile($pengajuan->id,'surat_pengalihan'))) ? $this->ensureQrLink($dokumen['signed']['surat_pengalihan'] ?? $this->searchSignedFile($pengajuan->id,'surat_pengalihan')) : null,
             ],
             'surat_pernyataan' => [
-                'label' => 'Surat Pernyataan (Signed)',
+                'label' => 'Surat Pernyataan',
+                'description' => 'Surat pernyataan keaslian karya',
+                'icon' => 'fas fa-file-signature',
+                'color' => 'warning',
                 'file_info' => ($dokumen['signed']['surat_pernyataan'] ?? ($this->searchSignedFile($pengajuan->id,'surat_pernyataan'))) ? $this->getFileInfo($dokumen['signed']['surat_pernyataan'] ?? $this->searchSignedFile($pengajuan->id,'surat_pernyataan')) : null,
                 'scan_url' => ($dokumen['signed']['surat_pernyataan'] ?? ($this->searchSignedFile($pengajuan->id,'surat_pernyataan'))) ? $this->ensureQrLink($dokumen['signed']['surat_pernyataan'] ?? $this->searchSignedFile($pengajuan->id,'surat_pernyataan')) : null,
             ],
-            'ktp' => [
-                'label' => 'KTP Pencipta',
-                'file_info' => $this->getFileInfoFromDokumen($dokumen,'ktp',$preferSigned),
-                'scan_url' => isset($dokumen['ktp']) ? $this->ensureQrLink($dokumen['ktp']) : null,
+            'ktp_gabungan'=>[
+                'label'=>'KTP Gabungan',
+                'description'=>'Kartu Tanda Penduduk Gabungan',
+                'icon'=>'fas fa-id-card',
+                'color'=>'secondary',
+                'file_info'=>$ktpFileInfo,
+                'scan_url'=>$ktpGabunganPath ? $this->ensureQrLink($ktpGabunganPath) : null,
             ],
         ];
     }

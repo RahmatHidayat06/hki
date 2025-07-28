@@ -42,14 +42,6 @@
                             <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                         </div>
                         <div class="mb-3">
-                            <label for="tahun_usulan" class="form-label">Tahun Usulan</label>
-                            <select class="form-select" id="tahun_usulan" name="tahun_usulan">
-                                <option value="">Pilih</option>
-                                <!-- Opsi tahun akan diisi oleh JavaScript -->
-                            </select>
-                            <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
-                        </div>
-                        <div class="mb-3">
                             <label for="jumlah_pencipta" class="form-label">Jumlah Pencipta</label>
                             <select class="form-select" id="jumlah_pencipta" name="jumlah_pencipta" required>
                                 <option value="">Pilih Jumlah Pencipta</option>
@@ -76,8 +68,8 @@
                                 <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                             </div>
                             <div class="mb-2">
-                                <label class="form-label">No HP</label>
-                                <input type="tel" class="form-control" name="pencipta[{{ $i }}][no_hp]" value="{{ old('pencipta.'.$i.'.no_hp', $pencipta->no_hp) }}" pattern="^08[0-9]{8,11}$" maxlength="15" required>
+                                <label for="no_telp" class="form-label">No. Telp</label>
+                                <input type="tel" class="form-control" id="no_telp" name="pencipta[{{ $i }}][no_telp]" value="{{ old('pencipta.'.$i.'.no_telp', $pencipta->no_telp) }}" maxlength="15" required>
                                 <div class="invalid-feedback">Nomor HP wajib diisi dan harus dimulai 08, 10-13 digit angka.</div>
                             </div>
                             <div class="mb-2">
@@ -86,8 +78,8 @@
                                 <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                             </div>
                             <div class="mb-2">
-                                <label class="form-label">Kecamatan</label>
-                                <input type="text" class="form-control" name="pencipta[{{ $i }}][kecamatan]" value="{{ old('pencipta.'.$i.'.kecamatan', $pencipta->kecamatan) }}">
+                                <label class="form-label">Kewarganegaraan</label>
+                                <input type="text" class="form-control" name="pencipta[{{ $i }}][kewarganegaraan]" value="{{ old('pencipta.'.$i.'.kewarganegaraan', $pencipta->kewarganegaraan) }}">
                                 <div class="invalid-feedback">Field ini wajib diisi untuk melanjutkan atau mengirim.</div>
                             </div>
                             <div class="mb-2">
@@ -111,22 +103,6 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Tahun Usulan otomatis 4 tahun terakhir
-    const tahunUsulanSelect = document.getElementById('tahun_usulan');
-    if (tahunUsulanSelect) {
-        const tahunSekarang = new Date().getFullYear();
-        const tahunTerpilih = "{{ old('tahun_usulan', $pengajuan->tahun_usulan) }}";
-        for (let i = 0; i < 4; i++) {
-            const tahun = tahunSekarang - i;
-            const option = document.createElement('option');
-            option.value = tahun;
-            option.textContent = tahun;
-            if (tahun == tahunTerpilih) {
-                option.selected = true;
-            }
-            tahunUsulanSelect.appendChild(option);
-        }
-    }
     // Sub Jenis Ciptaan dinamis sesuai Jenis Ciptaan
     const identitasCiptaanSelect = document.getElementById('identitas_ciptaan');
     const subJenisCiptaanSelect = document.getElementById('sub_jenis_ciptaan');

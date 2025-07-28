@@ -27,12 +27,12 @@ class DashboardController extends Controller
 
         if ($user->role === 'direktur') {
             // Dashboard untuk direktur - exclude draft from all statistics and data
-            $menunggu = PengajuanHki::where('status', 'menunggu_validasi')->count();
+            $menunggu = PengajuanHki::where('status', 'menunggu_validasi_direktur')->count();
             $disetujui = PengajuanHki::where('status', 'divalidasi_sedang_diproses')->count();
             $ditolak = PengajuanHki::where('status', 'ditolak')->count();
             
             // Pengajuan baru menunggu persetujuan (exclude draft)
-            $pengajuanBaru = PengajuanHki::where('status', 'menunggu_validasi')
+            $pengajuanBaru = PengajuanHki::where('status', 'menunggu_validasi_direktur')
                 ->latest()
                 ->take(5)
                 ->get();

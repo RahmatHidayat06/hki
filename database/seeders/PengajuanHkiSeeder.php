@@ -50,7 +50,7 @@ class PengajuanHkiSeeder extends Seeder
                 'user_id' => $user->id,
                 'judul_karya' => 'Judul Karya ' . $user->role . ' #' . $index,
                 'deskripsi' => $faker->paragraph(2),
-                'status' => 'menunggu_validasi',
+                'status' => 'menunggu_validasi_direktur',
                 'nomor_pengajuan' => Str::uuid()->toString(),
                 'tanggal_pengajuan' => now(),
                 'role' => $user->role,

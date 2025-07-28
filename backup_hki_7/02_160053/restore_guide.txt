@@ -1,0 +1,52 @@
+PANDUAN RESTORE SISTEM HKI POLIBAN
+==================================
+
+LANGKAH RESTORE:
+
+1. PERSIAPAN
+   - Pastikan XAMPP sudah terinstall
+   - Pastikan PHP, Composer, dan Node.js tersedia
+
+2. RESTORE SOURCE CODE
+   - Copy seluruh isi folder source_code/ ke lokasi web server (misal: C:\xampp\htdocs\PengajuanHKI_restored)
+
+3. RESTORE DATABASE
+   - Buka phpMyAdmin atau MySQL command line
+   - Buat database baru: CREATE DATABASE hki_db;
+   - Import file database_backup.sql ke database tersebut
+   - Atau gunakan command: mysql -u root -p hki_db < database_backup.sql
+
+4. KONFIGURASI ENVIRONMENT
+   - Copy file .env.backup menjadi .env
+   - Sesuaikan konfigurasi database di .env:
+     DB_CONNECTION=mysql
+     DB_HOST=127.0.0.1
+     DB_PORT=3306
+     DB_DATABASE=hki_db
+     DB_USERNAME=root
+     DB_PASSWORD=
+
+5. INSTALL DEPENDENCIES
+   - Buka terminal di direktori project
+   - Jalankan: composer install
+   - Jalankan: npm install
+
+6. KONFIGURASI LARAVEL
+   - Jalankan: php artisan key:generate
+   - Jalankan: php artisan config:cache
+   - Jalankan: php artisan route:cache
+   - Jalankan: php artisan storage:link
+
+7. SET PERMISSIONS (jika di Linux/Mac)
+   - chmod -R 775 storage
+   - chmod -R 775 bootstrap/cache
+
+8. TEST APLIKASI
+   - Jalankan: php artisan serve
+   - Buka browser: http://localhost:8000
+
+CATATAN PENTING:
+- Pastikan semua file storage/app/public ada dan dapat diakses
+- Periksa file .env untuk konfigurasi email dan lainnya
+- Jika ada error permission, sesuaikan ownership file/folder
+- Backup ini dibuat pada: 04/07/2025 22.05.43,32

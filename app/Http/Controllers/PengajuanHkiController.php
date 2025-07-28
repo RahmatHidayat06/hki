@@ -17,9 +17,34 @@ use Illuminate\Validation\ValidationException;
 
 class PengajuanHkiController extends Controller
 {
+
+
+public function signatureForm($id)
+{
+    $pengajuan = PengajuanHki::findOrFail($id);
+    return view('pengajuan.signature', compact('pengajuan'));
+}
+
+public function signatureSave(Request $request, $id)
+{
+    $pengajuan = PengajuanHki::findOrFail($id);
+    $signatureData = $request->input('signature_data');
+    // Simpan signature ke storage
+    if ($signatureData) {
+        $image = str_replace('data:image/png;base64,', '', $signatureData);
+        $image = str_replace(' ', '+', $image);
+        $imageName = 'ttd_pengajuan_' . $id . '_' . time() . '.png';
+        \Storage::disk('public')->put('ttd/' . $imageName, base64_decode($image));
+        // Simpan path ke database
+        $pengajuan->ttd_path = 'storage/ttd/' . $imageName;
+        $pengajuan->save();
+    }
+    return redirect()->route('pengajuan.show', $id)->with('success', 'Tanda tangan berhasil disimpan.');
+}
     /**
      * Display a listing of the resource.
      */
+
     public function index(Request $request): View|\Illuminate\Http\RedirectResponse
     {
         // Admin diarahkan ke dashboard khusus
@@ -96,261 +121,138 @@ class PengajuanHkiController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        try {
-        // Logging awal untuk debug semua request
-        Log::info('STORE METHOD CALLED', [
-            'user_id' => Auth::id(),
-            'has_save_as_draft' => $request->has('save_as_draft'),
-            'has_submit_final' => $request->has('submit_final'),
-            'save_as_draft_value' => $request->input('save_as_draft'),
-            'submit_final_value' => $request->input('submit_final'),
-            'all_parameters' => array_keys($request->all())
-        ]);
-        
-        // Jika tombol simpan draft ditekan
-        if ($request->has('save_as_draft')) {
-            // Logging untuk debug
-            Log::info('ENTERING DRAFT LOGIC', [
-                'user_id' => Auth::id(),
-                'has_save_as_draft' => $request->has('save_as_draft'),
-                'save_as_draft_value' => $request->input('save_as_draft'),
-                'request_data' => $request->all()
-            ]);
-            
+        // Check untuk action update
+        if ($request->has('action') && $request->input('action') === 'update') {
+            try {
             $validated = $request->validate([
                 'judul' => 'nullable|string|max:255',
                 'deskripsi' => 'nullable|string',
                 'nama_pengusul' => 'nullable|string|max:255',
                 'nip_nidn' => 'nullable|string|max:255',
-                'no_hp' => 'nullable|string|max:255',
+                'no_telp' => 'nullable|string|max:255',
                 'id_sinta' => 'nullable|string|max:255',
                     'jumlah_pencipta' => 'nullable|in:1,2,3,4,5',
                 'identitas_ciptaan' => 'nullable|string|in:karya tulis,karya audio visual,karya lainnya',
                 'sub_jenis_ciptaan' => 'nullable|string',
                 'tanggal_pertama_kali_diumumkan' => 'nullable|date',
+                'kota_pertama_kali_diumumkan' => 'nullable|string|max:255',
                 'tahun_usulan' => 'nullable|string|max:10',
-                'role' => 'nullable|in:dosen,mahasiswa',
+                    // Role not needed from input as it comes from auth()->user()->role
                 'pencipta' => 'nullable|array',
                 'pencipta.*.nama' => 'nullable|string|max:255',
                 'pencipta.*.email' => 'nullable|email|max:255',
-                'pencipta.*.no_hp' => 'nullable|string|max:255',
+                'pencipta.*.no_telp' => 'nullable|string|max:255',
                 'pencipta.*.alamat' => 'nullable|string',
-                'pencipta.*.kecamatan' => 'nullable|string|max:255',
+                'pencipta.*.kewarganegaraan' => 'nullable|string|max:255',
                 'pencipta.*.kodepos' => 'nullable|string|max:20',
+                    'tanggal_surat' => 'nullable|date',
+                    'alamat_pencipta' => 'nullable|array',
+                    'alamat_pencipta.*.nama' => 'nullable|string|max:255',
+                    'alamat_pencipta.*.gelar' => 'nullable|string|max:100',
+                    'alamat_pencipta.*.alamat' => 'nullable|string',
+                    'signature_pencipta' => 'nullable|array', 
+                    'signature_pencipta.*.nama_ttd' => 'nullable|string|max:255',
+                    'signature_pencipta.*.posisi' => 'nullable|string|in:kanan,kiri',
+                    'gunakan_materai' => 'nullable|boolean',
                 // dokumen dan pencipta dinamis tidak required saat draft
             ]);
             
-            $pengajuan = PengajuanHki::create([
+                Log::info('Update pengajuan request', [
                 'user_id' => Auth::id(),
-                'judul_karya' => $validated['judul'] ?? null,
-                'deskripsi' => $validated['deskripsi'] ?? null,
-                'file_karya' => null,
-                'file_dokumen_pendukung' => json_encode([]),
-                'status' => 'draft',
-                'catatan_validasi' => null,
-                'catatan_persetujuan' => null,
-                'nomor_pengajuan' => null,
-                'tanggal_pengajuan' => Carbon::now('Asia/Makassar'),
-                'nama_pengusul' => $validated['nama_pengusul'] ?? null,
-                'nip_nidn' => $validated['nip_nidn'] ?? null,
-                'no_hp' => $validated['no_hp'] ?? null,
-                'id_sinta' => $validated['id_sinta'] ?? null,
-                'jumlah_pencipta' => $validated['jumlah_pencipta'] ?? null,
-                'identitas_ciptaan' => $validated['identitas_ciptaan'] ?? null,
-                'sub_jenis_ciptaan' => $validated['sub_jenis_ciptaan'] ?? null,
-                'tanggal_pertama_kali_diumumkan' => $validated['tanggal_pertama_kali_diumumkan'] ?? null,
-                'tahun_usulan' => $validated['tahun_usulan'] ?? null,
-                'role' => $validated['role'] ?? null,
-            ]);
+                    'input' => $request->all()
+                ]);
+
+                // Buat pengajuan baru (draft)
+                $pengajuan = new PengajuanHki();
+                $pengajuan->user_id = Auth::id();
+                $pengajuan->judul_karya = $validated['judul'] ?? '';
+                $pengajuan->deskripsi = $validated['deskripsi'] ?? '';
+                $pengajuan->nama_pengusul = $validated['nama_pengusul'] ?? auth()->user()->nama_lengkap;
+                $pengajuan->nip_nidn = auth()->user()->nip_nidn ?? '';
+                $pengajuan->no_telp = $validated['no_telp'] ?? '';
+                $pengajuan->id_sinta = auth()->user()->id_sinta ?? '';
+                $pengajuan->jumlah_pencipta = $validated['jumlah_pencipta'] ?? '';
+                $pengajuan->identitas_ciptaan = $validated['identitas_ciptaan'] ?? '';
+                $pengajuan->sub_jenis_ciptaan = $validated['sub_jenis_ciptaan'] ?? '';
+                $pengajuan->tanggal_pertama_kali_diumumkan = $validated['tanggal_pertama_kali_diumumkan'] ?? '';
+                $pengajuan->kota_pertama_kali_diumumkan = $validated['kota_pertama_kali_diumumkan'] ?? '';
+                $pengajuan->status = 'draft';
+                $pengajuan->role = auth()->user()->role;
+                $pengajuan->tanggal_surat = $validated['tanggal_surat'] ?? null;
+                $pengajuan->alamat_pencipta = $validated['alamat_pencipta'] ?? null;
+                $pengajuan->signature_pencipta = $validated['signature_pencipta'] ?? null;
+                $pengajuan->gunakan_materai = $validated['gunakan_materai'] ?? false;
+                $pengajuan->save();
             
-            Log::info('Draft created successfully', [
-                'draft_id' => $pengajuan->id,
-                'user_id' => Auth::id(),
+                Log::info('Pengajuan draft created', [
+                    'id' => $pengajuan->id,
+                    'user_id' => $pengajuan->user_id,
                 'status' => $pengajuan->status
             ]);
             
-            // Simpan data pencipta dinamis jika ada
-            if ($request->has('pencipta')) {
-                foreach ($request->input('pencipta') as $dataPencipta) {
-                    if (!empty($dataPencipta['email']) && !empty($dataPencipta['nama'])) {
-                        $pengajuan->pengaju()->create([
-                            'nama' => $dataPencipta['nama'],
-                            'email' => $dataPencipta['email'],
-                            'no_hp' => $dataPencipta['no_hp'] ?? null,
-                            'alamat' => $dataPencipta['alamat'] ?? null,
-                            'kecamatan' => $dataPencipta['kecamatan'] ?? null,
-                            'kodepos' => $dataPencipta['kodepos'] ?? null,
-                        ]);
-                    }
-                }
+                return Redirect::to(route('pengajuan.draftIndex'))->with('success', 'Pengajuan berhasil disimpan sebagai draft');
+            } catch (ValidationException $e) {
+                Log::error('Validation error during draft update', [
+                    'errors' => $e->errors(),
+                    'user_id' => Auth::id(),
+                    'request_data' => $request->all()
+                ]);
+                return Redirect::back()->withErrors($e->errors())->withInput();
+            } catch (\Exception $e) {
+                Log::error('Error creating draft pengajuan', [
+                    'error' => $e->getMessage(),
+                    'user_id' => Auth::id(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                return Redirect::back()->with('error', 'Terjadi kesalahan saat menyimpan draft')->withInput();
             }
-            return Redirect::to(route('draft.index'))->with('success', 'Draft berhasil disimpan');
         }
-            // Jika tombol Kirim (submit_final) ditekan
-            if ($request->has('submit_final')) {
-                Log::info('ENTERING SUBMIT FINAL LOGIC', [
-                    'user_id' => Auth::id(),
-                    'has_submit_final' => $request->has('submit_final'),
-                    'submit_final_value' => $request->input('submit_final'),
-                    'also_has_save_as_draft' => $request->has('save_as_draft')
-                ]);
-                $validated = $request->validate([
-                    'judul' => 'required|string|max:255',
-                    'deskripsi' => 'required|string',
-                    'nama_pengusul' => 'required|string|max:255',
-                    'nip_nidn' => ['nullable', 'string', 'max:255', 'required_if:role,dosen'],
-                    'no_hp' => 'required|string|max:255',
-                    'id_sinta' => 'required_if:role,dosen|string|max:255',
-                    'jumlah_pencipta' => 'required|in:1,2,3,4,5',
-                    'identitas_ciptaan' => 'required|string|in:karya tulis,karya audio visual,karya lainnya',
-                    'sub_jenis_ciptaan' => 'required|string|in:Buku,E-Book,Diktat,Modul,Buku Panduan/Petunjuk,Karya Ilmiah,Karya Tulis/Artikel,Laporan Penelitian,Jurnal,Kuliah,Karya Rekaman Video,Karya Siaran Video,Program Komputer,Permainan Video,Basis Data',
-                    'tanggal_pertama_kali_diumumkan' => 'required|date',
-                    'contoh_ciptaan_type' => 'required|in:upload,link',
-                    'contoh_ciptaan' => 'required_if:contoh_ciptaan_type,upload|file|mimes:pdf,mp4,mp3,jpg,jpeg,png,gif,svg,webp,doc,docx|max:10240',
-                    'contoh_ciptaan_link' => 'required_if:contoh_ciptaan_type,link|nullable|url',
-                    'surat_pengalihan_hak_cipta' => 'required|file|mimes:pdf|max:2048',
-                    'surat_pernyataan_hak_cipta' => 'required|file|mimes:pdf|max:2048',
-                    'ktp_seluruh_pencipta' => 'required|file|mimes:pdf|max:10240',
-                    'role' => 'required|in:dosen,mahasiswa',
-                    'pencipta' => 'required|array',
-                    'pencipta.*.nama' => 'required|string|max:255',
-                    'pencipta.*.email' => 'required|email|max:255',
-                    'pencipta.*.no_hp' => 'nullable|string|max:255',
-                    'pencipta.*.alamat' => 'nullable|string',
-                    'pencipta.*.kecamatan' => 'nullable|string|max:255',
-                    'pencipta.*.kodepos' => 'nullable|string|max:20',
-                    'tahun_usulan' => 'nullable|string|max:10',
-                ], [
-                    'judul.required' => 'Judul karya wajib diisi.',
-                    'deskripsi.required' => 'Deskripsi wajib diisi.',
-                    'nama_pengusul.required' => 'Nama pengusul wajib diisi.',
-                    'nip_nidn.required_if' => 'NIP/NIDN wajib diisi untuk dosen.',
-                    'no_hp.required' => 'Nomor HP wajib diisi.',
-                    'id_sinta.required_if' => 'ID SINTA wajib diisi untuk dosen.',
-                    'jumlah_pencipta.required' => 'Jumlah pencipta wajib diisi.',
-                    'identitas_ciptaan.required' => 'Jenis ciptaan wajib diisi.',
-                    'sub_jenis_ciptaan.required' => 'Sub jenis ciptaan wajib diisi.',
-                    'tanggal_pertama_kali_diumumkan.required' => 'Tanggal pertama kali diumumkan wajib diisi.',
-                    'contoh_ciptaan_type.required' => 'Pilih tipe contoh ciptaan (upload atau link).',
-                    'contoh_ciptaan.required_if' => 'File contoh ciptaan wajib diupload.',
-                    'contoh_ciptaan_link.required_if' => 'Link contoh ciptaan wajib diisi.',
-                    'surat_pengalihan_hak_cipta.required' => 'Surat pengalihan hak cipta wajib diupload.',
-                    'surat_pernyataan_hak_cipta.required' => 'Surat pernyataan hak cipta wajib diupload.',
-                    'ktp_seluruh_pencipta.required' => 'KTP seluruh pencipta wajib diupload.',
-                    'role.required' => 'Role wajib dipilih.',
-                    'pencipta.required' => 'Data pencipta wajib diisi minimal satu.',
-                    'pencipta.*.nama.required' => 'Nama setiap pencipta wajib diisi.',
-                    'pencipta.*.email.required' => 'Email setiap pencipta wajib diisi.',
-                ]);
-                // Proses file atau link contoh ciptaan
-                $fileKarya = null;
-                if ($request->input('contoh_ciptaan_type') === 'upload' && $request->hasFile('contoh_ciptaan')) {
-                    $fileKarya = $request->file('contoh_ciptaan')->store('dokumen_ciptaan', 'public');
-                } elseif ($request->input('contoh_ciptaan_type') === 'link') {
-                    $fileKarya = $request->input('contoh_ciptaan_link');
-                }
-                $pathSuratPengalihan = $request->file('surat_pengalihan_hak_cipta')->store('dokumen_pengalihan', 'public');
-                $pathSuratPernyataan = $request->file('surat_pernyataan_hak_cipta')->store('dokumen_pernyataan', 'public');
-                $pathKtp = $request->file('ktp_seluruh_pencipta')->store('dokumen_ktp', 'public');
-                $tahun = date('Y');
-                $bulan = date('m');
-                $prefix = sprintf('HKI/%s/%s/', $tahun, $bulan);
-                $lastPengajuan = PengajuanHki::where('nomor_pengajuan', 'like', $prefix . '%')
-                    ->orderBy('nomor_pengajuan', 'desc')
-                    ->first();
-                $nomorUrut = $lastPengajuan ? intval(substr($lastPengajuan->nomor_pengajuan, -4)) + 1 : 1;
-                do {
-                    $nomorPengajuan = sprintf('HKI/%s/%s/%04d', $tahun, $bulan, $nomorUrut);
-                    $exists = PengajuanHki::where('nomor_pengajuan', $nomorPengajuan)->exists();
-                    if ($exists) $nomorUrut++;
-                } while ($exists);
-                $pengajuan = PengajuanHki::create([
-                    'user_id' => Auth::id(),
-                    'judul_karya' => $validated['judul'] ?? '',
-                    'deskripsi' => $validated['deskripsi'] ?? '',
-                    'nama_pengusul' => $validated['nama_pengusul'] ?? '',
-                    'nip_nidn' => $validated['nip_nidn'] ?? '',
-                    'no_hp' => $validated['no_hp'] ?? '',
-                    'id_sinta' => $validated['id_sinta'] ?? '',
-                    'jumlah_pencipta' => $validated['jumlah_pencipta'] ?? '',
-                    'identitas_ciptaan' => $validated['identitas_ciptaan'] ?? '',
-                    'sub_jenis_ciptaan' => $validated['sub_jenis_ciptaan'] ?? '',
-                    'tanggal_pertama_kali_diumumkan' => $validated['tanggal_pertama_kali_diumumkan'] ?? '',
-                    'status' => 'menunggu_validasi',
-                    'tanggal_pengajuan' => Carbon::now('Asia/Makassar'),
-                    'nomor_pengajuan' => $nomorPengajuan,
-                    'role' => $validated['role'] ?? '',
-                    'file_karya' => $fileKarya,
-                    'file_dokumen_pendukung' => json_encode([
-                        'surat_pengalihan' => $pathSuratPengalihan,
-                        'surat_pernyataan' => $pathSuratPernyataan,
-                        'ktp' => $pathKtp
-                    ]),
-                    'tahun_usulan' => $validated['tahun_usulan'] ?? '',
-                ]);
-                // Simpan data pencipta dinamis
-                if (isset($validated['pencipta'])) {
-                    foreach ($validated['pencipta'] as $dataPencipta) {
-                        if (!empty($dataPencipta['email']) && !empty($dataPencipta['nama'])) {
-                            $pengajuan->pengaju()->create([
-                                'nama' => $dataPencipta['nama'],
-                                'email' => $dataPencipta['email'],
-                                'no_hp' => $dataPencipta['no_hp'] ?? null,
-                                'alamat' => $dataPencipta['alamat'] ?? null,
-                                'kecamatan' => $dataPencipta['kecamatan'] ?? null,
-                                'kodepos' => $dataPencipta['kodepos'] ?? null,
-                            ]);
-                        }
-                    }
-                }
-                Notifikasi::create([
-                    'user_id' => Auth::id(),
-                    'pengajuan_hki_id' => $pengajuan->id,
-                    'judul' => 'Pengajuan HKI Baru',
-                    'pesan' => 'Pengajuan HKI Anda dengan nomor "' . $nomorPengajuan . '" telah berhasil dibuat dan sedang menunggu validasi.',
-                    'status' => 'unread',
-                    'dibaca' => false
-                ]);
-                // Clear cache jika ada
-                if (function_exists('cache')) {
-                    cache()->forget('pengajuan_user_' . Auth::id());
-                }
-                return Redirect::to(route('pengajuan.index'))->with('success', 'Pengajuan berhasil dibuat');
-            }
 
-        $validated = $request->validate([
+        // Check untuk action submit
+        if ($request->input('action') === 'submit') {
+            try {
+                // Get user role for dynamic validation
+                $userRole = auth()->user()->role;
+                
+                $validationRules = [
             'judul' => 'required|string|max:255',
             'deskripsi' => 'required|string',
-            'nama_pengusul' => 'required|string|max:255',
-            'nip_nidn' => ['nullable', 'string', 'max:255', 'required_if:role,dosen'],
-            'no_hp' => 'required|string|max:255',
-            'id_sinta' => 'required_if:role,dosen|string|max:255',
+                    'nama_pengusul' => 'nullable|string|max:255',
+                    'no_telp' => 'nullable|string|max:255',
                 'jumlah_pencipta' => 'required|in:1,2,3,4,5',
             'identitas_ciptaan' => 'required|string|in:karya tulis,karya audio visual,karya lainnya',
             'sub_jenis_ciptaan' => 'required|string|in:Buku,E-Book,Diktat,Modul,Buku Panduan/Petunjuk,Karya Ilmiah,Karya Tulis/Artikel,Laporan Penelitian,Jurnal,Kuliah,Karya Rekaman Video,Karya Siaran Video,Program Komputer,Permainan Video,Basis Data',
             'tanggal_pertama_kali_diumumkan' => 'required|date',
+            'kota_pertama_kali_diumumkan' => 'required|string|max:255',
             'contoh_ciptaan_type' => 'required|in:upload,link',
             'contoh_ciptaan' => 'required_if:contoh_ciptaan_type,upload|file|mimes:pdf,mp4,mp3,jpg,jpeg,png,gif,svg,webp,doc,docx|max:10240',
             'contoh_ciptaan_link' => 'required_if:contoh_ciptaan_type,link|nullable|url',
-            'surat_pengalihan_hak_cipta' => 'required|file|mimes:pdf|max:2048',
-            'surat_pernyataan_hak_cipta' => 'required|file|mimes:pdf|max:2048',
-            'ktp_seluruh_pencipta' => 'required|file|mimes:pdf|max:10240',
-            'role' => 'required|in:dosen,mahasiswa',
             'pencipta' => 'required|array',
             'pencipta.*.nama' => 'required|string|max:255',
             'pencipta.*.email' => 'required|email|max:255',
-            'pencipta.*.no_hp' => 'nullable|string|max:255',
+            'pencipta.*.no_telp' => 'nullable|string|max:255',
             'pencipta.*.alamat' => 'nullable|string',
-            'pencipta.*.kecamatan' => 'nullable|string|max:255',
+            'pencipta.*.kewarganegaraan' => 'nullable|string|max:255',
             'pencipta.*.kodepos' => 'nullable|string|max:20',
             'tahun_usulan' => 'nullable|string|max:10',
-        ], [
+                    'tanggal_surat' => 'required|date',
+                    'alamat_pencipta' => 'required|array',
+                    'alamat_pencipta.*.nama' => 'required|string|max:255',
+                    'alamat_pencipta.*.gelar' => 'nullable|string|max:100',
+                    'alamat_pencipta.*.alamat' => 'required|string',
+                    'signature_pencipta' => 'required|array', 
+                    'signature_pencipta.*.nama_ttd' => 'required|string|max:255',
+                    'signature_pencipta.*.posisi' => 'nullable|string|in:kanan,kiri',
+                    'gunakan_materai' => 'nullable|boolean',
+                ];
+                
+                // Note: nip_nidn and id_sinta are now handled during registration
+                
+                $validationMessages = [
             'judul.required' => 'Judul karya wajib diisi.',
             'deskripsi.required' => 'Deskripsi wajib diisi.',
             'nama_pengusul.required' => 'Nama pengusul wajib diisi.',
-            'nip_nidn.required_if' => 'NIP/NIDN wajib diisi untuk dosen.',
-            'no_hp.required' => 'Nomor HP wajib diisi.',
-                'id_sinta.required_if' => 'ID SINTA wajib diisi untuk dosen.',
+            'no_telp.required' => 'Nomor HP wajib diisi.',
             'jumlah_pencipta.required' => 'Jumlah pencipta wajib diisi.',
             'identitas_ciptaan.required' => 'Jenis ciptaan wajib diisi.',
             'sub_jenis_ciptaan.required' => 'Sub jenis ciptaan wajib diisi.',
@@ -358,14 +260,20 @@ class PengajuanHkiController extends Controller
             'contoh_ciptaan_type.required' => 'Pilih tipe contoh ciptaan (upload atau link).',
             'contoh_ciptaan.required_if' => 'File contoh ciptaan wajib diupload.',
             'contoh_ciptaan_link.required_if' => 'Link contoh ciptaan wajib diisi.',
-            'surat_pengalihan_hak_cipta.required' => 'Surat pengalihan hak cipta wajib diupload.',
-            'surat_pernyataan_hak_cipta.required' => 'Surat pernyataan hak cipta wajib diupload.',
-            'ktp_seluruh_pencipta.required' => 'KTP seluruh pencipta wajib diupload.',
-            'role.required' => 'Role wajib dipilih.',
+            
             'pencipta.required' => 'Data pencipta wajib diisi minimal satu.',
             'pencipta.*.nama.required' => 'Nama setiap pencipta wajib diisi.',
             'pencipta.*.email.required' => 'Email setiap pencipta wajib diisi.',
-        ]);
+                    'tanggal_surat.required' => 'Tanggal surat wajib diisi.',
+                    'alamat_pencipta.required' => 'Alamat pencipta wajib diisi.',
+                    'alamat_pencipta.*.nama.required' => 'Nama lengkap setiap pencipta wajib diisi.',
+                    'alamat_pencipta.*.alamat.required' => 'Alamat lengkap setiap pencipta wajib diisi.',
+                    'signature_pencipta.required' => 'Detail tanda tangan pencipta wajib diisi.',
+                    'signature_pencipta.*.nama_ttd.required' => 'Nama untuk tanda tangan setiap pencipta wajib diisi.',
+                ];
+                
+                $validated = $request->validate($validationRules, $validationMessages);
+                
         // Proses file atau link contoh ciptaan
         $fileKarya = null;
         if ($request->input('contoh_ciptaan_type') === 'upload' && $request->hasFile('contoh_ciptaan')) {
@@ -374,9 +282,10 @@ class PengajuanHkiController extends Controller
             $fileKarya = $request->input('contoh_ciptaan_link');
         }
 
-        $pathSuratPengalihan = $request->file('surat_pengalihan_hak_cipta')->store('dokumen_pengalihan', 'public');
-        $pathSuratPernyataan = $request->file('surat_pernyataan_hak_cipta')->store('dokumen_pernyataan', 'public');
-        $pathKtp = $request->file('ktp_seluruh_pencipta')->store('dokumen_ktp', 'public');
+        // KTP akan diupload melalui proses tanda tangan
+
+        // Inisialisasi dokumen pendukung minimal (KTP akan ditambahkan saat proses tanda tangan)
+        $initialDokumenPendukung = json_encode([]);
 
         $tahun = date('Y');
         $bulan = date('m');
@@ -395,34 +304,26 @@ class PengajuanHkiController extends Controller
             'user_id' => Auth::id(),
             'judul_karya' => $validated['judul'] ?? '',
             'deskripsi' => $validated['deskripsi'] ?? '',
-            'nama_pengusul' => $validated['nama_pengusul'] ?? '',
-            'nip_nidn' => $validated['nip_nidn'] ?? '',
-            'no_hp' => $validated['no_hp'] ?? '',
-            'id_sinta' => $validated['id_sinta'] ?? '',
+            'nama_pengusul' => $validated['nama_pengusul'] ?? auth()->user()->nama_lengkap,
+                    'nip_nidn' => auth()->user()->nip_nidn ?? '',
+            'no_telp' => $validated['no_telp'] ?? '',
+                    'id_sinta' => auth()->user()->id_sinta ?? '',
             'jumlah_pencipta' => $validated['jumlah_pencipta'] ?? '',
             'identitas_ciptaan' => $validated['identitas_ciptaan'] ?? '',
             'sub_jenis_ciptaan' => $validated['sub_jenis_ciptaan'] ?? '',
             'tanggal_pertama_kali_diumumkan' => $validated['tanggal_pertama_kali_diumumkan'] ?? '',
-            'status' => 'menunggu_validasi',
+            'kota_pertama_kali_diumumkan' => $validated['kota_pertama_kali_diumumkan'] ?? '',
+            'status' => 'menunggu_tanda_tangan',
             'tanggal_pengajuan' => Carbon::now('Asia/Makassar'),
             'nomor_pengajuan' => $nomorPengajuan,
-            'role' => $validated['role'] ?? '',
+                    'role' => auth()->user()->role,
             'file_karya' => $fileKarya,
-            'file_dokumen_pendukung' => json_encode([
-                'surat_pengalihan' => $pathSuratPengalihan,
-                'surat_pernyataan' => $pathSuratPernyataan,
-                'ktp' => $pathKtp
-            ]),
             'tahun_usulan' => $validated['tahun_usulan'] ?? '',
-        ]);
-
-        // Log untuk debugging
-        Log::info('Pengajuan berhasil dibuat', [
-            'id' => $pengajuan->id,
-            'user_id' => $pengajuan->user_id,
-            'status' => $pengajuan->status,
-            'nomor_pengajuan' => $pengajuan->nomor_pengajuan,
-            'judul_karya' => $pengajuan->judul_karya
+                    'tanggal_surat' => $validated['tanggal_surat'] ?? null,
+                    'alamat_pencipta' => $validated['alamat_pencipta'] ?? null,
+                    'signature_pencipta' => $validated['signature_pencipta'] ?? null,
+                    'gunakan_materai' => $validated['gunakan_materai'] ?? false,
+            'file_dokumen_pendukung' => $initialDokumenPendukung,
         ]);
 
         // Simpan data pencipta dinamis
@@ -432,30 +333,96 @@ class PengajuanHkiController extends Controller
                     $pengajuan->pengaju()->create([
                         'nama' => $dataPencipta['nama'],
                         'email' => $dataPencipta['email'],
-                        'no_hp' => $dataPencipta['no_hp'] ?? null,
+                        'no_telp' => $dataPencipta['no_telp'] ?? null,
                         'alamat' => $dataPencipta['alamat'] ?? null,
-                        'kecamatan' => $dataPencipta['kecamatan'] ?? null,
+                        'kewarganegaraan' => $dataPencipta['kewarganegaraan'] ?? null,
                         'kodepos' => $dataPencipta['kodepos'] ?? null,
+                        'no_telp' => $dataPencipta['no_telp'] ?? $dataPencipta['no_telp'] ?? null,
                     ]);
                 }
             }
         }
 
+                // Auto-generate surat berdasarkan data pengajuan
+                $suratController = new \App\Http\Controllers\SuratController();
+                $generatedPaths = $suratController->autoGenerateAllDocuments($pengajuan);
+
+                // Update file_dokumen_pendukung dengan path auto-generated (KTP akan ditambahkan saat tanda tangan)
+                $dokumenPendukung = [];
+                if (!empty($generatedPaths['form_permohonan_pendaftaran'])) {
+                    $dokumenPendukung['form_permohonan_pendaftaran'] = $generatedPaths['form_permohonan_pendaftaran'];
+                }
+                if (!empty($generatedPaths['surat_pengalihan'])) {
+                    $dokumenPendukung['surat_pengalihan'] = $generatedPaths['surat_pengalihan'];
+                }
+                if (!empty($generatedPaths['surat_pernyataan'])) {
+                    $dokumenPendukung['surat_pernyataan'] = $generatedPaths['surat_pernyataan'];
+                }
+                $pengajuan->update([
+                    'file_dokumen_pendukung' => json_encode($dokumenPendukung)
+                ]);
+
         Notifikasi::create([
             'user_id' => Auth::id(),
             'pengajuan_hki_id' => $pengajuan->id,
             'judul' => 'Pengajuan HKI Baru',
-            'pesan' => 'Pengajuan HKI Anda dengan nomor "' . $nomorPengajuan . '" telah berhasil dibuat dan sedang menunggu validasi.',
+                    'pesan' => 'Pengajuan HKI Anda dengan nomor "' . $nomorPengajuan . '" telah berhasil dibuat dengan surat otomatis dan sedang menunggu validasi.',
             'status' => 'unread',
             'dibaca' => false
         ]);
+
+        // Create initial tracking status
+        $pengajuan->addTracking(
+            'submitted',
+            'Pengajuan Diterima',
+            'Pengajuan HKI telah diterima dan menunggu validasi P3M',
+            'fas fa-file-upload',
+            'primary',
+            'Pengajuan berhasil disubmit ke sistem'
+        );
+
+        // Create signatures untuk setiap pencipta
+        if (isset($validated['signature_pencipta']) && is_array($validated['signature_pencipta'])) {
+            $penciptaData = [];
+            // Normalisasi agar indeks dimulai dari 0 berurutan (hindari offset)
+            $signatureArr = array_values($validated['signature_pencipta']);
+            $alamatArr    = array_values($validated['alamat_pencipta'] ?? []);
+            $penciptaArr  = array_values($validated['pencipta'] ?? []);
+
+            foreach ($signatureArr as $idx => $signatureData) {
+                $alamatPencipta = $alamatArr[$idx]    ?? [];
+                $penciptaDb     = $penciptaArr[$idx]  ?? [];
+                
+                $penciptaData[] = [
+                    'nama'   => $alamatPencipta['nama'] ?? ($penciptaDb['nama'] ?? 'Pencipta ' . ($idx + 1)),
+                    'email'  => $penciptaDb['email']    ?? null,
+                    'nama_ttd' => $signatureData['nama_ttd'],
+                    'posisi'   => $signatureData['posisi'] ?? 'kanan'
+                ];
+            }
+            
+            \App\Models\Signature::createSignaturesForPengajuan($pengajuan->id, $penciptaData);
+            
+            // Update status jika ada multiple signatures
+            if (count($penciptaData) > 1) {
+                $pengajuan->update(['status' => 'menunggu_tanda_tangan']);
+                $pengajuan->addTracking(
+                    'waiting_signatures',
+                    'Menunggu Tanda Tangan',
+                    'Dokumen telah digenerate dan menunggu tanda tangan dari semua pencipta',
+                    'fas fa-signature',
+                    'warning',
+                    'Total ' . count($penciptaData) . ' pencipta perlu menandatangani'
+                );
+            }
+        }
 
         // Clear cache jika ada
         if (function_exists('cache')) {
             cache()->forget('pengajuan_user_' . Auth::id());
         }
         
-        return Redirect::to(route('pengajuan.index'))->with('success', 'Pengajuan berhasil dibuat');
+                return Redirect::to(route('pengajuan.index'))->with('success', 'Pengajuan berhasil dibuat dengan surat otomatis');
         } catch (ValidationException $e) {
             Log::error('Validation error in store', [
                 'errors' => $e->errors(),
@@ -467,11 +434,14 @@ class PengajuanHkiController extends Controller
             Log::error('Error in store method', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'request_data' => $request->all(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return Redirect::back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+                return Redirect::back()->with('error', 'Terjadi kesalahan saat membuat pengajuan')->withInput();
         }
+        }
+
+        // Default fallback (should not reach here in normal flow)
+        return Redirect::back()->with('error', 'Action tidak valid')->withInput();
     }
 
     /**
@@ -499,6 +469,8 @@ class PengajuanHkiController extends Controller
         $preferSigned = in_array($pengajuan->status, ['divalidasi_sedang_diproses','menunggu_pembayaran','menunggu_verifikasi_pembayaran','selesai']);
 
         // Konfigurasi dokumen dengan prioritas file bertanda tangan
+        $ktpGabunganPath = $dokumen['ktp_gabungan'] ?? $dokumen['ktp'] ?? null;
+        $ktpFileInfo = $ktpGabunganPath ? $this->getFileInfoFromDokumen($dokumen, 'ktp_gabungan', $preferSigned) : null;
         $documents = [
             'contoh_ciptaan' => [
                 'label'=>'Contoh Ciptaan',
@@ -521,13 +493,13 @@ class PengajuanHkiController extends Controller
                 'color'=>'warning',
                 'file_info'=>$this->getFileInfoFromDokumen($dokumen,'surat_pernyataan',$preferSigned)
             ],
-            'ktp'=>[
-                'label'=>'KTP Pencipta',
-                'description'=>'Kartu Tanda Penduduk',
+            'ktp_gabungan'=>[
+                'label'=>'KTP Gabungan',
+                'description'=>'Kartu Tanda Penduduk Gabungan',
                 'icon'=>'fas fa-id-card',
                 'color'=>'success',
-                'file_info'=>$this->getFileInfoFromDokumen($dokumen,'ktp',$preferSigned)
-            ]
+                'file_info'=>$ktpFileInfo
+            ],
         ];
 
         return view('pengajuan.show', compact('pengajuan', 'dokumen', 'pencipta', 'documents'));
@@ -542,7 +514,7 @@ class PengajuanHkiController extends Controller
             return Redirect::to(route('pengajuan.index'))
                 ->with('error', 'Anda tidak memiliki akses ke pengajuan ini');
         }
-        if ($pengajuan->status !== 'menunggu_validasi') {
+        if ($pengajuan->status !== 'menunggu_validasi_direktur') {
             return Redirect::to(route('pengajuan.index'))
                 ->with('error', 'Pengajuan tidak dapat diubah karena sudah diproses');
         }
@@ -559,7 +531,7 @@ class PengajuanHkiController extends Controller
                 ->with('error', 'Anda tidak memiliki akses ke pengajuan ini');
         }
 
-        if ($pengajuan->status !== 'menunggu_validasi') {
+        if ($pengajuan->status !== 'menunggu_validasi_direktur') {
             return Redirect::to(route('pengajuan.index'))
                 ->with('error', 'Pengajuan tidak dapat diubah karena sudah diproses');
         }
@@ -575,13 +547,13 @@ class PengajuanHkiController extends Controller
                 'pencipta' => 'nullable|array',
                 'pencipta.*.nama' => 'nullable|string|max:255',
                 'pencipta.*.email' => 'nullable|email|max:255',
-                'pencipta.*.no_hp' => 'nullable|string|max:255',
+                'pencipta.*.no_telp' => 'nullable|string|max:255',
                 'pencipta.*.alamat' => 'nullable|string',
-                'pencipta.*.kecamatan' => 'nullable|string|max:255',
+                'pencipta.*.kewarganegaraan' => 'nullable|string|max:255',
                 'pencipta.*.kodepos' => 'nullable|string|max:20',
             ], [
                 'nama_pengusul.required' => 'Nama pengusul wajib diisi.',
-                'no_hp.required' => 'Nomor HP wajib diisi.',
+                'no_telp.required' => 'Nomor HP wajib diisi.',
                 'id_sinta.required_if' => 'ID SINTA wajib diisi untuk dosen.',
                 'jumlah_pencipta.required' => 'Jumlah pencipta wajib diisi.',
                 'identitas_ciptaan.required' => 'Jenis ciptaan wajib diisi.',
@@ -593,7 +565,7 @@ class PengajuanHkiController extends Controller
             if (isset($validated['pencipta'])) {
                 foreach ($validated['pencipta'] as $idx => $dataPencipta) {
                     $filled = false;
-                    foreach (['nama','email','no_hp','alamat','kecamatan','kodepos'] as $f) {
+                    foreach (['nama','email','no_telp','alamat','kewarganegaraan','kodepos'] as $f) {
                         if (!empty($dataPencipta[$f])) $filled = true;
                     }
                     if ($filled && (empty($dataPencipta['nama']) || empty($dataPencipta['email']))) {
@@ -606,8 +578,6 @@ class PengajuanHkiController extends Controller
                 'deskripsi' => $validated['deskripsi'] ?? null,
                 'identitas_ciptaan' => $validated['identitas_ciptaan'] ?? null,
                 'sub_jenis_ciptaan' => $validated['sub_jenis_ciptaan'] ?? null,
-                'tahun_usulan' => $validated['tahun_usulan'] ?? null,
-                'jumlah_pencipta' => $validated['jumlah_pencipta'] ?? null,
                 'status' => 'draft',
             ]);
             $pengajuan->pengaju()->delete();
@@ -617,9 +587,9 @@ class PengajuanHkiController extends Controller
                         $pengajuan->pengaju()->create([
                             'nama' => $dataPencipta['nama'] ?? null,
                             'email' => $dataPencipta['email'] ?? null,
-                            'no_hp' => $dataPencipta['no_hp'] ?? null,
+                            'no_telp' => $dataPencipta['no_telp'] ?? null,
                             'alamat' => $dataPencipta['alamat'] ?? null,
-                            'kecamatan' => $dataPencipta['kecamatan'] ?? null,
+                            'kewarganegaraan' => $dataPencipta['kewarganegaraan'] ?? null,
                             'kodepos' => $dataPencipta['kodepos'] ?? null,
                         ]);
                     }
@@ -640,9 +610,9 @@ class PengajuanHkiController extends Controller
             'pencipta' => 'required|array',
             'pencipta.*.nama' => 'required|string|max:255',
             'pencipta.*.email' => 'required|email|max:255',
-            'pencipta.*.no_hp' => 'nullable|string|max:255',
+            'pencipta.*.no_telp' => 'nullable|string|max:255',
             'pencipta.*.alamat' => 'nullable|string',
-            'pencipta.*.kecamatan' => 'nullable|string|max:255',
+            'pencipta.*.kewarganegaraan' => 'nullable|string|max:255',
             'pencipta.*.kodepos' => 'nullable|string|max:20',
         ]);
 
@@ -651,9 +621,7 @@ class PengajuanHkiController extends Controller
             'deskripsi' => $validated['deskripsi'],
             'identitas_ciptaan' => $validated['identitas_ciptaan'],
             'sub_jenis_ciptaan' => $validated['sub_jenis_ciptaan'],
-            'tahun_usulan' => $validated['tahun_usulan'] ?? null,
-            'jumlah_pencipta' => $validated['jumlah_pencipta'],
-            'status' => 'menunggu_validasi',
+            'status' => 'menunggu_validasi_direktur',
         ]);
 
         // Update data pencipta
@@ -663,9 +631,9 @@ class PengajuanHkiController extends Controller
                 $pengajuan->pengaju()->create([
                     'nama' => $dataPencipta['nama'],
                     'email' => $dataPencipta['email'],
-                    'no_hp' => $dataPencipta['no_hp'] ?? null,
+                    'no_telp' => $dataPencipta['no_telp'] ?? null,
                     'alamat' => $dataPencipta['alamat'] ?? null,
-                    'kecamatan' => $dataPencipta['kecamatan'] ?? null,
+                    'kewarganegaraan' => $dataPencipta['kewarganegaraan'] ?? null,
                     'kodepos' => $dataPencipta['kodepos'] ?? null,
                 ]);
             }
@@ -683,7 +651,7 @@ class PengajuanHkiController extends Controller
             return Redirect::to(route('pengajuan.index'))
                 ->with('error', 'Anda tidak memiliki akses ke pengajuan ini');
         }
-        if ($pengajuan->status !== 'menunggu_validasi') {
+        if ($pengajuan->status !== 'menunggu_validasi_direktur') {
             return Redirect::to(route('pengajuan.index'))
                 ->with('error', 'Pengajuan tidak dapat dihapus karena sudah diproses');
         }
@@ -726,9 +694,9 @@ class PengajuanHkiController extends Controller
             'user_id' => Auth::id(),
             'judul_karya' => $validated['judul'] ?? $request->input('judul', ''),
             'deskripsi' => $validated['deskripsi'] ?? $request->input('deskripsi', ''),
-            'nama_pengusul' => $request->input('nama_pengusul', ''),
+            'nama_pengusul' => auth()->user()->nama_lengkap ?? '',
             'nip_nidn' => $request->input('nip_nidn', ''),
-            'no_hp' => $request->input('no_hp', ''),
+            'no_telp' => auth()->user()->no_telp ?? '',
             'id_sinta' => $request->input('id_sinta', ''),
             'jumlah_pencipta' => $request->input('jumlah_pencipta', ''),
             'identitas_ciptaan' => $request->input('identitas_ciptaan', ''),
@@ -795,12 +763,12 @@ class PengajuanHkiController extends Controller
             } while ($exists);
             
             $pengajuan->update([
-                'status' => 'menunggu_validasi',
+                'status' => 'menunggu_validasi_direktur',
                 'nomor_pengajuan' => $nomorPengajuan,
                 'tanggal_pengajuan' => Carbon::now('Asia/Makassar')
             ]);
         } else {
-            $pengajuan->update(['status' => 'menunggu_validasi']);
+            $pengajuan->update(['status' => 'menunggu_validasi_direktur']);
         }
         
         // Buat notifikasi
@@ -865,7 +833,7 @@ class PengajuanHkiController extends Controller
                 'deskripsi' => $request->input('deskripsi', $pengajuan->deskripsi),
                 'nama_pengusul' => $request->input('nama_pengusul', $pengajuan->nama_pengusul),
                 'nip_nidn' => $request->input('nip_nidn', $pengajuan->nip_nidn),
-                'no_hp' => $request->input('no_hp', $pengajuan->no_hp),
+                'no_telp' => $request->input('no_telp', $pengajuan->no_telp),
                 'id_sinta' => $request->input('id_sinta', $pengajuan->id_sinta),
                 'jumlah_pencipta' => $request->input('jumlah_pencipta', $pengajuan->jumlah_pencipta),
                 'identitas_ciptaan' => $request->input('identitas_ciptaan', $pengajuan->identitas_ciptaan),
@@ -887,9 +855,7 @@ class PengajuanHkiController extends Controller
             if ($request->hasFile('surat_pernyataan_hak_cipta')) {
                 $dokumen['surat_pernyataan'] = $request->file('surat_pernyataan_hak_cipta')->store('dokumen_pernyataan', 'public');
             }
-            if ($request->hasFile('ktp_seluruh_pencipta')) {
-                $dokumen['ktp'] = $request->file('ktp_seluruh_pencipta')->store('dokumen_ktp', 'public');
-            }
+            // KTP akan diupload melalui proses tanda tangan
             
             $pengajuan->file_dokumen_pendukung = json_encode($dokumen);
             $pengajuan->save();
@@ -902,9 +868,9 @@ class PengajuanHkiController extends Controller
                         $pengajuan->pengaju()->create([
                             'nama' => $dataPencipta['nama'],
                             'email' => $dataPencipta['email'],
-                            'no_hp' => $dataPencipta['no_hp'] ?? null,
+                            'no_telp' => $dataPencipta['no_telp'] ?? null,
                             'alamat' => $dataPencipta['alamat'] ?? null,
-                            'kecamatan' => $dataPencipta['kecamatan'] ?? null,
+                            'kewarganegaraan' => $dataPencipta['kewarganegaraan'] ?? null,
                             'kodepos' => $dataPencipta['kodepos'] ?? null,
                         ]);
                     }
@@ -925,10 +891,8 @@ class PengajuanHkiController extends Controller
             $validated = $request->validate([
                 'judul' => 'required|string|max:255',
                 'deskripsi' => 'required|string',
-                'nama_pengusul' => 'required|string|max:255',
-                'nip_nidn' => ['nullable', 'string', 'max:255', 'required_if:role,dosen'],
-                'no_hp' => 'required|string|max:255',
-                'id_sinta' => 'required_if:role,dosen|string|max:255',
+                'nama_pengusul' => 'nullable|string|max:255',
+                'no_telp' => 'nullable|string|max:255',
                 'jumlah_pencipta' => 'required|in:1 orang,2 orang,3 orang,4 orang,5 orang',
                 'identitas_ciptaan' => 'required|string|in:karya tulis,karya audio visual,karya lainnya',
                 'sub_jenis_ciptaan' => 'required|string|in:Buku,E-Book,Diktat,Modul,Buku Panduan/Petunjuk,Karya Ilmiah,Karya Tulis/Artikel,Laporan Penelitian,Jurnal,Kuliah,Karya Rekaman Video,Karya Siaran Video,Program Komputer,Permainan Video,Basis Data',
@@ -943,18 +907,16 @@ class PengajuanHkiController extends Controller
                 'pencipta' => 'required|array',
                 'pencipta.*.nama' => 'required|string|max:255',
                 'pencipta.*.email' => 'required|email|max:255',
-                'pencipta.*.no_hp' => 'nullable|string|max:255',
+                'pencipta.*.no_telp' => 'nullable|string|max:255',
                 'pencipta.*.alamat' => 'nullable|string',
-                'pencipta.*.kecamatan' => 'nullable|string|max:255',
+                'pencipta.*.kewarganegaraan' => 'nullable|string|max:255',
                 'pencipta.*.kodepos' => 'nullable|string|max:20',
                 'tahun_usulan' => 'nullable|string|max:10',
             ], [
                 'judul.required' => 'Judul karya wajib diisi.',
                 'deskripsi.required' => 'Deskripsi wajib diisi.',
                 'nama_pengusul.required' => 'Nama pengusul wajib diisi.',
-                'nip_nidn.required_if' => 'NIP/NIDN wajib diisi untuk dosen.',
-                'no_hp.required' => 'Nomor HP wajib diisi.',
-                'id_sinta.required_if' => 'ID SINTA wajib diisi untuk dosen.',
+                'no_telp.required' => 'Nomor HP wajib diisi.',
                 'jumlah_pencipta.required' => 'Jumlah pencipta wajib diisi.',
                 'identitas_ciptaan.required' => 'Jenis ciptaan wajib diisi.',
                 'sub_jenis_ciptaan.required' => 'Sub jenis ciptaan wajib diisi.',
@@ -1051,22 +1013,22 @@ class PengajuanHkiController extends Controller
             $pengajuan->update([
                 'judul_karya' => $validated['judul'],
                 'deskripsi' => $validated['deskripsi'],
-                'nama_pengusul' => $validated['nama_pengusul'],
-                'nip_nidn' => $validated['nip_nidn'] ?? '',
-                'no_hp' => $validated['no_hp'],
-                'id_sinta' => $validated['id_sinta'] ?? '',
+                'nama_pengusul' => $validated['nama_pengusul'] ?? auth()->user()->nama_lengkap,
+                'nip_nidn' => auth()->user()->nip_nidn ?? '',
+                'no_telp' => $validated['no_telp'],
+                'id_sinta' => auth()->user()->id_sinta ?? '',
                 'jumlah_pencipta' => $jumlahPenciptaNumber,
                 'identitas_ciptaan' => $validated['identitas_ciptaan'],
                 'sub_jenis_ciptaan' => $validated['sub_jenis_ciptaan'],
                 'tanggal_pertama_kali_diumumkan' => $validated['tanggal_pertama_kali_diumumkan'],
                 'tahun_usulan' => $validated['tahun_usulan'] ?? '',
                 'role' => $validated['role'],
-                'status' => 'menunggu_validasi',
+                'status' => 'menunggu_validasi_direktur',
                 'file_dokumen_pendukung' => json_encode($dokumen),
             ]);
             
             Log::info('Pengajuan data updated', [
-                'status' => 'menunggu_validasi',
+                'status' => 'menunggu_validasi_direktur',
                 'jumlah_pencipta' => $jumlahPenciptaNumber
             ]);
             
@@ -1103,9 +1065,9 @@ class PengajuanHkiController extends Controller
                         $pengajuan->pengaju()->create([
                             'nama' => $dataPencipta['nama'],
                             'email' => $dataPencipta['email'],
-                            'no_hp' => $dataPencipta['no_hp'] ?? null,
+                            'no_telp' => $dataPencipta['no_telp'] ?? null,
                             'alamat' => $dataPencipta['alamat'] ?? null,
-                            'kecamatan' => $dataPencipta['kecamatan'] ?? null,
+                            'kewarganegaraan' => $dataPencipta['kewarganegaraan'] ?? null,
                             'kodepos' => $dataPencipta['kodepos'] ?? null,
                         ]);
                     }
@@ -1401,5 +1363,28 @@ class PengajuanHkiController extends Controller
             return substr($url, strlen($storageUrl));
         }
         return null;
+    }
+
+    public function konfirmasiSelesaiTtd($id)
+    {
+        $pengajuan = \App\Models\PengajuanHki::findOrFail($id);
+        if (!$pengajuan->allSignaturesSigned()) {
+            return back()->with('error', 'Semua dokumen harus sudah ditandatangani.');
+        }
+        $pengajuan->status = 'menunggu_validasi_direktur';
+        $pengajuan->save();
+        // Kirim notifikasi ke direktur
+        $direkturs = \App\Models\User::where('role', 'direktur')->get();
+        foreach ($direkturs as $direktur) {
+            \App\Models\Notifikasi::create([
+                'user_id' => $direktur->id,
+                'pengajuan_hki_id' => $pengajuan->id,
+                'judul' => 'Pengajuan HKI Siap Validasi',
+                'pesan' => 'Pengajuan HKI dengan judul "' . $pengajuan->judul_karya . '" sudah siap divalidasi dan ditandatangani.',
+                'status' => 'unread',
+                'dibaca' => false
+            ]);
+        }
+        return back()->with('success', 'Pengajuan berhasil dikirim ke Direktur untuk validasi.');
     }
 } 

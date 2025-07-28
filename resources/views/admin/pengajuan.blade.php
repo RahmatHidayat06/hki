@@ -67,7 +67,7 @@
                     <label class="form-label text-muted fw-medium">Status</label>
                     <select name="status" class="form-select status-filter-dropdown" data-current-status="{{ request('status') }}">
                         <option value="" data-status="">Semua Status</option>
-                        <option value="menunggu_validasi" {{ request('status')=='menunggu_validasi'?'selected':'' }} data-status="menunggu_validasi">Menunggu Validasi</option>
+                        <option value="menunggu_validasi_direktur" {{ request('status')=='menunggu_validasi_direktur'?'selected':'' }} data-status="menunggu_validasi_direktur">Menunggu Validasi Direktur</option>
                         <option value="divalidasi_sedang_diproses" {{ request('status')=='divalidasi_sedang_diproses'?'selected':'' }} data-status="divalidasi_sedang_diproses">Divalidasi & Sedang Diproses</option>
                         <option value="menunggu_pembayaran" {{ request('status')=='menunggu_pembayaran'?'selected':'' }} data-status="menunggu_pembayaran">Menunggu Pembayaran</option>
                         <option value="menunggu_verifikasi_pembayaran" {{ request('status')=='menunggu_verifikasi_pembayaran'?'selected':'' }} data-status="menunggu_verifikasi_pembayaran">Verifikasi Pembayaran</option>
@@ -141,7 +141,7 @@
                                 @php
                                     // Definisi urutan status
                                     $statusOrder = [
-                                        'menunggu_validasi' => 1,
+                                        'menunggu_validasi_direktur' => 1,
                                         'divalidasi_sedang_diproses' => 2,
                                         'menunggu_pembayaran' => 3,
                                         'menunggu_verifikasi_pembayaran' => 4,
@@ -150,7 +150,7 @@
                                     ];
                                     
                                     $currentStatusLevel = $statusOrder[$item->status] ?? 1;
-                                    $allStatuses = ['menunggu_validasi','divalidasi_sedang_diproses','menunggu_pembayaran','menunggu_verifikasi_pembayaran','selesai'];
+                                    $allStatuses = ['menunggu_validasi_direktur','divalidasi_sedang_diproses','menunggu_pembayaran','menunggu_verifikasi_pembayaran','selesai'];
                                     
                                     // Filter status yang bisa dipilih (hanya yang sama level atau lebih tinggi)
                                     $availableStatuses = array_filter($allStatuses, function($st) use ($statusOrder, $currentStatusLevel) {
@@ -201,7 +201,7 @@
                                             @if(auth()->user()->role === 'admin')
                                             <form action="{{ route('pengajuan.updateStatus', $item->id) }}" method="POST" class="d-inline ms-1">
                                                 @csrf
-                                                <input type="hidden" name="status" value="menunggu_validasi">
+                                                <input type="hidden" name="status" value="menunggu_validasi_direktur">
                                                 <button type="submit" class="btn btn-sm btn-warning" title="Reset ke Menunggu Validasi" onclick="return confirm('Reset pengajuan ke status Menunggu Validasi?')">
                                                     <i class="fas fa-undo"></i>
                                                 </button>
@@ -214,7 +214,7 @@
                             <td class="py-3 text-center">
                                 <div class="d-flex flex-wrap justify-content-center gap-1">
                                     <a href="{{ route('admin.pengajuan.show', $item->id) }}" class="btn btn-info btn-sm">Detail</a>
-                                @if($item->status === 'menunggu_validasi')
+                                @if($item->status === 'menunggu_validasi_direktur')
                                         <a href="{{ route('pengajuan.edit', $item->id) }}" class="btn btn-warning btn-sm">Edit</a>
                                 @else
                                         <button type="button" class="btn btn-secondary btn-sm" onclick="alert('Pengajuan hanya dapat diedit jika statusnya Menunggu Validasi');">Edit</button>
@@ -357,7 +357,7 @@ td .btn-group {
     transition: all 0.3s ease;
 }
 
-.status-dropdown[data-current-status="menunggu_validasi"] {
+.status-dropdown[data-current-status="menunggu_validasi_direktur"] {
     background-color: #fff3cd !important;
     color: #856404 !important;
     border-color: #ffeaa7 !important;
@@ -394,7 +394,7 @@ td .btn-group {
 }
 
 /* Dropdown option colors */
-.status-dropdown option[data-status="menunggu_validasi"] {
+.status-dropdown option[data-status="menunggu_validasi_direktur"] {
     background-color: #fff3cd;
     color: #856404;
 }
@@ -434,7 +434,7 @@ td .btn-group {
     transition: all 0.3s ease;
 }
 
-.status-filter-dropdown[data-current-status="menunggu_validasi"] {
+.status-filter-dropdown[data-current-status="menunggu_validasi_direktur"] {
     background-color: #fff3cd !important;
     color: #856404 !important;
     border-color: #ffeaa7 !important;
@@ -525,7 +525,7 @@ td .btn-group {
 document.addEventListener('DOMContentLoaded', function() {
     // Status order definition
     const statusOrder = {
-        'menunggu_validasi': 1,
+        'menunggu_validasi_direktur': 1,
         'divalidasi_sedang_diproses': 2,
         'menunggu_pembayaran': 3,
         'menunggu_verifikasi_pembayaran': 4,
@@ -535,7 +535,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Status labels for user feedback
     const statusLabels = {
-        'menunggu_validasi': 'Menunggu Validasi',
+        'menunggu_validasi_direktur': 'Menunggu Validasi Direktur',
         'divalidasi_sedang_diproses': 'Divalidasi & Sedang Diproses',
         'menunggu_pembayaran': 'Menunggu Pembayaran',
         'menunggu_verifikasi_pembayaran': 'Menunggu Verifikasi Pembayaran',

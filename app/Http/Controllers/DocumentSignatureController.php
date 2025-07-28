@@ -90,34 +90,51 @@ class DocumentSignatureController extends Controller
                 return response()->json(['error' => 'Dokumen tidak ditemukan'], 404);
             }
 
-            // For now, we'll save the overlay information to database
-            // Later this can be enhanced to actually merge the PDF
-            $overlayData = [
-                'signature_id' => $request->signature_id,
-                'stamp_id' => $request->stamp_id,
-                'signature_position' => [
-                    'x' => $request->signature_x,
-                    'y' => $request->signature_y,
-                    'width' => $request->signature_width,
-                    'height' => $request->signature_height,
-                ],
-                'stamp_position' => $request->stamp_id ? [
-                    'x' => $request->stamp_x,
-                    'y' => $request->stamp_y,
-                    'width' => $request->stamp_width,
-                    'height' => $request->stamp_height,
-                ] : null,
-                'applied_at' => now(),
-                'applied_by' => auth()->id()
+            // Convert position data to overlay format compatible with PdfSigningController
+            $overlays = [];
+            
+            // Add signature overlay
+            $signatureData = $this->getSignatureById($request->signature_id);
+            if ($signatureData) {
+                $overlays[] = [
+                    'type' => 'signature',
+                    'url' => $signatureData['url'],
+                    'page' => 1, // Default to page 1
+                    'x_percent' => round(floatval($request->signature_x), 3),
+                    'y_percent' => round(floatval($request->signature_y), 3),
+                    'width_percent' => round(floatval($request->signature_width), 3),
+                    'height_percent' => round(floatval($request->signature_height), 3),
+                ];
+            }
+            
+            // Add stamp overlay if provided
+            if ($request->stamp_id) {
+                $stampData = $this->getStampById($request->stamp_id);
+                if ($stampData) {
+                    $overlays[] = [
+                        'type' => 'stamp',
+                        'url' => $stampData['url'],
+                        'page' => 1, // Default to page 1
+                        'x_percent' => round(floatval($request->stamp_x), 3),
+                        'y_percent' => round(floatval($request->stamp_y), 3),
+                        'width_percent' => round(floatval($request->stamp_width), 3),
+                        'height_percent' => round(floatval($request->stamp_height), 3),
             ];
+                }
+            }
 
-            // Update pengajuan with overlay information
-            $this->updatePengajuanWithOverlayData($pengajuan, $documentType, $overlayData);
+            // Update pengajuan with overlay information in the correct format
+            $this->updatePengajuanWithOverlayData($pengajuan, $documentType, $overlays);
+
+            // Automatically generate signed PDF
+            $pdfSigner = new \App\Http\Controllers\PdfSigningController();
+            $signedPath = $pdfSigner->signPdf($pengajuan, $documentType);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Informasi tanda tangan dan materai berhasil disimpan',
-                'overlay_data' => $overlayData
+                'message' => 'Tanda tangan dan materai berhasil diterapkan pada dokumen',
+                'overlays_applied' => count($overlays),
+                'signed_path' => $signedPath
             ]);
 
         } catch (\Exception $e) {
@@ -233,10 +250,17 @@ class DocumentSignatureController extends Controller
     /**
      * Update pengajuan with overlay data
      */
-    private function updatePengajuanWithOverlayData($pengajuan, $documentType, $overlayData)
+    private function updatePengajuanWithOverlayData($pengajuan, $documentType, $overlays)
     {
         $dokumenPendukung = json_decode($pengajuan->file_dokumen_pendukung, true) ?? [];
-        $dokumenPendukung[$documentType . '_overlay'] = $overlayData;
+        
+        // Ensure overlays structure exists
+        if (!isset($dokumenPendukung['overlays'])) {
+            $dokumenPendukung['overlays'] = [];
+        }
+        
+        // Store overlays in the format expected by PdfSigningController
+        $dokumenPendukung['overlays'][$documentType] = $overlays;
         
         $pengajuan->update([
             'file_dokumen_pendukung' => json_encode($dokumenPendukung)
@@ -297,5 +321,33 @@ class DocumentSignatureController extends Controller
     public function saveSignature(Request $request, $id)
     {
         // Implementasi metode saveSignature
+    }
+
+    /**
+     * Get signature data by ID
+     */
+    private function getSignatureById($signatureId)
+    {
+        $signatures = $this->getAvailableSignatures();
+        foreach ($signatures as $signature) {
+            if ($signature['id'] === $signatureId) {
+                return $signature;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get stamp data by ID  
+     */
+    private function getStampById($stampId)
+    {
+        $stamps = $this->getAvailableStamps();
+        foreach ($stamps as $stamp) {
+            if ($stamp['id'] === $stampId) {
+                return $stamp;
+            }
+        }
+        return null;
     }
 } 
