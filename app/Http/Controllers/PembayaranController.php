@@ -156,9 +156,9 @@ class PembayaranController extends Controller
             abort(403, 'Akses tidak diizinkan');
         }
 
-        // Validate that payment has been verified
-        if($pengajuan->status !== 'disetujui'){
-            return redirect()->back()->with('error', 'Pengajuan harus disetujui terlebih dahulu sebelum upload sertifikat');
+        // Validasi status: izinkan upload ketika proses sudah selesai pembayaran/verifikasi
+        if(!in_array($pengajuan->status, ['selesai','disetujui','menunggu_verifikasi_pembayaran'])){
+            return redirect()->back()->with('error', 'Pengajuan belum pada tahap upload sertifikat.');
         }
 
         $request->validate([

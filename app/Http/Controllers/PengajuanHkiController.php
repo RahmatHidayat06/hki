@@ -22,24 +22,137 @@ class PengajuanHkiController extends Controller
 public function signatureForm($id)
 {
     $pengajuan = PengajuanHki::findOrFail($id);
-    return view('pengajuan.signature', compact('pengajuan'));
+
+    // Pastikan dokumen Form Permohonan tersedia untuk pratinjau PDF
+    $dokumen = is_string($pengajuan->file_dokumen_pendukung)
+        ? json_decode($pengajuan->file_dokumen_pendukung, true)
+        : ($pengajuan->file_dokumen_pendukung ?? []);
+
+    $baseFormPath = $dokumen['form_permohonan_pendaftaran'] ?? null;
+    $needGenerateForm = true;
+    if ($baseFormPath) {
+        $normalized = ltrim($baseFormPath, '/');
+        if (str_starts_with($normalized, 'storage/')) {
+            $normalized = substr($normalized, strlen('storage/'));
+        }
+        if (\Storage::disk('public')->exists($normalized)) {
+            $needGenerateForm = false;
+        }
+    }
+
+    if ($needGenerateForm) {
+        try {
+            $suratController = new \App\Http\Controllers\SuratController();
+            $generatedFormPath = $suratController->autoGenerateFormPermohonan($pengajuan);
+            if ($generatedFormPath) {
+                $dokumen['form_permohonan_pendaftaran'] = $generatedFormPath;
+                $pengajuan->file_dokumen_pendukung = json_encode($dokumen);
+                $pengajuan->save();
+            }
+        } catch (\Exception $e) {
+            \Log::error('Gagal auto-generate Form Permohonan (render): ' . $e->getMessage());
+        }
+    }
+
+    $formPath = $dokumen['form_permohonan_pendaftaran'] ?? null;
+    $pdfUrl = $formPath ? \Storage::url(ltrim($formPath, '/')) : null;
+
+    return view('pengajuan.signature', compact('pengajuan', 'pdfUrl'));
 }
 
 public function signatureSave(Request $request, $id)
 {
     $pengajuan = PengajuanHki::findOrFail($id);
     $signatureData = $request->input('signature_data');
+    $placementJson = $request->input('placement'); // optional koordinat drag-drop
+
     // Simpan signature ke storage
     if ($signatureData) {
         $image = str_replace('data:image/png;base64,', '', $signatureData);
         $image = str_replace(' ', '+', $image);
         $imageName = 'ttd_pengajuan_' . $id . '_' . time() . '.png';
         \Storage::disk('public')->put('ttd/' . $imageName, base64_decode($image));
-        // Simpan path ke database
+        // Simpan path ke database (opsional untuk audit)
         $pengajuan->ttd_path = 'storage/ttd/' . $imageName;
         $pengajuan->save();
     }
-    return redirect()->route('pengajuan.show', $id)->with('success', 'Tanda tangan berhasil disimpan.');
+
+    // Generate overlay untuk Form Permohonan Pendaftaran
+    $dokumen = is_string($pengajuan->file_dokumen_pendukung) ? json_decode($pengajuan->file_dokumen_pendukung, true) : ($pengajuan->file_dokumen_pendukung ?? []);
+    if (!isset($dokumen['overlays'])) $dokumen['overlays'] = [];
+
+    // Default posisi yang sesuai dengan template form permohonan (bottom-right)
+    $page = 1; $x = 70.0; $y = 80.0; $w = 20.0; $h = 8.0; $anchor = 'center';
+    if ($placementJson) {
+        try {
+            $placement = json_decode($placementJson, true);
+            if (is_array($placement)) {
+                // Selalu hormati halaman dari frontend, default ke halaman 1 untuk Form Permohonan
+                $page = (int)($placement['page'] ?? 1);
+                $x = (float)($placement['x_percent'] ?? $x);
+                $y = (float)($placement['y_percent'] ?? $y);
+                $w = (float)($placement['width_percent'] ?? $w);
+                $h = (float)($placement['height_percent'] ?? $h);
+                $anchor = (string)($placement['anchor'] ?? $anchor);
+            }
+        } catch (\Throwable $e) {
+            // abaikan, gunakan default
+        }
+    }
+
+    if (isset($imageName)) {
+        // HAPUS semua overlay lama untuk form_permohonan_pendaftaran untuk mencegah duplikasi
+        unset($dokumen['overlays']['form_permohonan_pendaftaran']);
+        
+        // Buat overlay baru dengan posisi yang tepat
+        $dokumen['overlays']['form_permohonan_pendaftaran'] = [
+            [
+                'url' => \Storage::url('ttd/' . $imageName),
+                'page' => $page,
+                'x_percent' => $x,
+                'y_percent' => $y,
+                'width_percent' => $w,
+                'height_percent' => $h,
+                'anchor' => $anchor
+            ]
+        ];
+    }
+
+    // Pastikan dokumen dasar form tersedia; jika tidak, auto-generate
+    $baseFormPath = $dokumen['form_permohonan_pendaftaran'] ?? null;
+    $needGenerateForm = true;
+    if ($baseFormPath) {
+        $normalized = ltrim($baseFormPath, '/');
+        if (str_starts_with($normalized, 'storage/')) {
+            $normalized = substr($normalized, strlen('storage/'));
+        }
+        if (\Storage::disk('public')->exists($normalized)) {
+            $needGenerateForm = false;
+        }
+    }
+    if ($needGenerateForm) {
+        try {
+            $suratController = new \App\Http\Controllers\SuratController();
+            $generatedFormPath = $suratController->autoGenerateFormPermohonan($pengajuan);
+            if ($generatedFormPath) {
+                $dokumen['form_permohonan_pendaftaran'] = $generatedFormPath;
+            }
+        } catch (\Exception $e) {
+            \Log::error('Gagal auto-generate Form Permohonan: ' . $e->getMessage());
+        }
+    }
+    $pengajuan->file_dokumen_pendukung = json_encode($dokumen);
+    $pengajuan->save();
+
+    // Lakukan SIGN PDF karena ini adalah alur khusus Form Permohonan (dipicu dari tombol form permohonan)
+    try {
+        $pdfSigner = new \App\Http\Controllers\PdfSigningController();
+        $pdfSigner->signPdf($pengajuan, 'form_permohonan_pendaftaran');
+    } catch (\Exception $e) {
+        \Log::error('Gagal auto-sign Form Permohonan Pendaftaran: ' . $e->getMessage());
+    }
+    return redirect()->route('pengajuan.show', $id)
+        ->with('success_signature_permohonan', 'Form Permohonan Pendaftaran berhasil ditandatangani!');
 }
     /**
      * Display a listing of the resource.
@@ -478,6 +591,13 @@ public function signatureSave(Request $request, $id)
                 'icon'=>'fas fa-palette',
                 'color'=>'primary',
                 'file_info'=>$this->getFileInfoFromFileKarya($pengajuan->file_karya)
+            ],
+            'form_permohonan_pendaftaran' => [
+                'label' => 'Form Permohonan Pendaftaran',
+                'description' => 'Form permohonan pendaftaran ciptaan',
+                'icon' => 'fas fa-file-contract',
+                'color' => 'primary',
+                'file_info' => $this->getFileInfoFromDokumen($dokumen, 'form_permohonan_pendaftaran', $preferSigned)
             ],
             'surat_pengalihan' => [
                 'label'=>'Surat Pengalihan Hak',
@@ -1368,6 +1488,17 @@ public function signatureSave(Request $request, $id)
     public function konfirmasiSelesaiTtd($id)
     {
         $pengajuan = \App\Models\PengajuanHki::findOrFail($id);
+        // Cegah pengiriman ulang jika sudah dikirim ke Direktur atau sudah melampaui tahap tersebut
+        if (in_array($pengajuan->status, [
+            'menunggu_validasi_direktur',
+            'divalidasi_sedang_diproses',
+            'menunggu_pembayaran',
+            'menunggu_verifikasi_pembayaran',
+            'selesai',
+            'ditolak'
+        ])) {
+            return back()->with('error', 'Pengajuan ini sudah dikirim/ diproses. Konfirmasi hanya bisa dilakukan satu kali.');
+        }
         if (!$pengajuan->allSignaturesSigned()) {
             return back()->with('error', 'Semua dokumen harus sudah ditandatangani.');
         }
@@ -1386,5 +1517,58 @@ public function signatureSave(Request $request, $id)
             ]);
         }
         return back()->with('success', 'Pengajuan berhasil dikirim ke Direktur untuk validasi.');
+    }
+
+    /**
+     * Upload KTP Pemohon (oleh Admin P3M)
+     */
+    public function uploadKtpPemohon(Request $request, $id)
+    {
+        $pengajuan = PengajuanHki::findOrFail($id);
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Hanya admin P3M yang dapat mengupload KTP pemohon');
+        }
+        $request->validate([
+            'ktp_pemohon' => 'required|image|mimes:jpeg,jpg,png|max:5120',
+        ]);
+        $ktpPath = $request->file('ktp_pemohon')->store('ktp_pemohon', 'public');
+        $dokumen = is_string($pengajuan->file_dokumen_pendukung) ? json_decode($pengajuan->file_dokumen_pendukung, true) : ($pengajuan->file_dokumen_pendukung ?? []);
+        $dokumen['ktp_pemohon'] = $ktpPath;
+        $pengajuan->file_dokumen_pendukung = json_encode($dokumen);
+        $pengajuan->save();
+        // Regenerate KTP Gabungan
+        app(\App\Http\Controllers\MultiSignatureController::class)->generateCombinedKtpDocument($pengajuan->id);
+        return back()->with('success', 'KTP Pemohon berhasil diupload dan KTP Gabungan diperbarui.');
+    }
+
+    /**
+     * Upload KTP Pemegang Hak Cipta (oleh Direktur)
+     */
+    public function uploadKtpPemegangHakCipta(Request $request, $id)
+    {
+        $pengajuan = PengajuanHki::findOrFail($id);
+        if (auth()->user()->role !== 'direktur') {
+            abort(403, 'Hanya direktur yang dapat mengupload KTP pemegang hak cipta');
+        }
+        $request->validate([
+            'ktp_pemegang_hak' => 'required|image|mimes:jpeg,jpg,png|max:5120',
+        ]);
+        $ktpPath = $request->file('ktp_pemegang_hak')->store('ktp_pemegang_hak', 'public');
+        $dokumen = is_string($pengajuan->file_dokumen_pendukung) ? json_decode($pengajuan->file_dokumen_pendukung, true) : ($pengajuan->file_dokumen_pendukung ?? []);
+        $dokumen['ktp_pemegang_hak'] = $ktpPath;
+        $pengajuan->file_dokumen_pendukung = json_encode($dokumen);
+        $pengajuan->save();
+        // Pastikan re-generate KTP Gabungan dan refresh JSON dokumen signed
+        try {
+            $combined = app(\App\Http\Controllers\MultiSignatureController::class)->generateCombinedKtpDocument($pengajuan->id);
+            if ($combined) {
+                // muat ulang dari DB agar view mendapat path terbaru
+                $pengajuan->refresh();
+                return back()->with('success', 'KTP Pemegang Hak Cipta berhasil diupload dan KTP Gabungan diperbarui.');
+            }
+        } catch (\Throwable $e) {
+            \Log::error('Regenerate KTP Gabungan gagal setelah upload direktur', ['pengajuan_id'=>$pengajuan->id, 'error'=>$e->getMessage()]);
+        }
+        return back()->with('error', 'KTP terupload, namun KTP Gabungan gagal diperbarui. Coba ulangi atau hubungi admin.');
     }
 } 

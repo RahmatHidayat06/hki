@@ -242,6 +242,76 @@
             </div>
             @endif
 
+            <!-- KTP Gabungan (Direktur dapat upload KTP Pemegang Hak) -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0">
+                    <h5 class="mb-0 fw-semibold text-dark">
+                        <i class="fas fa-id-card me-2 text-primary"></i>
+                        KTP Gabungan
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        @if(auth()->user()->role === 'admin')
+                            <div class="col-md-6">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <h6 class="fw-bold mb-0">KTP Pemohon</h6>
+                                        <form action="{{ route('pengajuan.uploadKtpPemohon', $pengajuan->id) }}" method="POST" enctype="multipart/form-data" class="d-inline-flex align-items-center gap-2">
+                                            @csrf
+                                            <input type="file" name="ktp_pemohon" accept="image/*" class="form-control form-control-sm" required>
+                                            <button type="submit" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-upload me-1"></i>Upload
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div class="mt-2 p-2 border text-center" style="min-height:180px;">
+                                        @php
+                                            $dokArr = is_string($dokumen ?? null) ? json_decode($dokumen, true) : ($dokumen ?? []);
+                                            $ktpPemohonPath = $dokArr['ktp_pemohon'] ?? null;
+                                        @endphp
+                                        @if($ktpPemohonPath)
+                                            <a href="{{ Storage::url($ktpPemohonPath) }}" target="_blank">Lihat KTP Pemohon</a>
+                                        @else
+                                            <div class="text-muted">KTP tidak tersedia</div>
+                                        @endif
+                                    </div>
+                                    <small class="text-muted">Setelah upload, KTP Gabungan akan otomatis diperbarui.</small>
+                                </div>
+                            </div>
+                        @endif
+                        @php $rightColClass = (auth()->user()->role === 'direktur') ? 'col-12' : 'col-md-6'; @endphp
+                        <div class="{{ $rightColClass }}">
+                            <div class="border rounded p-3 h-100">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <h6 class="fw-bold mb-0">KTP Pemegang Hak Cipta</h6>
+                                    @if(auth()->user()->role === 'direktur')
+                                        <form action="{{ route('pengajuan.uploadKtpPemegangHak', $pengajuan->id) }}" method="POST" enctype="multipart/form-data" class="d-inline-flex align-items-center gap-2 flex-wrap w-100" style="max-width: 520px;">
+                                            @csrf
+                                            <input type="file" name="ktp_pemegang_hak" accept="image/*" class="form-control form-control-sm" style="min-width:300px; width:100%;" required>
+                                            <button type="submit" class="btn btn-primary btn-sm mt-2 mt-md-0">
+                                                <i class="fas fa-upload me-1"></i>Upload
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                                <div class="mt-2 p-2 border text-center" style="min-height:180px; min-width:320px;">
+                                    @php
+                                        $ktpPemegangPath = $dokArr['ktp_pemegang_hak'] ?? null;
+                                    @endphp
+                                    @if($ktpPemegangPath)
+                                        <a href="{{ Storage::url($ktpPemegangPath) }}" target="_blank">Lihat KTP Pemegang Hak</a>
+                                    @else
+                                        <div class="text-muted">KTP tidak tersedia</div>
+                                    @endif
+                                </div>
+                                <small class="text-muted">Setelah upload, KTP Gabungan akan otomatis diperbarui.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Dokumen yang Diupload -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-gradient-info text-white border-0">
@@ -344,8 +414,20 @@
                 </div>
                 <div class="card-body p-4">
                     @php
-                        $pengalihanSigned = isset($dokumen['overlays']['surat_pengalihan']) && !empty($dokumen['overlays']['surat_pengalihan']);
-                        $pernyataanSigned = isset($dokumen['overlays']['surat_pernyataan']) && !empty($dokumen['overlays']['surat_pernyataan']);
+                        // Status 'Ditandatangani' untuk panel ini harus merepresentasikan TANDA TANGAN DIREKTUR,
+                        // bukan overlay milik pencipta. Cek hanya overlay yang memiliki flag is_direktur=true.
+                        $pengalihanSigned = false;
+                        if(isset($dokumen['overlays']['surat_pengalihan']) && is_array($dokumen['overlays']['surat_pengalihan'])){
+                            foreach($dokumen['overlays']['surat_pengalihan'] as $ov){
+                                if(isset($ov['is_direktur']) && $ov['is_direktur']){ $pengalihanSigned = true; break; }
+                            }
+                        }
+                        $pernyataanSigned = false;
+                        if(isset($dokumen['overlays']['surat_pernyataan']) && is_array($dokumen['overlays']['surat_pernyataan'])){
+                            foreach($dokumen['overlays']['surat_pernyataan'] as $ov){
+                                if(isset($ov['is_direktur']) && $ov['is_direktur']){ $pernyataanSigned = true; break; }
+                            }
+                        }
                         $allSigned = $pengalihanSigned && $pernyataanSigned;
                     @endphp
                     
@@ -735,6 +817,24 @@ code {
 <script>
 // Custom approval logic
 document.addEventListener('DOMContentLoaded', function(){
+    // Tampilkan alert sukses/error (termasuk setelah upload KTP)
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil',
+            text: @json(session('success')),
+            confirmButtonColor: '#28a745'
+        });
+    @endif
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal',
+            text: @json(session('error')),
+            confirmButtonColor: '#dc3545'
+        });
+    @endif
+
     const approveBtn = document.getElementById('approveBtn');
     if(!approveBtn) return;
     

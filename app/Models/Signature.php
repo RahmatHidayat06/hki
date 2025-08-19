@@ -24,7 +24,12 @@ class Signature extends Model
         'signed_by',
         'status',
         'rejection_reason',
-        'signature_token'
+        'signature_token',
+        'page',
+        'x_percent',
+        'y_percent',
+        'width_percent',
+        'height_percent'
     ];
 
     protected $casts = [
@@ -99,7 +104,7 @@ class Signature extends Model
                 'nama_pencipta' => $pencipta['nama'],
                 'email_pencipta' => $pencipta['email'] ?? null,
                 'nama_ttd' => $pencipta['nama_ttd'] ?? $pencipta['nama'],
-                'posisi' => $pencipta['posisi'] ?? 'kanan',
+                'posisi' => $pencipta['posisi'] ?? 'kiri',
                 'signature_token' => self::generateToken(),
                 'status' => 'pending'
             ]);

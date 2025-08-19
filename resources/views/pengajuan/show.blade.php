@@ -295,33 +295,59 @@
     </div>
     <div class="card-body p-4">
         <div class="row g-3">
+                        @php
+                            $dokumen = is_string($pengajuan->file_dokumen_pendukung) ? json_decode($pengajuan->file_dokumen_pendukung, true) : ($pengajuan->file_dokumen_pendukung ?? []);
+                        @endphp
             @foreach($documents as $field => $docInfo)
                 <div class="col-md-6">
-                    <div class="border rounded-3 p-3 h-100 
-                        @if($docInfo['file_info'] && $docInfo['file_info']['exists'])
-                            border-success bg-success bg-opacity-10
-                        @else
-                            border-danger bg-danger bg-opacity-10
-                        @endif">
+                                <div class="border rounded-3 p-3 h-100 {{ $docInfo['file_info'] ? 'border-success bg-success bg-opacity-10' : 'border-danger bg-danger bg-opacity-10' }}">
                         <div class="d-flex align-items-center mb-2">
-                            <i class="{{ $docInfo['icon'] ?? 'fas fa-file' }} text-{{ $docInfo['color'] ?? 'secondary' }} fs-5 me-2"></i>
-                            <h6 class="mb-0 fw-medium">{{ $docInfo['label'] ?? ucfirst(str_replace('_',' ',$field)) }}</h6>
+                                        <i class="{{ $docInfo['icon'] }} text-{{ $docInfo['color'] }} fs-5 me-2"></i>
+                                        <h6 class="mb-0 fw-medium">{{ $docInfo['label'] }}</h6>
                         </div>
-                        <p class="text-muted small mb-2">{{ $docInfo['description'] ?? '' }}</p>
-                        @if($docInfo['file_info'] && $docInfo['file_info']['exists'])
+                                    <p class="text-muted small mb-2">{{ $docInfo['description'] }}</p>
+
+                                    @php
+                                        $path = '';
+                                        if ($field === 'contoh_ciptaan') {
+                                            if (filter_var($pengajuan->file_karya, FILTER_VALIDATE_URL)) {
+                                                $path = $pengajuan->file_karya;
+                                            } else {
+                                                $path = $pengajuan->file_karya;
+                                            }
+                                        } else {
+                                            // Prioritaskan file signed jika ada
+                                            if (isset($dokumen['signed'][$field]) && $dokumen['signed'][$field]) {
+                                                $path = $dokumen['signed'][$field];
+                                            } else {
+                                                $path = $dokumen[$field] ?? '';
+                                            }
+                                        }
+                                        $path = ltrim($path, '/');
+                                        if (str_starts_with($path, 'storage/')) {
+                                            $path = substr($path, strlen('storage/'));
+                                        }
+                                        if (filter_var($path, FILTER_VALIDATE_URL)) {
+                                            $fileUrl = $path;
+                                        } else {
+                                            $fileUrl = $path ? Storage::url($path) : '';
+                                        }
+                                    @endphp
+                                    @if($docInfo['file_info'] || $fileUrl)
                             <div class="d-flex align-items-center justify-content-between">
                                 <span class="badge bg-success">
                                     <i class="fas fa-check me-1"></i>Tersedia
                                 </span>
                                 <div class="btn-group btn-group-sm">
-                                    <a href="{{ $docInfo['file_info']['url'] }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                <a href="{{ $fileUrl }}" target="_blank" class="btn btn-outline-primary btn-sm">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{{ $docInfo['file_info']['url'] }}" download class="btn btn-outline-success btn-sm">
+                                                <a href="{{ $fileUrl }}" download class="btn btn-outline-success btn-sm">
                                         <i class="fas fa-download"></i>
                                     </a>
                                 </div>
                             </div>
+
                             <div class="mt-2">
                                 <small class="text-muted">
                                     <i class="fas fa-file me-1"></i>{{ $docInfo['file_info']['filename'] ?? 'File' }}
@@ -329,19 +355,20 @@
                                         <i class="fas fa-weight me-1"></i>{{ $docInfo['file_info']['size_formatted'] ?? '-' }}
                                     </span>
                                 </small>
-                                @if(isset($docInfo['file_info']['is_signed']) && $docInfo['file_info']['is_signed'])
-                                    <div class="mt-1">
-                                        <span class="badge bg-info text-white">
-                                            <i class="fas fa-signature me-1"></i>Sudah Ditandatangani
-                                        </span>
-                                    </div>
-                                @elseif(isset($docInfo['file_info']['is_signed']) && !$docInfo['file_info']['is_signed'] && $field === 'form_permohonan_pendaftaran')
-                                    <div class="mt-1">
-                                        <span class="badge bg-warning text-dark">
-                                            <i class="fas fa-exclamation-triangle me-1"></i>Belum Ditandatangani
-                                        </span>
-                                    </div>
-                                @endif
+                                            
+                    @if(isset($dokumen['signed'][$field]) && $dokumen['signed'][$field])
+                        <div class="mt-1">
+                            <span class="badge bg-info text-white">
+                                <i class="fas fa-signature me-1"></i>Sudah Ditandatangani
+                            </span>
+                        </div>
+                    @elseif(in_array($field, ['form_permohonan_pendaftaran', 'surat_pengalihan']))
+                        <div class="mt-1">
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Belum Ditandatangani
+                            </span>
+                        </div>
+                    @endif
                             </div>
                         @else
                             <span class="badge bg-danger">
@@ -351,76 +378,77 @@
                     </div>
                 </div>
             @endforeach
+                        
+                    </div>
         </div>
     </div>
-</div>            </div>
                         </div>
         
         <!-- Right Column -->
         <div class="col-lg-4">
-            <!-- Status Pengajuan -->
-            <div class="card border-0 shadow-sm mb-4 order-lg-1">
-                <div class="card-header bg-light border-0 py-3">
-                    <h5 class="mb-0 fw-semibold text-dark">
-                        <i class="fas fa-info-circle text-primary me-2"></i>Status Pengajuan
-                    </h5>
-                        </div>
-                <div class="card-body p-4">
-                    <div class="status-timeline">
-                        <!-- Status Badge -->
-                        <div class="text-center mb-4">
-                            @switch($pengajuan->status)
-                                @case('menunggu_validasi_direktur')
-                                    <span class="badge bg-warning text-dark fs-6 px-4 py-3">
-                                        <i class="fas fa-clock me-2"></i>Menunggu Validasi
-                                    </span>
-                                    @break
-                                @case('divalidasi_sedang_diproses')
-                                    <span class="badge bg-success fs-6 px-4 py-3">
-                                        <i class="fas fa-check-circle me-2"></i>Divalidasi & Sedang Diproses
-                                    </span>
-                                    @break
-                                @case('ditolak')
-                                    <span class="badge bg-danger fs-6 px-4 py-3">
-                                        <i class="fas fa-times-circle me-2"></i>Ditolak
-                                    </span>
-                                    @break
-                                @case('menunggu_pembayaran')
-                                    <span class="badge bg-info fs-6 px-4 py-3">
-                                        <i class="fas fa-credit-card me-2"></i>Menunggu Pembayaran
-                                    </span>
-                                    @break
-                                @case('menunggu_verifikasi_pembayaran')
-                                    <span class="badge bg-warning text-dark fs-6 px-4 py-3">
-                                        <i class="fas fa-hourglass-half me-2"></i>Menunggu Verifikasi
-                                    </span>
-                                    @break
-                                @case('selesai')
-                                    <span class="badge bg-success fs-6 px-4 py-3">
-                                        <i class="fas fa-medal me-2"></i>Selesai
-                                    </span>
-                                    @break
-                                @case('menunggu_tanda_tangan')
-                                    <span class="badge bg-warning text-dark fs-6 px-4 py-3">
-                                        <i class="fas fa-pen-nib me-2"></i>Menunggu Tanda Tangan
-                                    </span>
-                                    @break
-                                @default
-                                    <span class="badge bg-secondary fs-6 px-4 py-3">
-                                        <i class="fas fa-question-circle me-2"></i>{{ ucfirst(str_replace('_', ' ', $pengajuan->status)) }}
-                                    </span>
-                            @endswitch
-                        </div>
-
-                        <!-- Timeline -->
-                        <div class="timeline">
-                            <div class="timeline-item {{ $pengajuan->created_at ? 'active' : '' }}">
-                                <div class="timeline-marker bg-primary"></div>
-                                <div class="timeline-content">
-                                    <h6 class="fw-semibold mb-1">Pengajuan Dibuat</h6>
-                                    <small class="text-muted">{{ $pengajuan->created_at ? $pengajuan->created_at->format('d M Y, H:i') : '-' }}</small>
-                        </div>
+                <!-- Status Pengajuan -->
+                <div class="card border-0 shadow-sm mb-4 order-lg-1">
+                    <div class="card-header bg-light border-0 py-3">
+                        <h5 class="mb-0 fw-semibold text-dark">
+                            <i class="fas fa-info-circle text-primary me-2"></i>Status Pengajuan
+                        </h5>
                     </div>
+                    <div class="card-body p-4">
+                        <div class="status-timeline">
+                            <!-- Status Badge -->
+                            <div class="text-center mb-4">
+                                @switch($pengajuan->status)
+                                    @case('menunggu_validasi_direktur')
+                                        <span class="badge bg-warning text-dark fs-6 px-4 py-3">
+                                            <i class="fas fa-clock me-2"></i>Menunggu Validasi
+                                        </span>
+                                        @break
+                                    @case('divalidasi_sedang_diproses')
+                                        <span class="badge bg-success fs-6 px-4 py-3">
+                                            <i class="fas fa-check-circle me-2"></i>Divalidasi & Sedang Diproses
+                                        </span>
+                                        @break
+                                    @case('ditolak')
+                                        <span class="badge bg-danger fs-6 px-4 py-3">
+                                            <i class="fas fa-times-circle me-2"></i>Ditolak
+                                        </span>
+                                        @break
+                                    @case('menunggu_pembayaran')
+                                        <span class="badge bg-info fs-6 px-4 py-3">
+                                            <i class="fas fa-credit-card me-2"></i>Menunggu Pembayaran
+                                        </span>
+                                        @break
+                                    @case('menunggu_verifikasi_pembayaran')
+                                        <span class="badge bg-warning text-dark fs-6 px-4 py-3">
+                                            <i class="fas fa-hourglass-half me-2"></i>Menunggu Verifikasi
+                                        </span>
+                                        @break
+                                    @case('selesai')
+                                        <span class="badge bg-success fs-6 px-4 py-3">
+                                            <i class="fas fa-medal me-2"></i>Selesai
+                                        </span>
+                                        @break
+                                    @case('menunggu_tanda_tangan')
+                                        <span class="badge bg-warning text-dark fs-6 px-4 py-3">
+                                            <i class="fas fa-pen-nib me-2"></i>Menunggu Tanda Tangan
+                                        </span>
+                                        @break
+                                    @default
+                                        <span class="badge bg-secondary fs-6 px-4 py-3">
+                                            <i class="fas fa-question-circle me-2"></i>{{ ucfirst(str_replace('_', ' ', $pengajuan->status)) }}
+                                        </span>
+                                @endswitch
+                            </div>
+
+                            <!-- Timeline -->
+                            <div class="timeline">
+                                <div class="timeline-item {{ $pengajuan->created_at ? 'active' : '' }}">
+                                    <div class="timeline-marker bg-primary"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="fw-semibold mb-1">Pengajuan Dibuat</h6>
+                                        <small class="text-muted">{{ $pengajuan->created_at ? $pengajuan->created_at->format('d M Y, H:i') : '-' }}</small>
+                                </div>
+                            </div>
                             
                             <div class="timeline-item {{ in_array($pengajuan->status, ['divalidasi_sedang_diproses', 'menunggu_pembayaran', 'menunggu_verifikasi_pembayaran', 'selesai']) ? 'active' : '' }}">
                                 <div class="timeline-marker {{ in_array($pengajuan->status, ['divalidasi_sedang_diproses', 'menunggu_pembayaran', 'menunggu_verifikasi_pembayaran', 'selesai']) ? 'bg-success' : 'bg-light' }}"></div>
@@ -444,72 +472,137 @@
                                     <h6 class="fw-semibold mb-1">Selesai</h6>
                                     <small class="text-muted">{{ $pengajuan->status === 'selesai' ? 'Sertifikat tersedia' : 'Belum selesai' }}</small>
                                 </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Panel Aksi -->
-            @php
-                $dokumen = is_string($pengajuan->file_dokumen_pendukung) ? json_decode($pengajuan->file_dokumen_pendukung, true) : ($pengajuan->file_dokumen_pendukung ?? []);
-                $semuaDokumenSudahTtd = $pengajuan->allSignaturesSigned();
-            @endphp
-            <div class="card mb-4">
-                <div class="card-header bg-light fw-bold d-flex align-items-center justify-content-between">
-                    <span>Panel Aksi</span>
-                    @if($semuaDokumenSudahTtd)
-                        <span class="badge bg-success ms-2">Lengkap</span>
-                    @endif
-                </div>
-                <div class="card-body d-flex flex-column gap-2">
-                    <a href="{{ route('tracking.show', $pengajuan->id) }}" class="btn btn-outline-primary w-100">
-                        <i class="fas fa-route me-1"></i> Tracking Status
-                    </a>
-                    <a href="{{ route('signatures.index', $pengajuan->id) }}" class="btn btn-outline-warning w-100">
-                        <i class="fas fa-file-signature me-1"></i> Tanda Tangan Surat Pengalihan & Upload KTP
-                    </a>
-                    <a href="{{ route('pengajuan.signature.form', $pengajuan->id) }}" class="btn btn-outline-primary w-100">
-                        <i class="fas fa-file-signature me-1"></i> Tanda Tangan Form Permohonan Pendaftaran
-                    </a>
-                    @if($semuaDokumenSudahTtd)
-                        <form action="{{ route('pengajuan.konfirmasiSelesai', $pengajuan->id) }}" method="POST" class="mt-2">
-                            @csrf
-                            <button type="submit" class="btn btn-success w-100">
+                <!-- Panel Aksi -->
+                @php
+                    $dokumen = is_string($pengajuan->file_dokumen_pendukung) ? json_decode($pengajuan->file_dokumen_pendukung, true) : ($pengajuan->file_dokumen_pendukung ?? []);
+                    $semuaDokumenSudahTtd = $pengajuan->allSignaturesSigned();
+                @endphp
+                <div class="card mb-4">
+                    <div class="card-header bg-light fw-bold d-flex align-items-center justify-content-between">
+                        <span>Panel Aksi</span>
+                        @if($semuaDokumenSudahTtd)
+                            <span class="badge bg-success ms-2">Lengkap</span>
+                        @endif
+                    </div>
+                    <div class="card-body d-flex flex-column gap-2">
+                        <a href="{{ route('tracking.show', $pengajuan->id) }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-route me-1"></i> Tracking Status
+                        </a>
+                        @php
+                            $docsJson = is_string($pengajuan->file_dokumen_pendukung)
+                                ? json_decode($pengajuan->file_dokumen_pendukung, true)
+                                : ($pengajuan->file_dokumen_pendukung ?? []);
+                            $sudahTtdPengalihan = !empty($docsJson['signed']['surat_pengalihan']);
+                            $sudahTtdForm = !empty($docsJson['signed']['form_permohonan_pendaftaran']);
+                        @endphp
+
+                        <a href="{{ $sudahTtdPengalihan ? 'javascript:void(0)' : route('signatures.index', $pengajuan->id) }}" 
+                           class="btn {{ $sudahTtdPengalihan ? 'btn-secondary disabled' : 'btn-outline-warning' }} w-100"
+                           @if($sudahTtdPengalihan) onclick="Swal.fire({icon:'info',title:'Sudah Dilakukan',text:'Tanda Tangan Surat Pengalihan & Upload KTP sudah dilakukan dan hanya bisa 1 kali.'});" @endif>
+                            <i class="fas fa-file-signature me-1"></i> Tanda Tangan Surat Pengalihan & Upload KTP
+                        </a>
+                        <a href="{{ $sudahTtdForm ? 'javascript:void(0)' : route('pengajuan.signature.form', $pengajuan->id) }}" 
+                           class="btn {{ $sudahTtdForm ? 'btn-secondary disabled' : 'btn-outline-primary' }} w-100"
+                           @if($sudahTtdForm) onclick="Swal.fire({icon:'info',title:'Sudah Dilakukan',text:'Tanda Tangan Form Permohonan Pendaftaran sudah dilakukan dan hanya bisa 1 kali.'});" @endif>
+                            <i class="fas fa-file-signature me-1"></i> Tanda Tangan Form Permohonan Pendaftaran
+                        </a>
+                        @if($semuaDokumenSudahTtd && !in_array($pengajuan->status, ['menunggu_validasi_direktur','divalidasi_sedang_diproses','menunggu_pembayaran','menunggu_verifikasi_pembayaran','selesai','ditolak']))
+                            <form id="form-konfirmasi-kirim" action="{{ route('pengajuan.konfirmasiSelesai', $pengajuan->id) }}" method="POST" class="mt-2">
+                                @csrf
+                                <button type="submit" class="btn btn-success w-100" id="btn-konfirmasi-kirim">
+                                    <i class="fas fa-paper-plane me-1"></i>Konfirmasi & Kirim ke Direktur
+                                </button>
+                            </form>
+                        @elseif(!$semuaDokumenSudahTtd)
+                            <button type="button" class="btn btn-success w-100 mt-2" onclick="Swal.fire({icon:'info',title:'Belum Lengkap',text:'Silakan selesaikan tanda tangan dokumen terlebih dahulu sebelum mengirim ke Direktur.'});">
                                 <i class="fas fa-paper-plane me-1"></i>Konfirmasi & Kirim ke Direktur
                             </button>
-                        </form>
-                    @endif
-                    <a href="{{ route('pengajuan.index') }}" class="btn btn-outline-secondary w-100">
-                        <i class="fas fa-arrow-left me-1"></i> Kembali ke Daftar
-                    </a>
-                </div>
-            </div>
-
-            <!-- Informasi Tambahan -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light border-0 py-3">
-                    <h5 class="mb-0 fw-semibold text-dark">
-                        <i class="fas fa-info text-info me-2"></i>Informasi Tambahan
-                    </h5>
-                        </div>
-                <div class="card-body p-4">
-                    <div class="info-item mb-3">
-                        <label class="form-label text-muted small fw-medium">Nomor Pengajuan</label>
-                        <p class="mb-0 fw-bold text-primary">{{ $pengajuan->nomor_pengajuan ?? 'Belum tersedia' }}</p>
-                                </div>
-                    <div class="info-item mb-3">
-                        <label class="form-label text-muted small fw-medium">Tanggal Pengajuan</label>
-                        <p class="mb-0">{{ $pengajuan->tanggal_pengajuan ? $pengajuan->tanggal_pengajuan->format('d M Y, H:i') : '-' }}</p>
-                            </div>
-                    @if($pengajuan->catatan_admin)
-                    <div class="info-item">
-                        <label class="form-label text-muted small fw-medium">Catatan Admin</label>
-                        <div class="p-3 bg-light rounded-3">
-                            <p class="mb-0 small">{{ $pengajuan->catatan_admin }}</p>
-                        </div>
+                        @else
+                            <button type="button" class="btn btn-secondary w-100 mt-2" onclick="Swal.fire({icon:'info',title:'Sudah Dikirim',text:'Pengajuan sudah dikirim dan tidak bisa dikirim ulang.'});" disabled>
+                                <i class="fas fa-paper-plane me-1"></i>Konfirmasi & Kirim ke Direktur
+                            </button>
+                        @endif
+                        <a href="{{ route('pengajuan.index') }}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-arrow-left me-1"></i> Kembali ke Daftar
+                        </a>
                     </div>
-                    @endif
+                </div>
+
+                @if($semuaDokumenSudahTtd)
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function(){
+                        const form = document.getElementById('form-konfirmasi-kirim');
+                        const btn = document.getElementById('btn-konfirmasi-kirim');
+                        if(form && btn){
+                            btn.addEventListener('click', function(e){
+                                e.preventDefault();
+                                Swal.fire({
+                                    icon: 'question',
+                                    title: 'Kirim ke Direktur?',
+                                    text: 'Pastikan semua dokumen sudah benar. Tindakan ini akan mengirim pengajuan ke Direktur.',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Ya, kirim sekarang',
+                                    cancelButtonText: 'Batal',
+                                    customClass: { confirmButton: 'btn btn-success', cancelButton: 'btn btn-secondary ms-2' },
+                                    buttonsStyling: false
+                                }).then((result) => {
+                                    if(result.isConfirmed){
+                                        form.submit();
+                                    }
+                                });
+                            });
+                        }
+                    });
+                </script>
+                @endif
+
+                @if(session('success'))
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function(){
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Terkirim!',
+                            text: @json(session('success')),
+                            confirmButtonText: 'OK',
+                            customClass: { confirmButton: 'btn btn-primary' },
+                            buttonsStyling: false
+                        });
+                    });
+                </script>
+                @endif
+
+                <!-- Informasi Tambahan -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light border-0 py-3">
+                        <h5 class="mb-0 fw-semibold text-dark">
+                            <i class="fas fa-info text-info me-2"></i>Informasi Tambahan
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="info-item mb-3">
+                            <label class="form-label text-muted small fw-medium">Nomor Pengajuan</label>
+                            <p class="mb-0 fw-bold text-primary">{{ $pengajuan->nomor_pengajuan ?? 'Belum tersedia' }}</p>
+                        </div>
+                        <div class="info-item mb-3">
+                            <label class="form-label text-muted small fw-medium">Tanggal Pengajuan</label>
+                            <p class="mb-0">{{ $pengajuan->tanggal_pengajuan ? $pengajuan->tanggal_pengajuan->format('d M Y, H:i') : '-' }}</p>
+                        </div>
+                        @if($pengajuan->catatan_admin)
+                        <div class="info-item">
+                            <label class="form-label text-muted small fw-medium">Catatan Admin</label>
+                            <div class="p-3 bg-light rounded-3">
+                                <p class="mb-0 small">{{ $pengajuan->catatan_admin }}</p>
+                            </div>
+                        </div>
+                        @endif
                 </div>
             </div>
         </div>
@@ -604,5 +697,21 @@ function copyBilling(code) {
     });
 }
 </script>
+
+@if(session('success_signature_permohonan'))
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: @json(session('success_signature_permohonan')),
+                confirmButtonText: 'OK',
+                customClass: { confirmButton: 'btn btn-primary' },
+                buttonsStyling: false
+            });
+        });
+    </script>
+@endif
 
 @endsection 

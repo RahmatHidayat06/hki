@@ -420,9 +420,6 @@
                             <a href="{{ route('pengajuan.index') }}" class="nav-link nav-sub-link{{ request()->routeIs('pengajuan.index') ? ' active' : '' }}">
                                 <i class="fas fa-list me-2" style="font-size: 0.8rem;"></i> Daftar Ciptaan
                             </a>
-                            <a href="{{ route('draft.index') }}" class="nav-link nav-sub-link{{ request()->routeIs('draft.index') ? ' active' : '' }}">
-                                <i class="fas fa-file-alt me-2" style="font-size: 0.8rem;"></i> Daftar Ciptaan (Draft)
-                            </a>
                         </div>
                     </div>
                 </div>
@@ -683,6 +680,29 @@
             
             // Initialize on page load
             initializeSidebar();
+        });
+    </script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: @json(session('success')),
+                    confirmButtonText: 'OK'
+                });
+            @endif
+            @if(session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: @json(session('error')),
+                    confirmButtonText: 'OK'
+                });
+            @endif
         });
     </script>
     

@@ -601,6 +601,12 @@
 </style>
 
 <script>
+// Set CSRF token for all jQuery AJAX requests
+$.ajaxSetup({
+    headers: {
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    }
+});
 $(function() {
     // Global variables using window object to avoid linter conflicts
     window.dragContainer = $("#drag-container");
@@ -1003,10 +1009,10 @@ $(function() {
                         title: 'Berhasil!', 
                         html: messageHtml,
                         showConfirmButton: true,
-                        confirmButtonText: 'Lanjutkan ke Validasi',
+                        confirmButtonText: 'Kembali ke Daftar Persetujuan',
                         timer: 5000
                     }).then(function() { 
-                        window.location.href = '{{ route("persetujuan.validation.wizard", $pengajuan->id) }}'; 
+                        window.location.href = '{{ route("persetujuan.index") }}'; 
                     });
                 },
             error: function(xhr) { 

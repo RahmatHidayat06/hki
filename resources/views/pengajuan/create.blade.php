@@ -139,7 +139,6 @@
                                             <button type="button" class="btn btn-primary next-section" data-next="data-pencipta">
                                                 Selanjutnya <i class="fas fa-arrow-right ms-2"></i>
                                             </button>
-                                            <button type="submit" name="save_as_draft" value="1" class="btn btn-secondary ms-2" formnovalidate>Simpan sebagai Draft</button>
                                         </div>
                                     </div>
                                 </div>
@@ -171,7 +170,6 @@
                                             <button type="button" class="btn btn-primary next-section" data-next="detail-surat">
                                                 Selanjutnya <i class="fas fa-arrow-right ms-2"></i>
                                             </button>
-                                            <button type="submit" name="save_as_draft" value="1" class="btn btn-secondary ms-2" formnovalidate>Simpan sebagai Draft</button>
                                         </div>
                                     </div>
                                 </div>
@@ -241,7 +239,6 @@
                                             <button type="button" class="btn btn-primary next-section" data-next="dokumen">
                                                 Selanjutnya <i class="fas fa-arrow-right ms-2"></i>
                                             </button>
-                                            <button type="submit" name="save_as_draft" value="1" class="btn btn-secondary ms-2" formnovalidate>Simpan sebagai Draft</button>
                                         </div>
                                     </div>
                                 </div>
@@ -332,10 +329,6 @@
                                                 <i class="fas fa-arrow-left me-2"></i> Sebelumnya
                                             </button>
                                             <div>
-                                                <button type="submit" name="action" value="update" class="btn btn-secondary" id="btn-save-draft" formnovalidate>
-                                                    <span class="spinner-border spinner-border-sm d-none" id="spinner-draft" role="status" aria-hidden="true"></span>
-                                                    Simpan sebagai Draft
-                                                </button>
                                                 <button type="submit" name="action" value="submit" class="btn btn-primary ms-2" id="btn-submit">
                                                     <span class="spinner-border spinner-border-sm d-none" id="spinner-submit" role="status" aria-hidden="true"></span>
                                                     <i class="fas fa-magic me-1"></i>Kirim (dengan Auto-Generate Surat)

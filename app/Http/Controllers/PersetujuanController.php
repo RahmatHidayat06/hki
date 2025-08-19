@@ -28,8 +28,8 @@ class PersetujuanController extends Controller
 
     public function index(Request $request): View
     {
-        $query = PengajuanHki::with('user')
-            ->whereNotIn('status', ['draft']); // Exclude draft from director view
+        // Base query
+        $query = PengajuanHki::with('user');
         
         // Search functionality
         if ($request->filled('search')) {
@@ -42,9 +42,14 @@ class PersetujuanController extends Controller
         }
         
         // Status filter
+        // Catatan: jika parameter status diberikan, gunakan itu.
+        // Jika tidak, default ke 'menunggu_validasi_direktur'.
         if ($request->filled('status')) {
             $status = $request->get('status');
             $query->where('status', $status);
+        } else {
+            // Default: tampilkan yang menunggu dan yang sudah divalidasi (sedang diproses)
+            $query->whereIn('status', ['menunggu_validasi_direktur', 'divalidasi_sedang_diproses']);
         }
         
         // Date filter
@@ -73,13 +78,13 @@ class PersetujuanController extends Controller
         
         // Enhanced statistics
         $stats = [
-            'total' => PengajuanHki::whereNotIn('status', ['draft'])->count(),
+            'total' => PengajuanHki::whereIn('status', ['menunggu_validasi_direktur', 'divalidasi_sedang_diproses'])->count(),
             'pending' => PengajuanHki::where('status', 'menunggu_validasi_direktur')->count(),
             'approved' => PengajuanHki::where('status', 'divalidasi_sedang_diproses')->count(),
             'rejected' => PengajuanHki::where('status', 'ditolak')->count(),
-            'today' => PengajuanHki::whereDate('created_at', today())->whereNotIn('status', ['draft'])->count(),
-            'this_week' => PengajuanHki::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->whereNotIn('status', ['draft'])->count(),
-            'this_month' => PengajuanHki::whereMonth('created_at', now()->month)->whereNotIn('status', ['draft'])->count(),
+            'today' => PengajuanHki::whereDate('created_at', today())->whereIn('status', ['menunggu_validasi_direktur', 'divalidasi_sedang_diproses'])->count(),
+            'this_week' => PengajuanHki::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->whereIn('status', ['menunggu_validasi_direktur', 'divalidasi_sedang_diproses'])->count(),
+            'this_month' => PengajuanHki::whereMonth('created_at', now()->month)->whereIn('status', ['menunggu_validasi_direktur', 'divalidasi_sedang_diproses'])->count(),
         ];
         
         return view('persetujuan.index', compact('pengajuans', 'stats'));
@@ -271,57 +276,24 @@ class PersetujuanController extends Controller
 
             // Merge dengan existing overlays (pencipta signatures) jika ada
             $existingOverlays = $dokumenJson['overlays'][$documentType] ?? [];
-            
-            // Check if this is direktur adding signature - add it to the correct position
-            $direkturOverlays = [];
-            foreach ($normalizedOverlays as $overlay) {
-                if ($overlay['type'] === 'signature') {
-                    // Check if this is direktur signature by checking if current user is direktur
-                    if (auth()->user()->role === 'direktur') {
-                        // Position direktur signature based on document type
-                        if ($documentType === 'surat_pengalihan') {
-                            // Position in "Pemegang Hak Cipta" area on left side
-                        $direkturOverlays[] = [
-                            'type' => 'signature',
-                            'url' => $overlay['url'],
-                            'page' => 1,
-                            'x_percent' => 25.0, // Left side for "Pemegang Hak Cipta"
-                            'y_percent' => 68.0, // Above the director name
-                                'width_percent' => 15.0,
-                                'height_percent' => 3.5,
-                                'is_direktur' => true // Mark as direktur signature
-                            ];
-                        } elseif ($documentType === 'surat_pernyataan') {
-                            // Position in signature area at bottom right
-                            $direkturOverlays[] = [
-                                'type' => 'signature',
-                                'url' => $overlay['url'],
-                                'page' => 1,
-                                'x_percent' => 70.0, // Right side for signature block
-                                'y_percent' => 82.0, // Above the director name in signature section
-                                'width_percent' => 15.0,
-                                'height_percent' => 3.5,
-                            'is_direktur' => true // Mark as direktur signature
-                        ];
-                        } else {
-                            $direkturOverlays[] = $overlay;
-                        }
-                    } else {
-                        $direkturOverlays[] = $overlay;
-                    }
-                } else {
-                    $direkturOverlays[] = $overlay;
-                }
-            }
 
-            // Merge existing pencipta overlays with direktur overlay
-            $allOverlays = array_merge($existingOverlays, $direkturOverlays);
+            // Direktur: jangan override koordinat dari editor. Hanya tandai overlay sebagai milik direktur
+            $submittedOverlays = array_map(function ($ov) {
+                if (auth()->user()->role === 'direktur') {
+                    $ov['is_direktur'] = true;
+                }
+                return $ov;
+            }, $normalizedOverlays);
+
+            // Gabungkan overlay yang sudah ada dengan yang baru
+            $allOverlays = array_merge($existingOverlays, $submittedOverlays);
             
             // Remove duplicates but keep both pencipta and direktur signatures
             $uniqueOverlays = [];
             foreach ($allOverlays as $overlay) {
                 $isDirektur = $overlay['is_direktur'] ?? false;
-                $key = ($isDirektur ? 'direktur_' : 'pencipta_') . $overlay['type'] . '_' . $overlay['page'];
+                $key = ($isDirektur ? 'direktur_' : 'pencipta_') . ($overlay['type'] ?? 'signature') . '_' . ($overlay['page'] ?? 1);
+                // Simpan overlay terakhir untuk key tsb (editor akan menulis posisi final yang benar)
                 $uniqueOverlays[$key] = $overlay;
             }
             
@@ -335,10 +307,8 @@ class PersetujuanController extends Controller
             $pdfSigner = new PdfSigningController();
             $signedPath = $pdfSigner->signPdf($pengajuan, $documentType);
 
-            // Check if director signed all required documents
-            if (auth()->user()->role === 'direktur') {
-                $this->checkDirectorSignatureCompletion($pengajuan);
-            }
+            // Status tidak diubah otomatis saat tanda tangan.
+            // Perubahan status akan dilakukan saat aksi Approve.
 
             // Clear caches so fresh data appears
             cache()->forget("persetujuan_show_{$pengajuan->id}");
@@ -447,7 +417,8 @@ class PersetujuanController extends Controller
         
         // If both documents are signed by director, update status
         if ($pengalihanSigned && $pernyataanSigned) {
-            $pengajuan->update(['status' => 'siap_serah_djki']);
+            // Gunakan status yang sudah ada di enum untuk menghindari SQLSTATE[01000] 1265 (data truncated)
+            $pengajuan->update(['status' => 'divalidasi_sedang_diproses']);
             $pengajuan->addTracking(
                 'director_signed_complete',
                 'Direktur Telah Menandatangani Semua Dokumen',

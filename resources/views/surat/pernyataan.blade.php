@@ -135,7 +135,7 @@
         <div class="signature-section">
             <div class="signature-block">
                 <div>
-                    Banjarmasin, {{ $tanggalSurat ? \Carbon\Carbon::parse($tanggalSurat)->translatedFormat('d F Y') : '……………………….' }}<br>
+                    Banjarmasin, {{ $tanggalSurat ?: '……………………….' }}<br>
                     Politeknik Negeri Banjarmasin
                 </div>
                 <div class="materai-text">Materai 10.000, -</div>

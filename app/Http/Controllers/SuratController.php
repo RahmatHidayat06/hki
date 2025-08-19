@@ -204,28 +204,40 @@ class SuratController extends Controller
     public function autoGenerateFormPermohonan(PengajuanHki $pengajuan)
     {
         try {
+            // Sertakan ttdPath jika tersedia (diambil dari user pemohon)
+            $pengusul = $pengajuan->user;
+            $ttdPath = ($pengusul && $pengusul->ttd_path)
+                ? storage_path('app/public/' . ltrim($pengusul->ttd_path, '/'))
+                : null;
+
             $data = [
                 'pengajuan' => $pengajuan,
+                'ttdPath' => $ttdPath,
             ];
 
-            $pdf = Pdf::loadView('surat.form-permohonan', $data)
+            // Gunakan view yang benar
+            $pdf = \PDF::loadView('surat.form_permohonan_pendaftaran', $data)
                 ->setPaper('a4', 'portrait')
-                ->setOptions(['defaultPaperSize' => 'a4', 'isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true, 'defaultFont' => 'times']);
+                ->setOptions([
+                    'defaultPaperSize' => 'a4',
+                    'isHtml5ParserEnabled' => true,
+                    'isRemoteEnabled' => true,
+                    'defaultFont' => 'times'
+                ]);
             
-            // Save to storage
+            // Save to storage (disk public)
             $fileName = 'form_permohonan_pendaftaran_' . $pengajuan->id . '_' . time() . '.pdf';
             $filePath = 'dokumen_form/' . $fileName;
+            \Storage::disk('public')->put($filePath, $pdf->output());
             
-            Storage::disk('public')->put($filePath, $pdf->output());
-            
-            Log::info('Auto-generated Form Permohonan Pendaftaran', [
+            \Log::info('Auto-generated Form Permohonan Pendaftaran', [
                 'pengajuan_id' => $pengajuan->id,
                 'file_path' => $filePath
             ]);
 
             return $filePath;
         } catch (\Exception $e) {
-            Log::error('Error auto-generating Form Permohonan Pendaftaran', [
+            \Log::error('Error auto-generating Form Permohonan Pendaftaran', [
                 'pengajuan_id' => $pengajuan->id,
                 'error' => $e->getMessage()
             ]);

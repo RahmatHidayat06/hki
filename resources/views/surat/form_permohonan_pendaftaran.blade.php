@@ -59,19 +59,13 @@
         .uraian-multiline {
             white-space: pre-line;
         }
-        .signature-section {
-            margin-top: 60px;
-            text-align: right;
-            margin-right: 30px;
-        }
-        .signature-box {
-            margin-top: 60px;
-            text-align: center;
-        }
-        .signature-name {
-            text-decoration: underline;
-            font-weight: bold;
-        }
+        .signature-section { margin-top: 60px; text-align: right; margin-right: 30px; }
+        .signature-wrapper { display: inline-block; text-align: center; min-width: 420px; }
+        .signature-meta { margin-bottom: 6px; }
+        .signature-role { margin-bottom: 32px; }
+        .signature-box { margin-top: 0; text-align: center; }
+        .signature-box img { display: inline-block; width: 130px; max-height: 65px; }
+        .signature-name { text-decoration: underline; font-weight: bold; margin-top: 36px; }
         .page-break {
             page-break-before: always;
         }
@@ -101,8 +95,8 @@
             </table>
         </div>
     @endfor
-    <div class="work-data-section page-break">
-        <div class="creator-title">V. Data Ciptaan</div>
+    <div class="work-data-section">
+        <div class="creator-title">{{ $roman[$jumlahPencipta] ?? ($jumlahPencipta + 1) }}. Data Ciptaan</div>
         <table class="data-table">
             <tr><td class="label">a.</td><td class="field">Jenis Ciptaan</td><td class="colon">:</td><td class="value">{{ $pengajuan->identitas_ciptaan ? ucfirst($pengajuan->identitas_ciptaan) : '………………………………………………………………………' }}</td></tr>
             <tr><td class="label">b.</td><td class="field">Sub Jenis Ciptaan</td><td class="colon">:</td><td class="value">{{ $pengajuan->sub_jenis_ciptaan ?? '………………………………………………………………………' }}</td></tr>
@@ -113,26 +107,23 @@
         </table>
     </div>
     <div class="signature-section">
-        {{ $pengajuan->kota_pertama_kali_diumumkan ?? 'Banjarmasin' }},
-        @if($pengajuan->tanggal_surat)
-            {{ \Carbon\Carbon::parse($pengajuan->tanggal_surat)->translatedFormat('d F Y') }}
-        @else
-            {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}
-        @endif
-        <br> Pemohon,
-        <div class="signature-box">
-    @if($pengajuan->ttd_path)
-        <img src="{{ asset($pengajuan->ttd_path) }}" alt="Tanda Tangan" style="width: 100px; max-height: 50px;">
-    @endif
-    <div class="signature-name">
-        ({{ $penciptaData->get(0)->nama ?? $pengajuan->user->nama_lengkap ?? $pengajuan->nama_pengusul ?? '…………………………………' }})
-    </div>
-</div>
-                
-                
-                
-                -width: 100px; max-height: 50px;">
-            @endif
+        <div class="signature-wrapper">
+            <div class="signature-meta">
+                {{ $pengajuan->kota_pertama_kali_diumumkan ?? 'Banjarmasin' }},
+                @if($pengajuan->tanggal_surat)
+                    {{ \Carbon\Carbon::parse($pengajuan->tanggal_surat)->translatedFormat('d F Y') }}
+                @else
+                    {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}
+                @endif
+            </div>
+            <div class="signature-role">Pemohon,</div>
+            <div class="signature-box">
+                @if(!empty($ttdPath) && file_exists($ttdPath))
+                    <img src="file://{{ $ttdPath }}" alt="Tanda Tangan">
+                @elseif(!empty($pengajuan->ttd_path))
+                    <img src="{{ asset(ltrim($pengajuan->ttd_path, '/')) }}" alt="Tanda Tangan">
+                @endif
+            </div>
             <div class="signature-name">
                 ({{ $penciptaData->get(0)->nama ?? $pengajuan->user->nama_lengkap ?? $pengajuan->nama_pengusul ?? '…………………………………' }})
             </div>

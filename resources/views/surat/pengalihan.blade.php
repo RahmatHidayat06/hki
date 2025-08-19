@@ -112,7 +112,7 @@
             flex: 1 1 auto;
             height: 60px; /* ruang tanda tangan ~3 baris */
         }
-        .ttd-nama { margin-top: 0; }
+        .ttd-nama { margin-top: 1.2rem; }
         /* Hapus garis horizontal jika ada */
         hr { display: none; }
     </style>
@@ -178,7 +178,7 @@
         </div>
         <div class="signature-section" style="position: fixed; left: 0; right: 0; bottom: 0px; width: 100%; background: white; padding-bottom: 0px;">
             <div class="signature-date">
-                Banjarmasin, {{ $tanggalSurat ? \Carbon\Carbon::parse($tanggalSurat)->translatedFormat('d F Y') : '…………………' }}
+                Banjarmasin, {{ $tanggalSurat ?: '…………………' }}
             </div>
             <div class="signature-grid">
                 <div class="signature-cell">
@@ -187,7 +187,7 @@
                     <div class="ttd-container">
                         <div class="ttd-signbox"></div>
                     </div>
-                    <div class="ttd-parent ttd-nama ttd-pemegang" style="margin-top: 1.5rem;">( Joni Riadi, SST, MT )</div>
+                    <div class="ttd-parent ttd-nama ttd-pemegang" style="margin-top: 2rem;">( Joni Riadi, SST, MT )</div>
                 </div>
                 <div class="signature-cell">
                     <div class="ttd-label">Pencipta I,</div>
@@ -195,7 +195,7 @@
                     <div class="ttd-materai">Materai 10.000</div>
                         <div class="ttd-signbox"></div>
                     </div>
-                    <div class="ttd-parent ttd-nama" style="margin-top: 1.5rem;">
+                    <div class="ttd-parent ttd-nama" style="margin-top: 2rem;">
                         @php $nama1 = $penciptaData[1]['nama'] ?? '';
                         @endphp
                         {{ $nama1 ? '( ' . $nama1 . ' )' : '(……………………………………………)'}}
@@ -222,9 +222,9 @@
                                     $namaI = $penciptaData[$i]['nama'] ?? '';
                                     $romawi = $romawiArr[$i-2] ?? $i;
                                 @endphp
-                                <td style="width:50%; text-align:center; vertical-align:top; padding-bottom: 6.5rem;">
+                                <td style="width:50%; text-align:left; vertical-align:top; padding-bottom: 6.5rem;">
                                     <div class="ttd-label">Pencipta {{ $romawi }},</div>
-                                    <div class="ttd-container">
+                                    <div class="ttd-container" style="justify-content: flex-start;">
                                     <div class="ttd-materai">Materai 10.000</div>
                                         <div class="ttd-signbox"></div>
                                     </div>

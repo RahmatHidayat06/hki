@@ -369,12 +369,34 @@
                                                     $isUrl = filter_var($fileInfo['url'], FILTER_VALIDATE_URL);
                                                     $cleanPath = $isUrl ? $fileInfo['url'] : ltrim(preg_replace('#^storage/#', '', $fileInfo['url']), '/');
                                                 @endphp
-                                                @if(isset($docInfo['file_info']['url']) && str_starts_with($docInfo['file_info']['url'], '/storage/'))
-                                                    <a href="{{ $docInfo['file_info']['url'] }}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fas fa-eye"></i> Lihat</a>
-                                                    <a href="{{ $docInfo['file_info']['url'] }}" download class="btn btn-outline-success btn-sm"><i class="fas fa-download"></i></a>
+                                                
+                                                {{-- Logika khusus untuk form permohonan --}}
+                                                @if($field === 'form_permohonan_pendaftaran')
+                                                    @if($fileInfo['is_signed'] ?? false)
+                                                        <a href="{{ route('admin.pengajuan.viewSignedForm', $pengajuan->id) }}" target="_blank" class="btn btn-outline-success btn-sm">
+                                                            <i class="fas fa-eye"></i> Lihat (Bertanda Tangan)
+                                                        </a>
+                                                    @else
+                                                        <a href="{{ Storage::url($cleanPath) }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                            <i class="fas fa-eye"></i> Lihat
+                                                        </a>
+                                                    @endif
+                                                    
+                                                    {{-- Download button --}}
+                                                    @if(isset($docInfo['file_info']['url']) && str_starts_with($docInfo['file_info']['url'], '/storage/'))
+                                                        <a href="{{ $docInfo['file_info']['url'] }}" download class="btn btn-outline-info btn-sm"><i class="fas fa-download"></i></a>
+                                                    @else
+                                                        <a href="{{ Storage::url($cleanPath) }}" download class="btn btn-outline-info btn-sm"><i class="fas fa-download"></i></a>
+                                                    @endif
                                                 @else
-                                                    <a href="{{ Storage::url($cleanPath) }}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fas fa-eye"></i> Lihat</a>
-                                                    <a href="{{ Storage::url($cleanPath) }}" download class="btn btn-outline-success btn-sm"><i class="fas fa-download"></i></a>
+                                                    {{-- Logika untuk dokumen lainnya --}}
+                                                    @if(isset($docInfo['file_info']['url']) && str_starts_with($docInfo['file_info']['url'], '/storage/'))
+                                                        <a href="{{ $docInfo['file_info']['url'] }}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fas fa-eye"></i> Lihat</a>
+                                                        <a href="{{ $docInfo['file_info']['url'] }}" download class="btn btn-outline-success btn-sm"><i class="fas fa-download"></i></a>
+                                                    @else
+                                                        <a href="{{ Storage::url($cleanPath) }}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fas fa-eye"></i> Lihat</a>
+                                                        <a href="{{ Storage::url($cleanPath) }}" download class="btn btn-outline-success btn-sm"><i class="fas fa-download"></i></a>
+                                                    @endif
                                                 @endif
                                             </div>
                                         </div>
@@ -390,8 +412,20 @@
 
                                         @if(($fileInfo['is_signed'] ?? false))
                                             <div class="mt-2">
-                                                <span class="badge bg-info text-white">
-                                                    <i class="fas fa-check-double me-1"></i>Sudah Ditandatangani
+                                                @if($field === 'form_permohonan_pendaftaran')
+                                                    <span class="badge bg-success text-white">
+                                                        <i class="fas fa-signature me-1"></i>Sudah Ditandatangani Pemohon
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-info text-white">
+                                                        <i class="fas fa-check-double me-1"></i>Sudah Ditandatangani
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        @elseif($field === 'form_permohonan_pendaftaran' && !empty($pengajuan->ttd_path))
+                                            <div class="mt-2">
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="fas fa-clock me-1"></i>Tanda Tangan Tersedia - Memproses PDF
                                                 </span>
                                             </div>
                                         @endif
@@ -407,245 +441,11 @@
                 </div>
             </div>
 
-            <!-- Baris 5: Status Overlay & Tanda Tangan Direktur -->
-                                    @if(in_array($pengajuan->status, ['divalidasi_sedang_diproses', 'menunggu_pembayaran', 'menunggu_verifikasi_pembayaran', 'selesai']))
-            <div class="row g-3 mb-4">
-                <div class="col-12">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-header bg-gradient-warning text-white border-0">
-                            <h5 class="mb-0 fw-semibold">
-                                <i class="fas fa-stamp me-2"></i>
-                                Status Overlay & Tanda Tangan Direktur
-                            </h5>
-                            <small class="opacity-75">Pembaruan surat yang telah diberi overlay dan ditandatangani</small>
-                        </div>
-                        <div class="card-body p-4">
-                            @php
-                                $hasOverlays = false;
-                                $overlayPengalihan = isset($dokumen['overlays']['surat_pengalihan']) ? $dokumen['overlays']['surat_pengalihan'] : [];
-                                $overlayPernyataan = isset($dokumen['overlays']['surat_pernyataan']) ? $dokumen['overlays']['surat_pernyataan'] : [];
-                                
-                                if(!empty($overlayPengalihan) || !empty($overlayPernyataan)) {
-                                    $hasOverlays = true;
-                                }
-                            @endphp
-
-                            @if($hasOverlays)
-                                <div class="row g-4">
-                                    <!-- Surat Pengalihan Overlay Status -->
-                                    @if(!empty($overlayPengalihan))
-                                    <div class="col-md-6">
-                                        <div class="overlay-status-card border rounded-3 p-3 bg-light">
-                                            <div class="d-flex align-items-center mb-3">
-                                                <div class="overlay-icon bg-info bg-opacity-10 rounded-3 p-2 me-3">
-                                                    <i class="fas fa-file-signature fa-2x text-info"></i>
-                                                </div>
-                                                <div>
-                                                    <h6 class="fw-bold mb-1">Surat Pengalihan Hak</h6>
-                                                    <small class="text-muted">Status overlay dan tanda tangan</small>
-                                                </div>
-                                            </div>
-
-                                            <!-- Overlay Information -->
-                                            <div class="overlay-info mb-3">
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <span class="fw-medium">Status Overlay:</span>
-                                                    <span class="badge bg-success">
-                                                        <i class="fas fa-check me-1"></i>{{ count($overlayPengalihan) }} Overlay Applied
-                                                    </span>
-                                                </div>
-                                                
-                                                @foreach($overlayPengalihan as $index => $overlay)
-                                                <div class="overlay-item border rounded-2 p-2 mb-2 bg-white">
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <small class="fw-medium text-dark">
-                                                                @if($overlay['type'] === 'signature')
-                                                                    <i class="fas fa-signature text-primary me-1"></i>Tanda Tangan
-                                                                @else
-                                                                    <i class="fas fa-stamp text-warning me-1"></i>Materai
-                                                                @endif
-                                                            </small>
-                                                            <br>
-                                                            <small class="text-muted">
-                                                                Posisi: {{ number_format($overlay['x_percent'] ?? 0, 1) }}%, {{ number_format($overlay['y_percent'] ?? 0, 1) }}%
-                                                            </small>
-                                                        </div>
-                                                        <small class="text-success fw-medium">Applied</small>
-                                                    </div>
-                                                </div>
-                                                @endforeach
-                                            </div>
-
-                                            <!-- Signed File Status -->
-                                            <div class="signed-status">
-                                                @php
-                                                    // Check signed pengalihan file existence
-                                                    $signedPengalihanExistsOverlay = false;
-                                                    if(is_array($dokumen) && isset($dokumen['signed']['surat_pengalihan'])) {
-                                                        $signedPath = $dokumen['signed']['surat_pengalihan'];
-                                                        $normalizedPath = ltrim($signedPath, '/');
-                                                        if (str_starts_with($normalizedPath, 'storage/')) {
-                                                            $normalizedPath = substr($normalizedPath, strlen('storage/'));
-                                                        }
-                                                        $signedPengalihanExistsOverlay = Storage::disk('public')->exists($normalizedPath);
-                                                    }
-                                                @endphp
-                                                @if($signedPengalihanExistsOverlay)
-                                                    <div class="d-flex justify-content-between align-items-center p-2 bg-success bg-opacity-10 rounded-2">
-                                                        <div>
-                                                            <small class="fw-medium text-success">
-                                                                <i class="fas fa-certificate me-1"></i>File Bertanda Tangan
-                                                            </small>
-                                                            <br>
-                                                            <small class="text-muted">Siap untuk diunduh</small>
-                                                        </div>
-                                                        <a href="{{ route('admin.pengajuan.suratPengalihanSigned', $pengajuan->id) }}" 
-                                                           class="btn btn-success btn-sm" target="_blank">
-                                                            <i class="fas fa-download me-1"></i>Download
-                                                        </a>
-                                                    </div>
-                                                @else
-                                                    <div class="d-flex justify-content-between align-items-center p-2 bg-warning bg-opacity-10 rounded-2">
-                                                        <div>
-                                                            <small class="fw-medium text-warning">
-                                                                <i class="fas fa-exclamation-triangle me-1"></i>File Signed Belum Tersedia
-                                                            </small>
-                                                            <br>
-                                                            <small class="text-muted">Overlay sudah diterapkan, menunggu proses finalisasi</small>
-                                                        </div>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                    @endif
-
-                                    <!-- Surat Pernyataan Overlay Status -->
-                                    @if(!empty($overlayPernyataan))
-                                    <div class="col-md-6">
-                                        <div class="overlay-status-card border rounded-3 p-3 bg-light">
-                                            <div class="d-flex align-items-center mb-3">
-                                                <div class="overlay-icon bg-warning bg-opacity-10 rounded-3 p-2 me-3">
-                                                    <i class="fas fa-file-contract fa-2x text-warning"></i>
-                                                </div>
-                                                <div>
-                                                    <h6 class="fw-bold mb-1">Surat Pernyataan</h6>
-                                                    <small class="text-muted">Status overlay dan tanda tangan</small>
-                                                </div>
-                                            </div>
-
-                                            <!-- Overlay Information -->
-                                            <div class="overlay-info mb-3">
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <span class="fw-medium">Status Overlay:</span>
-                                                    <span class="badge bg-success">
-                                                        <i class="fas fa-check me-1"></i>{{ count($overlayPernyataan) }} Overlay Applied
-                                                    </span>
-                                                </div>
-                                                
-                                                @foreach($overlayPernyataan as $index => $overlay)
-                                                <div class="overlay-item border rounded-2 p-2 mb-2 bg-white">
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <small class="fw-medium text-dark">
-                                                                @if($overlay['type'] === 'signature')
-                                                                    <i class="fas fa-signature text-primary me-1"></i>Tanda Tangan
-                                                                @else
-                                                                    <i class="fas fa-stamp text-warning me-1"></i>Materai
-                                                                @endif
-                                                            </small>
-                                                            <br>
-                                                            <small class="text-muted">
-                                                                Posisi: {{ number_format($overlay['x_percent'] ?? 0, 1) }}%, {{ number_format($overlay['y_percent'] ?? 0, 1) }}%
-                                                            </small>
-                                                        </div>
-                                                        <small class="text-success fw-medium">Applied</small>
-                                                    </div>
-                                                </div>
-                                        @endforeach
-                                            </div>
-
-                                            <!-- Signed File Status -->
-                                            <div class="signed-status">
-                                                @php
-                                                    // Check signed pernyataan file existence
-                                                    $signedPernyataanExistsOverlay = false;
-                                                    if(is_array($dokumen) && isset($dokumen['signed']['surat_pernyataan'])) {
-                                                        $signedPath = $dokumen['signed']['surat_pernyataan'];
-                                                        $normalizedPath = ltrim($signedPath, '/');
-                                                        if (str_starts_with($normalizedPath, 'storage/')) {
-                                                            $normalizedPath = substr($normalizedPath, strlen('storage/'));
-                                                        }
-                                                        $signedPernyataanExistsOverlay = Storage::disk('public')->exists($normalizedPath);
-                                                    }
-                                                @endphp
-                                                @if($signedPernyataanExistsOverlay)
-                                                    <div class="d-flex justify-content-between align-items-center p-2 bg-success bg-opacity-10 rounded-2">
-                                                        <div>
-                                                            <small class="fw-medium text-success">
-                                                                <i class="fas fa-certificate me-1"></i>File Bertanda Tangan
-                                                            </small>
-                                                            <br>
-                                                            <small class="text-muted">Siap untuk diunduh</small>
-                                                        </div>
-                                                        <a href="{{ route('admin.pengajuan.suratPernyataanSigned', $pengajuan->id) }}" 
-                                                           class="btn btn-warning btn-sm" target="_blank">
-                                                            <i class="fas fa-download me-1"></i>Download
-                                                        </a>
-                                                    </div>
-                                                @else
-                                                    <div class="d-flex justify-content-between align-items-center p-2 bg-warning bg-opacity-10 rounded-2">
-                                                        <div>
-                                                            <small class="fw-medium text-warning">
-                                                                <i class="fas fa-exclamation-triangle me-1"></i>File Signed Belum Tersedia
-                                                            </small>
-                                                            <br>
-                                                            <small class="text-muted">Overlay sudah diterapkan, menunggu proses finalisasi</small>
-                                                        </div>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                    @endif
-                                </div>
-
-                                <!-- Summary Information -->
-                                <div class="row mt-4">
-                                    <div class="col-12">
-                                        <div class="alert alert-info border-0 d-flex align-items-center">
-                                            <i class="fas fa-info-circle fa-2x me-3"></i>
-                                            <div>
-                                                <strong>Informasi Overlay:</strong>
-                                                <p class="mb-0">
-                                                    Direktur telah menerapkan overlay (tanda tangan dan/atau materai) pada dokumen. 
-                                                    File yang telah ditandatangani akan tersedia untuk diunduh setelah proses finalisasi selesai.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                @else
-                                <!-- No Overlays State -->
-                                <div class="text-center py-5">
-                                    <i class="fas fa-signature fa-4x text-muted mb-3"></i>
-                                    <h6 class="fw-medium text-muted mb-2">Belum Ada Overlay</h6>
-                                    <p class="text-muted mb-0">
-                                        Direktur belum menerapkan tanda tangan atau materai pada dokumen ini.
-                                        <br>Status pengajuan: <strong>{{ ucfirst(str_replace('_', ' ', $pengajuan->status)) }}</strong>
-                                    </p>
-                                </div>
-                                @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-                                @endif
+            <!-- Tutup kolom kiri sebelum kolom kanan -->
         </div>
-
+ 
         <!-- Right Column -->
-        <div class="col-lg-4 d-flex flex-column gap-4">
+        <div class="col-lg-4 d-flex flex-column gap-4 sticky-top" style="top: 90px;">
             <!-- Timeline Status -->
             <div class="card border-0 shadow-sm mb-4 order-lg-2">
                 <div class="card-header bg-light border-0 py-3">
@@ -655,238 +455,297 @@
                 </div>
                     <div class="card-body p-4">
                         <div class="timeline">
-                            <div class="timeline-item active">
-                                <div class="timeline-marker bg-primary"></div>
-                                <div class="timeline-content">
-                                    <h6 class="fw-semibold mb-1">Pengajuan Dibuat</h6>
-                                    <p class="text-muted small mb-0">{{ $pengajuan->created_at->format('d M Y, H:i') }}</p>
-                                </div>
-                            </div>
-
-                            <div class="timeline-item active">
-                                <div class="timeline-marker bg-info"></div>
-                                <div class="timeline-content">
-                                    <h6 class="fw-semibold mb-1">Pengajuan Diperbarui</h6>
-                                    <p class="text-muted small mb-0">{{ $pengajuan->updated_at->format('d M Y, H:i') }}</p>
-                                </div>
-                            </div>
-
-                            @if(in_array($pengajuan->status, ['divalidasi_sedang_diproses']))
-                            <div class="timeline-item active">
-                                <div class="timeline-marker bg-success"></div>
-                                <div class="timeline-content">
-                                    <h6 class="fw-semibold mb-1">Pengajuan Divalidasi & Sedang Diproses</h6>
-                                    <p class="text-muted small mb-0">{{ $pengajuan->tanggal_validasi ? $pengajuan->tanggal_validasi->format('d M Y, H:i') : $pengajuan->updated_at->format('d M Y, H:i') }}</p>
-                                    @if($pengajuan->catatan_admin)
-                                        <div class="mt-2 p-2 bg-success bg-opacity-10 rounded-2">
-                                            <small class="text-success">{{ $pengajuan->catatan_admin }}</small>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                            @elseif(in_array($pengajuan->status, ['menunggu_pembayaran', 'menunggu_verifikasi_pembayaran']))
-                            <div class="timeline-item active">
-                                <div class="timeline-marker bg-success"></div>
-                                <div class="timeline-content">
-                                    <h6 class="fw-semibold mb-1">Pengajuan Divalidasi & Sedang Diproses</h6>
-                                    <p class="text-muted small mb-0">{{ $pengajuan->tanggal_validasi ? $pengajuan->tanggal_validasi->format('d M Y, H:i') : $pengajuan->updated_at->format('d M Y, H:i') }}</p>
-                                </div>
-                            </div>
-                            <div class="timeline-item active">
-                                <div class="timeline-marker bg-warning"></div>
-                                <div class="timeline-content">
-                                    <h6 class="fw-semibold mb-1">{{ $pengajuan->status == 'menunggu_pembayaran' ? 'Menunggu Pembayaran' : 'Menunggu Verifikasi Pembayaran' }}</h6>
-                                    <p class="text-muted small mb-0">{{ $pengajuan->updated_at->format('d M Y, H:i') }}</p>
-                                </div>
-                            </div>
-                            @elseif($pengajuan->status == 'selesai')
-                            <div class="timeline-item active">
-                                <div class="timeline-marker bg-success"></div>
-                                <div class="timeline-content">
-                                    <h6 class="fw-semibold mb-1">Pengajuan Divalidasi & Sedang Diproses</h6>
-                                    <p class="text-muted small mb-0">{{ $pengajuan->tanggal_validasi ? $pengajuan->tanggal_validasi->format('d M Y, H:i') : $pengajuan->updated_at->format('d M Y, H:i') }}</p>
-                                </div>
-                            </div>
-                            <div class="timeline-item active">
-                                <div class="timeline-marker bg-primary"></div>
-                                <div class="timeline-content">
-                                    <h6 class="fw-semibold mb-1">Pembayaran Terverifikasi</h6>
-                                    <p class="text-muted small mb-0">{{ $pengajuan->updated_at->format('d M Y, H:i') }}</p>
-                                </div>
-                            </div>
-                            <div class="timeline-item active">
-                                <div class="timeline-marker bg-success"></div>
-                                <div class="timeline-content">
-                                    <h6 class="fw-semibold mb-1">Pengajuan Selesai</h6>
-                                    <p class="text-muted small mb-0">{{ $pengajuan->updated_at->format('d M Y, H:i') }}</p>
-                                </div>
-                            </div>
-                            @elseif($pengajuan->status == 'ditolak')
-                            <div class="timeline-item active">
-                                <div class="timeline-marker bg-danger"></div>
-                                <div class="timeline-content">
-                                    <h6 class="fw-semibold mb-1">Pengajuan Ditolak</h6>
-                                    <p class="text-muted small mb-0">{{ $pengajuan->updated_at->format('d M Y, H:i') }}</p>
-                                    @if($pengajuan->catatan_admin)
-                                        <div class="mt-2 p-2 bg-danger bg-opacity-10 rounded-2">
-                                            <small class="text-danger">{{ $pengajuan->catatan_admin }}</small>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                            @else
-                            <div class="timeline-item">
-                                <div class="timeline-marker bg-secondary"></div>
-                                <div class="timeline-content">
-                                    <h6 class="fw-semibold mb-1 text-muted">Proses {{ ucfirst(str_replace('_',' ',$pengajuan->status)) }}</h6>
-                                    <p class="text-muted small mb-0">Sedang diproses</p>
-                                </div>
-                            </div>
-                            @endif
-                        </div>
-                        </div>
-                    </div>
-
-            <!-- Quick Info -->
-            <div class="card border-0 shadow-sm mb-4 order-lg-3">
-                <div class="card-header bg-light border-0 py-3">
-                    <h5 class="mb-0 fw-semibold text-dark">
-                        <i class="fas fa-info text-info me-2"></i>Informasi Cepat
-                    </h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <i class="fas fa-user-circle text-primary fs-5 me-3"></i>
-                        <div>
-                            <small class="text-muted d-block">Pemohon</small>
-                            <span class="fw-medium">{{ $pengajuan->user->name }}</span>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center mb-3">
-                        <i class="fas fa-calendar text-primary fs-5 me-3"></i>
-                        <div>
-                            <small class="text-muted d-block">Tanggal Pengajuan</small>
-                            <span class="fw-medium">{{ $pengajuan->created_at->format('d M Y') }}</span>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center mb-3">
-                        <i class="fas fa-tag text-primary fs-5 me-3"></i>
-                        <div>
-                            <small class="text-muted d-block">Kategori</small>
-                            <span class="fw-medium">{{ $pengajuan->identitas_ciptaan ?? '-' }}</span>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-clock text-primary fs-5 me-3"></i>
-                        <div>
-                            <small class="text-muted d-block">Terakhir Diperbarui</small>
-                            <span class="fw-medium">{{ $pengajuan->updated_at->diffForHumans() }}</span>
-                        </div>
-                    </div>
-                            @if(in_array($pengajuan->status, ['menunggu_pembayaran', 'menunggu_verifikasi_pembayaran', 'selesai']))
-                            <div class="info-item">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-credit-card text-primary me-2"></i>
-                                    <div>
-                                        <small class="text-muted">Status Pembayaran</small>
-                                        <div class="fw-medium">
-                                            @switch($pengajuan->status)
-                                                @case('menunggu_pembayaran')
-                                                    <span class="badge bg-warning text-dark">Menunggu Pembayaran</span>
-                                                    @break
-                                                @case('menunggu_verifikasi_pembayaran')
-                                                    <span class="badge bg-info text-white">Menunggu Verifikasi</span>
-                                                    @break
-                                                @case('selesai')
-                                                    <span class="badge bg-success">Lunas</span>
-                                                    @break
-                                            @endswitch
-                                        </div>
+                                <div class="timeline-item active">
+                                    <div class="timeline-marker bg-primary"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="fw-semibold mb-1">Pengajuan Dibuat</h6>
+                                        <p class="text-muted small mb-0">{{ $pengajuan->created_at->format('d M Y, H:i') }}</p>
                                     </div>
                                 </div>
+
+                                <div class="timeline-item active">
+                                    <div class="timeline-marker bg-info"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="fw-semibold mb-1">Pengajuan Diperbarui</h6>
+                                        <p class="text-muted small mb-0">{{ $pengajuan->updated_at->format('d M Y, H:i') }}</p>
+                                    </div>
+                                </div>
+
+                                @if(in_array($pengajuan->status, ['divalidasi_sedang_diproses']))
+                                <div class="timeline-item active">
+                                    <div class="timeline-marker bg-success"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="fw-semibold mb-1">Pengajuan Divalidasi & Sedang Diproses</h6>
+                                        <p class="text-muted small mb-0">{{ $pengajuan->tanggal_validasi ? $pengajuan->tanggal_validasi->format('d M Y, H:i') : $pengajuan->updated_at->format('d M Y, H:i') }}</p>
+                                        @if($pengajuan->catatan_admin)
+                                            <div class="mt-2 p-2 bg-success bg-opacity-10 rounded-2">
+                                                <small class="text-success">{{ $pengajuan->catatan_admin }}</small>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                                @elseif(in_array($pengajuan->status, ['menunggu_pembayaran', 'menunggu_verifikasi_pembayaran']))
+                                <div class="timeline-item active">
+                                    <div class="timeline-marker bg-success"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="fw-semibold mb-1">Pengajuan Divalidasi & Sedang Diproses</h6>
+                                        <p class="text-muted small mb-0">{{ $pengajuan->tanggal_validasi ? $pengajuan->tanggal_validasi->format('d M Y, H:i') : $pengajuan->updated_at->format('d M Y, H:i') }}</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-item active">
+                                    <div class="timeline-marker bg-warning"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="fw-semibold mb-1">{{ $pengajuan->status == 'menunggu_pembayaran' ? 'Menunggu Pembayaran' : 'Menunggu Verifikasi Pembayaran' }}</h6>
+                                        <p class="text-muted small mb-0">{{ $pengajuan->updated_at->format('d M Y, H:i') }}</p>
+                                    </div>
+                                </div>
+                                @elseif($pengajuan->status == 'selesai')
+                                <div class="timeline-item active">
+                                    <div class="timeline-marker bg-success"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="fw-semibold mb-1">Pengajuan Divalidasi & Sedang Diproses</h6>
+                                        <p class="text-muted small mb-0">{{ $pengajuan->tanggal_validasi ? $pengajuan->tanggal_validasi->format('d M Y, H:i') : $pengajuan->updated_at->format('d M Y, H:i') }}</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-item active">
+                                    <div class="timeline-marker bg-primary"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="fw-semibold mb-1">Pembayaran Terverifikasi</h6>
+                                        <p class="text-muted small mb-0">{{ $pengajuan->updated_at->format('d M Y, H:i') }}</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-item active">
+                                    <div class="timeline-marker bg-success"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="fw-semibold mb-1">Pengajuan Selesai</h6>
+                                        <p class="text-muted small mb-0">{{ $pengajuan->updated_at->format('d M Y, H:i') }}</p>
+                                    </div>
+                                </div>
+                                @elseif($pengajuan->status == 'ditolak')
+                                <div class="timeline-item active">
+                                    <div class="timeline-marker bg-danger"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="fw-semibold mb-1">Pengajuan Ditolak</h6>
+                                        <p class="text-muted small mb-0">{{ $pengajuan->updated_at->format('d M Y, H:i') }}</p>
+                                        @if($pengajuan->catatan_admin)
+                                            <div class="mt-2 p-2 bg-danger bg-opacity-10 rounded-2">
+                                                <small class="text-danger">{{ $pengajuan->catatan_admin }}</small>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                                @else
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-secondary"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="fw-semibold mb-1 text-muted">Proses {{ ucfirst(str_replace('_',' ',$pengajuan->status)) }}</h6>
+                                        <p class="text-muted small mb-0">Sedang diproses</p>
+                                    </div>
+                                </div>
+                                @endif
                             </div>
-                            @endif
                         </div>
                     </div>
-                </div>
 
-            <!-- Action Panel -->
-            <div class="card border-0 shadow-sm mb-4 order-lg-1">
-                <div class="card-header bg-light border-0 py-3">
-                    <h5 class="mb-0 fw-semibold text-dark">
-                        <i class="fas fa-cogs text-warning me-2"></i>Panel Aksi
-                    </h5>
-                </div>
+                <!-- Quick Info -->
+                <div class="card border-0 shadow-sm mb-4 order-lg-3">
+                    <div class="card-header bg-light border-0 py-3">
+                        <h5 class="mb-0 fw-semibold text-dark">
+                            <i class="fas fa-info text-info me-2"></i>Informasi Cepat
+                        </h5>
+                    </div>
                     <div class="card-body p-4">
-                        <div class="d-grid gap-2">
-                            @if($pengajuan->status === 'menunggu_validasi')
-                                <a href="{{ route('persetujuan.validation.wizard', $pengajuan->id) }}" 
-                                   class="btn btn-success">
-                                    <i class="fas fa-signature me-2"></i>Validasi Pengajuan
-                                </a>
-                                <div class="alert alert-info py-2 mb-2">
-                                    <small><i class="fas fa-info-circle me-1"></i>Pengajuan siap untuk divalidasi dan ditandatangani direktur</small>
-                                </div>
-                            @endif
-
-                            @if(in_array($pengajuan->status, ['divalidasi_sedang_diproses']))
-                                @if(!$pengajuan->billing_code)
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#billingModal">
-                                        <i class="fas fa-barcode me-2"></i>Set Kode Billing
-                                    </button>
-                                @else
-                                    <div class="alert alert-success py-2 mb-2">
-                                        <small><i class="fas fa-check-circle me-1"></i>Kode billing sudah tersedia: <strong>{{ $pengajuan->billing_code }}</strong></small>
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-user-circle text-primary fs-5 me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Pemohon</small>
+                                <span class="fw-medium">{{ $pengajuan->user->name }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-calendar text-primary fs-5 me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Tanggal Pengajuan</small>
+                                <span class="fw-medium">{{ $pengajuan->created_at->format('d M Y') }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-tag text-primary fs-5 me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Kategori</small>
+                                <span class="fw-medium">{{ $pengajuan->identitas_ciptaan ?? '-' }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-clock text-primary fs-5 me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Terakhir Diperbarui</small>
+                                <span class="fw-medium">{{ $pengajuan->updated_at->diffForHumans() }}</span>
+                            </div>
+                        </div>
+                                @if(in_array($pengajuan->status, ['menunggu_pembayaran', 'menunggu_verifikasi_pembayaran', 'selesai']))
+                                <div class="info-item">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-credit-card text-primary me-2"></i>
+                                        <div>
+                                            <small class="text-muted">Status Pembayaran</small>
+                                            <div class="fw-medium">
+                                                @switch($pengajuan->status)
+                                                    @case('menunggu_pembayaran')
+                                                        <span class="badge bg-warning text-dark">Menunggu Pembayaran</span>
+                                                        @break
+                                                    @case('menunggu_verifikasi_pembayaran')
+                                                        <span class="badge bg-info text-white">Menunggu Verifikasi</span>
+                                                        @break
+                                                    @case('selesai')
+                                                        <span class="badge bg-success">Lunas</span>
+                                                        @break
+                                                @endswitch
+                                            </div>
+                                        </div>
                                     </div>
-                                    <a href="{{ route('admin.pengajuan.finalisasi', $pengajuan->id) }}" 
-                                       class="btn btn-warning">
-                                        <i class="fas fa-check-double me-2"></i>Finalisasi ke Menunggu Pembayaran
-                                    </a>
-                                @endif
-                            @endif
-
-                            @if($pengajuan->status === 'menunggu_verifikasi_pembayaran')
-                                <a href="{{ route('admin.pengajuan.konfirmasiPembayaran', $pengajuan->id) }}" 
-                                   class="btn btn-success">
-                                    <i class="fas fa-check-circle me-2"></i>Konfirmasi Pembayaran
-                                </a>
-                                <div class="alert alert-warning py-2 mb-2">
-                                    <small><i class="fas fa-clock me-1"></i>Menunggu verifikasi bukti pembayaran</small>
                                 </div>
-                            @endif
-
-                            @if($pengajuan->status === 'disetujui')
-                                @if(!$pengajuan->sertifikat)
-                                    <!-- Upload Sertifikat Button -->
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadSertifikatModal">
-                                        <i class="fas fa-file-upload me-2"></i>Upload Sertifikat
-                                    </button>
-                                @else
-                                    <!-- Sertifikat already uploaded -->
-                                    <a href="{{ route('sertifikat.serve', $pengajuan->id) }}" target="_blank" class="btn btn-success">
-                                        <i class="fas fa-file-download me-2"></i>Lihat / Download Sertifikat
-                                    </a>
                                 @endif
-                            @endif
+                            </div>
+                        </div>
+                    </div>
 
-                            <hr class="my-3">
+                <!-- Action Panel -->
+                <div class="card border-0 shadow-sm mb-4 order-lg-1">
+                    <div class="card-header bg-light border-0 py-3">
+                        <h5 class="mb-0 fw-semibold text-dark">
+                            <i class="fas fa-cogs text-warning me-2"></i>Panel Aksi
+                        </h5>
+                    </div>
+                        <div class="card-body p-4">
+                            <div class="d-grid gap-2">
+                                {{-- Upload KTP Pemohon oleh Admin --}}
+                                <div class="mb-3">
+                                    <h6 class="fw-semibold mb-2"><i class="fas fa-id-card me-2 text-primary"></i>KTP Pemohon</h6>
+                                    @php
+                                        $ktpPemohonPath = is_array($dokumen) && isset($dokumen['ktp_pemohon']) ? $dokumen['ktp_pemohon'] : null;
+                                    @endphp
+                                    @if($ktpPemohonPath)
+                                        <div class="alert alert-success py-2 d-flex justify-content-between align-items-center">
+                                            <small class="mb-0"><i class="fas fa-check-circle me-1"></i>KTP Pemohon sudah diunggah.</small>
+                                            <a href="{{ Storage::url($ktpPemohonPath) }}" target="_blank" class="btn btn-success btn-sm"><i class="fas fa-eye me-1"></i>Lihat</a>
+                                        </div>
+                                        <small class="text-muted d-block mb-2">Unggah ulang untuk mengganti file KTP Pemohon.</small>
+                                    @else
+                                        <div class="alert alert-warning py-2"><small class="mb-0"><i class="fas fa-exclamation-triangle me-1"></i>KTP Pemohon belum diunggah.</small></div>
+                                    @endif
+                                    <form action="{{ route('pengajuan.uploadKtpPemohon', $pengajuan->id) }}" method="POST" enctype="multipart/form-data" class="d-flex gap-2 align-items-center">
+                                        @csrf
+                                        <input type="file" name="ktp_pemohon" class="form-control" accept="image/jpeg,image/png" required>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-upload me-1"></i>Upload KTP Pemohon
+                                        </button>
+                                    </form>
+                                    <small class="text-muted">Format JPG/PNG, maksimal 5 MB.</small>
+                                </div>
 
-                        
-                        <a href="{{ route('admin.pengajuan.rekapExcel', $pengajuan->id) }}" 
-                           class="btn btn-outline-primary">
-                            <i class="fas fa-file-excel me-2"></i>Ekspor Excel
-                        </a>
-                        
-                        <a href="{{ route('admin.pengajuan.rekapPdf', $pengajuan->id) }}" 
-                           target="_blank" 
-                           class="btn btn-outline-danger">
-                            <i class="fas fa-file-pdf me-2"></i>Rekap PDF
-                        </a>
-                        
-                        <a href="{{ route('admin.pengajuan') }}" 
-                           class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Kembali ke Daftar
-                        </a>
+                                {{-- Tanda Tangan Form Permohonan --}}
+                                <div class="mb-3">
+                                    <h6 class="fw-semibold mb-2"><i class="fas fa-signature me-2 text-primary"></i>Tanda Tangan Form Permohonan</h6>
+                                    @php
+                                        $formSignatureExists = !empty($pengajuan->ttd_path);
+                                        $signedFormExists = false;
+                                        if(is_array($dokumen) && isset($dokumen['signed']['form_permohonan_pendaftaran'])) {
+                                            $signedFormPath = $dokumen['signed']['form_permohonan_pendaftaran'];
+                                            $signedFormExists = \Storage::disk('public')->exists(ltrim($signedFormPath, '/'));
+                                        }
+                                    @endphp
+                                    
+                                    @if($signedFormExists)
+                                        <div class="alert alert-success py-2 d-flex justify-content-between align-items-center">
+                                            <small class="mb-0"><i class="fas fa-check-circle me-1"></i>Form permohonan sudah ditandatangani dan diproses.</small>
+                                            <a href="{{ route('admin.pengajuan.viewSignedForm', $pengajuan->id) }}" target="_blank" class="btn btn-success btn-sm">
+                                                <i class="fas fa-eye me-1"></i>Lihat Form Bertanda Tangan
+                                            </a>
+                                        </div>
+                                    @elseif($formSignatureExists)
+                                        <div class="alert alert-warning py-2">
+                                            <small class="mb-0"><i class="fas fa-clock me-1"></i>Tanda tangan tersedia, sedang memproses PDF bertanda tangan...</small>
+                                        </div>
+                                        <a href="{{ Storage::url(ltrim($pengajuan->ttd_path, '/')) }}" target="_blank" class="btn btn-outline-info btn-sm">
+                                            <i class="fas fa-image me-1"></i>Lihat Tanda Tangan
+                                        </a>
+                                    @else
+                                        <div class="alert alert-info py-2">
+                                            <small class="mb-0"><i class="fas fa-info-circle me-1"></i>Form permohonan belum ditandatangani oleh pemohon.</small>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                @if($pengajuan->status === 'menunggu_validasi')
+                                    <a href="{{ route('persetujuan.validation.wizard', $pengajuan->id) }}" 
+                                       class="btn btn-success">
+                                        <i class="fas fa-signature me-2"></i>Validasi Pengajuan
+                                    </a>
+                                    <div class="alert alert-info py-2 mb-2">
+                                        <small><i class="fas fa-info-circle me-1"></i>Pengajuan siap untuk divalidasi dan ditandatangani direktur</small>
+                                    </div>
+                                @endif
+
+                                @if(in_array($pengajuan->status, ['divalidasi_sedang_diproses']))
+                                    @if(!$pengajuan->billing_code)
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#billingModal">
+                                            <i class="fas fa-barcode me-2"></i>Set Kode Billing
+                                        </button>
+                                    @else
+                                        <div class="alert alert-success py-2 mb-2">
+                                            <small><i class="fas fa-check-circle me-1"></i>Kode billing sudah tersedia: <strong>{{ $pengajuan->billing_code }}</strong></small>
+                                        </div>
+                                        <a href="{{ route('admin.pengajuan.finalisasi', $pengajuan->id) }}" 
+                                           class="btn btn-warning">
+                                            <i class="fas fa-check-double me-2"></i>Finalisasi ke Menunggu Pembayaran
+                                        </a>
+                                    @endif
+                                @endif
+
+                                @if($pengajuan->status === 'menunggu_verifikasi_pembayaran')
+                                    <a href="{{ route('admin.pengajuan.konfirmasiPembayaran', $pengajuan->id) }}" 
+                                       class="btn btn-success">
+                                        <i class="fas fa-check-circle me-2"></i>Konfirmasi Pembayaran
+                                    </a>
+                                    <div class="alert alert-warning py-2 mb-2">
+                                        <small><i class="fas fa-clock me-1"></i>Menunggu verifikasi bukti pembayaran</small>
+                                    </div>
+                                @endif
+
+                                @if(in_array($pengajuan->status, ['disetujui','selesai']))
+                                    @if(!$pengajuan->sertifikat)
+                                        <!-- Upload Sertifikat Button -->
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadSertifikatModal">
+                                            <i class="fas fa-file-upload me-2"></i>Upload Sertifikat
+                                        </button>
+                                    @else
+                                        <!-- Sertifikat already uploaded -->
+                                        <a href="{{ route('sertifikat.serve', $pengajuan->id) }}" target="_blank" class="btn btn-success">
+                                            <i class="fas fa-file-download me-2"></i>Lihat / Download Sertifikat
+                                        </a>
+                                    @endif
+                                @endif
+
+                                <hr class="my-3">
+
+                            
+                            <a href="{{ route('admin.pengajuan.rekapExcel', $pengajuan->id) }}" 
+                               class="btn btn-outline-primary">
+                                <i class="fas fa-file-excel me-2"></i>Ekspor Excel
+                            </a>
+                            
+                            <a href="{{ route('admin.pengajuan.rekapPdf', $pengajuan->id) }}" 
+                               target="_blank" 
+                               class="btn btn-outline-danger">
+                                <i class="fas fa-file-pdf me-2"></i>Rekap PDF
+                            </a>
+                            
+                            <a href="{{ route('admin.pengajuan') }}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Kembali ke Daftar
+                            </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1172,7 +1031,7 @@
 </div>
 
 <!-- Modal Upload Sertifikat -->
-@if($pengajuan->status === 'disetujui' && !$pengajuan->sertifikat)
+@if(in_array($pengajuan->status, ['disetujui','selesai']) && !$pengajuan->sertifikat)
 <div class="modal fade" id="uploadSertifikatModal" tabindex="-1" aria-labelledby="uploadSertifikatLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">

@@ -447,6 +447,13 @@ class AdminController extends Controller
                 'color'=>'primary',
                 'file_info'=>$this->getFileInfoFromFileKarya($pengajuan->file_karya)
             ],
+            'form_permohonan_pendaftaran' => [
+                'label'=>'Form Permohonan Pendaftaran',
+                'description'=>'Form permohonan pendaftaran ciptaan',
+                'icon'=>'fas fa-file-alt',
+                'color'=>'dark',
+                'file_info'=>$this->getFileInfoFromDokumen($dokumen,'form_permohonan_pendaftaran',$preferSigned)
+            ],
             'surat_pengalihan' => [
                 'label'=>'Surat Pengalihan Hak',
                 'description'=>'Dokumen pengalihan hak cipta',
@@ -1309,8 +1316,10 @@ class AdminController extends Controller
             return Redirect::back()->with('error','Pengajuan tidak dalam status menunggu verifikasi pembayaran.');
         }
 
+        // Gunakan status yang valid pada enum kolom `status`
+        // Ganti dari 'disetujui' (tidak ada di enum) menjadi 'selesai'
         $pengajuan->update([
-            'status' => 'disetujui',
+            'status' => 'selesai',
             'catatan_admin' => 'Pembayaran telah diverifikasi dan disetujui oleh admin.'
         ]);
 
@@ -1331,8 +1340,8 @@ class AdminController extends Controller
             abort(403);
         }
 
-        if($pengajuan->status !== 'disetujui'){
-            return Redirect::back()->with('error','Hanya pengajuan dengan status disetujui yang dapat diupload sertifikat.');
+        if(!in_array($pengajuan->status, ['selesai','disetujui'])){
+            return Redirect::back()->with('error','Hanya pengajuan dengan status selesai yang dapat diupload sertifikat.');
         }
 
         $request->validate([

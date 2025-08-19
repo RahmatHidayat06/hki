@@ -6,6 +6,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use App\Models\Notifikasi;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -35,5 +37,14 @@ class AppServiceProvider extends ServiceProvider
                 $view->with('unreadNotifications', $unreadNotifications);
             }
         });
+
+        // Set locale Carbon ke Indonesia agar nama bulan/tanggal terjemahan tampil bahasa Indonesia
+        try {
+            Carbon::setLocale('id');
+            CarbonImmutable::setLocale('id');
+            \Locale::setDefault('id_ID');
+        } catch (\Throwable $e) {
+            // silent fail jika ekstensi intl tidak tersedia
+        }
     }
 }
