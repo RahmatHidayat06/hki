@@ -348,7 +348,7 @@
 			const yPercent = (docY / originalH) * 100;
 			const wPercent = (docW / originalW) * 100;
 			
-			coordsEl.textContent = `X: ${xPercent.toFixed(2)}% | Y: ${yPercent.toFixed(2)}% | W: ${wPercent.toFixed(2)}%`;
+		coordsEl.textContent = `X: ${xPercent.toFixed(2)}% | Y: ${yPercent.toFixed(2)}% | W: ${wPercent.toFixed(2)}%`;
 		});
 	}
 
